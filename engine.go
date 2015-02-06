@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/NeowayLabs/neosearch/store"
+	"bitbucket.org/i4k/neosearch/store"
 )
 
 // StoreCache have the KVStore and LastAccess of the index
