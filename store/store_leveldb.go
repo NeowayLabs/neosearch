@@ -3,7 +3,11 @@
 // Package store defines the interface for the KV store technology
 package store
 
-import "github.com/jmhodges/levigo"
+import (
+	"fmt"
+
+	"github.com/jmhodges/levigo"
+)
 
 // KVName is the name of leveldb data store
 const KVName = "leveldb"
@@ -17,15 +21,41 @@ type LVDB struct {
 	_writeOptions *levigo.WriteOptions
 }
 
+// Registry the leveldb module
+func init() {
+	initFn := func(config *KVConfig) (*KVStore, error) {
+		if config.Debug {
+			fmt.Println("Initializing leveldb backend store")
+		}
+
+		store, err := NewLVDB(config)
+		return &store, err
+	}
+
+	err := SetDefault(KVName, &initFn)
+
+	if err != nil {
+		fmt.Println("Failed to initialize leveldb backend")
+	}
+}
+
 // NewLVDB creates a new leveldb instance
 func NewLVDB(config *KVConfig) (KVStore, error) {
-	return &LVDB{
+	lvdb := LVDB{
 		Config: config,
-	}, nil
+	}
+
+	lvdb.Setup()
+
+	return &lvdb, nil
 }
 
 // Setup the leveldb instance
 func (lvdb *LVDB) Setup() error {
+	if lvdb.Config.Debug {
+		fmt.Println("Setup leveldb")
+	}
+
 	lvdb._opts = levigo.NewOptions()
 	lvdb._opts.SetCache(levigo.NewLRUCache(3 << 30))
 	lvdb._opts.SetCreateIfMissing(true)
@@ -39,7 +69,14 @@ func (lvdb *LVDB) Setup() error {
 // Open the database
 func (lvdb *LVDB) Open(path string) error {
 	var err error
-	lvdb._db, err = levigo.Open(path, lvdb._opts)
+
+	// We avoid some cycles by not checking the last '/'
+	fullPath := lvdb.Config.DataDir + "/" + path
+	lvdb._db, err = levigo.Open(fullPath, lvdb._opts)
+
+	if lvdb.Config.Debug {
+		fmt.Printf("Database '%s' opened: %s\n", path, err)
+	}
 
 	return err
 }
@@ -56,6 +93,14 @@ func (lvdb *LVDB) SetCustom(opt *levigo.WriteOptions, key []byte, value []byte) 
 
 // MergeSet isn't implemented yet
 func (lvdb *LVDB) MergeSet(key []byte, value uint64) error {
+	data, err := lvdb.Get(key)
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Data: ", data)
+
 	return nil
 }
 
@@ -79,15 +124,13 @@ func (lvdb *LVDB) DeleteCustom(opt *levigo.WriteOptions, key []byte) error {
 	return lvdb._db.Delete(opt, key)
 }
 
+// Close the database
+func (lvdb *LVDB) Close() {
+	lvdb._db.Close()
+}
+
 // LVDBConstructor build the constructor
 func LVDBConstructor(config *KVConfig) (*KVStore, error) {
 	store, err := NewLVDB(config)
 	return &store, err
-}
-
-func init() {
-	//	error := SetDefault(KVName, func(config *KVConfig) (*KVStore, error) {
-	//		store, err := NewLVDB(config)
-	//		return &store, err
-	//	})
 }

@@ -2,6 +2,7 @@ package neosearch
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/NeowayLabs/neosearch/store"
@@ -9,13 +10,13 @@ import (
 
 // StoreCache have the KVStore and LastAccess of the index
 type StoreCache struct {
-	Store      store.KVStore
+	Store      *store.KVStore
 	LastAccess time.Time
 }
 
 // NGConfig configure the Engine
 type NGConfig struct {
-	DataDir string
+	KVCfg *store.KVConfig
 }
 
 // Engine type
@@ -28,22 +29,34 @@ type Engine struct {
 func NewEngine(config NGConfig) *Engine {
 	return &Engine{
 		config: config,
+		stores: make(map[string]StoreCache),
 	}
 }
 
 // Open the index
 func (ng *Engine) Open(name string) error {
+	storekv, err := store.KVInit(ng.config.KVCfg)
+
+	fmt.Println("Got LVDB instance: ", storekv)
+
+	if err != nil {
+		return err
+	}
+
 	ng.stores[name] = StoreCache{
-		Store:      store.KVInit(),
+		Store:      storekv,
 		LastAccess: time.Now(),
 	}
+
+	err = (*storekv).Open(name)
+	return err
 }
 
 // Execute the given command
 func (ng *Engine) Execute(cmd Command) ([]byte, error) {
 	var err error
 
-	if ng.stores[cmd.Index] == "" {
+	if ng.stores[cmd.Index].Store == nil {
 		err = ng.Open(cmd.Index)
 		if err != nil {
 			return nil, err
@@ -55,11 +68,21 @@ func (ng *Engine) Execute(cmd Command) ([]byte, error) {
 
 	switch cmd.Command {
 	case "set":
-		err = store.Set(cmd.Key, cmd.Value)
-		return nil, error
+		err = (*store).Set(cmd.Key, cmd.Value)
+		return nil, err
 	case "get":
-		return store.Get(cmd.Key)
+		return (*store).Get(cmd.Key)
+	case "mergeset":
+		return nil, (*store).MergeSet(cmd.Key, uint64(cmd.Value[0]))
 	}
 
-	return errors.New("Failed to execute command.")
+	return nil, errors.New("Failed to execute command.")
+}
+
+// Close all of the opened databases
+func (ng *Engine) Close() {
+	for _, stc := range ng.stores {
+		st := stc.Store
+		(*st).Close()
+	}
 }

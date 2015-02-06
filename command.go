@@ -4,6 +4,6 @@ package neosearch
 type Command struct {
 	Index   string
 	Command string
-	Key     string
-	Value   string
+	Key     []byte
+	Value   []byte
 }
