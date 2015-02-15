@@ -1,8 +1,8 @@
-package neosearch
+package engine
 
 import (
 	"errors"
-	"fmt"
+	"strconv"
 	"time"
 
 	"bitbucket.org/i4k/neosearch/store"
@@ -25,8 +25,16 @@ type Engine struct {
 	config NGConfig
 }
 
-// NewEngine creates a new Engine instance
-func NewEngine(config NGConfig) *Engine {
+// Command defines a NeoSearch command
+type Command struct {
+	Index   string
+	Command string
+	Key     []byte
+	Value   []byte
+}
+
+// New creates a new Engine instance
+func New(config NGConfig) *Engine {
 	return &Engine{
 		config: config,
 		stores: make(map[string]StoreCache),
@@ -36,8 +44,6 @@ func NewEngine(config NGConfig) *Engine {
 // Open the index
 func (ng *Engine) Open(name string) error {
 	storekv, err := store.KVInit(ng.config.KVCfg)
-
-	fmt.Println("Got LVDB instance: ", storekv)
 
 	if err != nil {
 		return err
@@ -73,7 +79,11 @@ func (ng *Engine) Execute(cmd Command) ([]byte, error) {
 	case "get":
 		return (*store).Get(cmd.Key)
 	case "mergeset":
-		return nil, (*store).MergeSet(cmd.Key, uint64(cmd.Value[0]))
+		v, _ := strconv.ParseInt(string(cmd.Value), 10, 64)
+		return nil, (*store).MergeSet(cmd.Key, uint64(v))
+	case "delete":
+		err = (*store).Delete(cmd.Key)
+		return nil, err
 	}
 
 	return nil, errors.New("Failed to execute command.")

@@ -4,6 +4,7 @@
 package store
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/jmhodges/levigo"
@@ -93,13 +94,41 @@ func (lvdb *LVDB) SetCustom(opt *levigo.WriteOptions, key []byte, value []byte) 
 
 // MergeSet isn't implemented yet
 func (lvdb *LVDB) MergeSet(key []byte, value uint64) error {
-	data, err := lvdb.Get(key)
+	dataJSON, err := lvdb.Get(key)
 
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("Data: ", data)
+	var values []uint64
+
+	if len(dataJSON) > 0 {
+		err = json.Unmarshal(dataJSON, &values)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	exists := false
+	// only testing, we need a efficient solution
+	for i := 0; i < len(values); i++ {
+		if values[i] == value {
+			exists = true
+			break
+		}
+	}
+
+	if !exists {
+		values = append(values, value)
+		dataJSON, err = json.Marshal(&values)
+
+		if err != nil {
+			return err
+		}
+
+		return lvdb.Set(key, dataJSON)
+	}
 
 	return nil
 }
