@@ -77,4 +77,6 @@ func (neo *NeoSearch) Close() {
 		index := neo.Indices[idx]
 		index.Close()
 	}
+
+	neo.Indices = make([]*index.Index, 0)
 }

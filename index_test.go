@@ -1,7 +1,6 @@
 package neosearch
 
 import (
-	"fmt"
 	"os"
 	"testing"
 )
@@ -150,8 +149,9 @@ func TestAddDocument(t *testing.T) {
 		t.Error(err)
 	}
 
-	if string(filterData) != "[1]" {
-		t.Errorf("Failed to filter by field name: %v != %s", filterData, "[1]")
+	if len(filterData) != 1 ||
+		filterData[0] != `{"id": 1, "name": "Neoway Business Solution"}` {
+		t.Errorf("Failed to filter by field name: %v != %s", filterData, `{"id": 1, "name": "Neoway Business Solution"}`)
 	}
 
 	filterData, err = index.FilterTerm([]byte("name"), []byte("neoway"))
@@ -160,10 +160,9 @@ func TestAddDocument(t *testing.T) {
 		t.Error(err)
 	}
 
-	fmt.Println("term out: ", string(filterData))
-
-	if string(filterData) != "[1,4]" {
-		t.Errorf("Failed to filter by field name: %s != %s", filterData, "[1,4]")
+	if len(filterData) != 2 || filterData[0] != `{"id": 1, "name": "Neoway Business Solution"}` ||
+		filterData[1] != `{"id": 4, "name": "Neoway Teste"}` {
+		t.Errorf("Failed to filter by field name: %s != %s", filterData, `[{"id": 1, "name": "Neoway Business Solution"} {"id": 4, "name": "Neoway Teste"}]`)
 	}
 
 	neo.Close()
@@ -236,8 +235,17 @@ func TestPrefixMatch(t *testing.T) {
 		t.Error(err)
 	}
 
-	fmt.Println("Found at: ", values)
+	if len(values) != 2 ||
+		values[0] != `{"id": 1, "name": "Neoway Business Solution"}` ||
+		values[1] != `{"id": 4, "name": "Neoway Teste"}` {
+		t.Error("Failed to retrieve documents with 'name' field prefixed with 'neoway'")
+	}
 
 	neo.Close()
+
+	if len(neo.Indices) != 0 {
+		t.Error("Failed to close all neosearch indices")
+	}
+
 	os.RemoveAll(dataDir)
 }

@@ -4,8 +4,12 @@
 package store
 
 import (
-	"encoding/json"
+	"bytes"
+	"encoding/gob"
 	"fmt"
+	"sort"
+
+	"bitbucket.org/i4k/neosearch/utils"
 
 	"github.com/jmhodges/levigo"
 )
@@ -101,18 +105,26 @@ func (lvdb *LVDB) SetCustom(opt *levigo.WriteOptions, key []byte, value []byte) 
 	return lvdb._db.Put(opt, key, value)
 }
 
-// MergeSet isn't implemented yet
+// MergeSet add value to a ordered set of integers stored in key. If value
+// is already on the key, than the set will be skipped.
 func (lvdb *LVDB) MergeSet(key []byte, value uint64) error {
-	dataJSON, err := lvdb.Get(key)
+	var (
+		valueBytes bytes.Buffer
+		values     []uint64
+		err        error
+	)
+
+	dataGob, err := lvdb.Get(key)
 
 	if err != nil {
 		return err
 	}
 
-	var values []uint64
+	if len(dataGob) > 0 {
+		valueBytes.Write(dataGob)
+		decoder := gob.NewDecoder(&valueBytes)
 
-	if len(dataJSON) > 0 {
-		err = json.Unmarshal(dataJSON, &values)
+		err = decoder.Decode(&values)
 
 		if err != nil {
 			return err
@@ -130,15 +142,17 @@ func (lvdb *LVDB) MergeSet(key []byte, value uint64) error {
 
 	if !exists {
 		values = append(values, value)
-		dataJSON, err = json.Marshal(&values)
+		sort.Sort(utils.Uint64Slice(values))
 
-		if err != nil {
-			return err
+		encoder := gob.NewEncoder(&valueBytes)
+		if err = encoder.Encode(values); err == nil {
+			return lvdb.Set(key, valueBytes.Bytes())
 		}
 
-		return lvdb.Set(key, dataJSON)
+		return err
 	}
 
+	// value already in the set
 	return nil
 }
 
