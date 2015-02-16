@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -25,14 +26,25 @@ type Index struct {
 type Config struct {
 	// Per-Index configurations
 
-	DataDir string
-	Debug   bool
+	DataDir     string
+	Debug       bool
+	CacheSize   int
+	EnableCache bool
+}
+
+func validateIndexName(name string) bool {
+	if len(name) < 3 {
+		return false
+	}
+
+	validName := regexp.MustCompile(`^[a-zA-Z0-9-]+$`)
+	return validName.MatchString(name)
 }
 
 // New creates new index
 func New(name string, cfg Config) (*Index, error) {
-	if name == "" {
-		return nil, errors.New("empty index name")
+	if !validateIndexName(name) {
+		return nil, errors.New("Invalid index name")
 	}
 
 	index := &Index{
@@ -58,8 +70,10 @@ func (i *Index) setup() error {
 
 	i.engine = engine.New(engine.NGConfig{
 		KVCfg: &store.KVConfig{
-			DataDir: i.config.DataDir,
-			Debug:   i.config.Debug,
+			DataDir:     i.config.DataDir,
+			Debug:       i.config.Debug,
+			CacheSize:   i.config.CacheSize,
+			EnableCache: i.config.EnableCache,
 		},
 	})
 

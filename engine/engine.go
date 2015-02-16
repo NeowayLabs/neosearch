@@ -2,27 +2,34 @@ package engine
 
 import (
 	"errors"
+	"sort"
 	"strconv"
 	"time"
 
 	"bitbucket.org/i4k/neosearch/store"
 )
 
-// StoreCache have the KVStore and LastAccess of the index
-type StoreCache struct {
-	Store      *store.KVStore
-	LastAccess time.Time
-}
+const (
+	// OpenCacheSize is the default value for the maximum number of
+	// opened database files. This value can be override by
+	// NGConfig.OpenCacheSize.
+	OpenCacheSize int = 100
+)
 
 // NGConfig configure the Engine
 type NGConfig struct {
 	KVCfg *store.KVConfig
+	// OpenCacheSize adjust the length of maximum number of
+	// opened indices. This is a LRU cache, the least used
+	// database opened will be closed when needed.
+	OpenCacheSize int
 }
 
 // Engine type
 type Engine struct {
-	stores map[string]StoreCache
-	config NGConfig
+	stores       StoreCache
+	storeEntries []StoreEntry
+	config       NGConfig
 }
 
 // Command defines a NeoSearch command
@@ -34,25 +41,64 @@ type Command struct {
 }
 
 // New creates a new Engine instance
+// Engine is the generic interface to access database/index files.
+// You can execute commands directly to database using Execute method
+// acquire direct iterators using the Store interface.
 func New(config NGConfig) *Engine {
-	return &Engine{
+	ng := &Engine{
 		config: config,
-		stores: make(map[string]StoreCache),
+		stores: make(StoreCache),
 	}
+
+	if ng.config.OpenCacheSize == 0 {
+		ng.config.OpenCacheSize = OpenCacheSize
+	}
+
+	return ng
+}
+
+// cacheClean ensures that only OpenCacheSize indexes are opened
+// closing each of the least accessed of them, until the engine has the
+// correct max number of database opened (OpenCacheSize config).
+func (ng *Engine) cacheClean() {
+	var entries = len(ng.storeEntries)
+	if entries < ng.config.OpenCacheSize {
+		return
+	}
+
+	delEntries := ng.storeEntries[ng.config.OpenCacheSize:entries]
+
+	for i := range delEntries {
+		entry := delEntries[i]
+		store := entry.Store
+		(*store).Close()
+
+		delete(ng.stores, entry.Name)
+	}
+
+	ng.storeEntries = ng.storeEntries[0:ng.config.OpenCacheSize]
 }
 
 // Open the index
-func (ng *Engine) Open(name string) error {
+func (ng *Engine) open(name string) error {
 	storekv, err := store.KVInit(ng.config.KVCfg)
 
 	if err != nil {
 		return err
 	}
 
-	ng.stores[name] = StoreCache{
+	entry := StoreEntry{
 		Store:      storekv,
-		LastAccess: time.Now(),
+		LastAccess: time.Now().Nanosecond(),
+		Name:       name,
 	}
+
+	ng.storeEntries = append(ng.storeEntries, entry)
+	sort.Sort(ByLastAccess(ng.storeEntries))
+
+	ng.stores[name] = &entry
+
+	ng.cacheClean()
 
 	err = (*storekv).Open(name)
 	return err
@@ -62,15 +108,11 @@ func (ng *Engine) Open(name string) error {
 func (ng *Engine) Execute(cmd Command) ([]byte, error) {
 	var err error
 
-	if ng.stores[cmd.Index].Store == nil {
-		err = ng.Open(cmd.Index)
-		if err != nil {
-			return nil, err
-		}
-	}
+	store, err := ng.GetStore(cmd.Index)
 
-	storeCache := ng.stores[cmd.Index]
-	store := storeCache.Store
+	if err != nil {
+		return nil, err
+	}
 
 	switch cmd.Command {
 	case "set":
@@ -87,6 +129,33 @@ func (ng *Engine) Execute(cmd Command) ([]byte, error) {
 	}
 
 	return nil, errors.New("Failed to execute command.")
+}
+
+// GetStore returns a instance of KVStore for the given index name
+// If the given index name isn't open, then this method will open
+// and cache the index for next use.
+func (ng *Engine) GetStore(name string) (*store.KVStore, error) {
+	var (
+		err   error
+		isNew bool
+	)
+
+	if ng.stores[name] == nil {
+		isNew = true
+		err = ng.open(name)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	storeCache := ng.stores[name]
+
+	if !isNew {
+		storeCache.LastAccess = time.Now().Nanosecond()
+		sort.Sort(ByLastAccess(ng.storeEntries))
+	}
+
+	return storeCache.Store, nil
 }
 
 // Close all of the opened databases

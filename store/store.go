@@ -11,13 +11,31 @@ type KVStore interface {
 	MergeSet([]byte, uint64) error
 	Delete([]byte) error
 	Close()
+
+	GetIterator() KVIterator
+}
+
+// KVIterator expose the interface for database iterators.
+// This was Based on leveldb interface
+type KVIterator interface {
+	Valid() bool
+	Key() []byte
+	Value() []byte
+	Next()
+	Prev()
+	SeekToFirst()
+	SeekToLast()
+	Seek([]byte)
+	GetError() error
+	Close()
 }
 
 // KVConfig stores the kv configurations
 type KVConfig struct {
-	Debug bool
-
-	DataDir string
+	Debug       bool
+	DataDir     string
+	EnableCache bool
+	CacheSize   int
 }
 
 // KVStoreConstructor is a pointer to constructor of default KVStore

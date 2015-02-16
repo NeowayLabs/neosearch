@@ -21,6 +21,12 @@ type NeoSearch struct {
 type Config struct {
 	DataDir string
 	Debug   bool
+
+	// CacheSize is the length of LRU cache used by the storage engine
+	// Default is 1GB
+	CacheSize int
+	// EnableCache enable/disable cache support
+	EnableCache bool
 }
 
 // New creates the NeoSearch high-level interface.
@@ -32,6 +38,10 @@ func New(cfg Config) *NeoSearch {
 
 	if cfg.DataDir[len(cfg.DataDir)-1] == '/' {
 		cfg.DataDir = cfg.DataDir[0 : len(cfg.DataDir)-1]
+	}
+
+	if cfg.CacheSize == 0 && cfg.EnableCache {
+		cfg.CacheSize = 3 << 30
 	}
 
 	neo := &NeoSearch{
@@ -46,8 +56,10 @@ func (neo *NeoSearch) CreateIndex(name string) (*index.Index, error) {
 	index, err := index.New(
 		name,
 		index.Config{
-			DataDir: neo.config.DataDir,
-			Debug:   neo.config.Debug,
+			DataDir:     neo.config.DataDir,
+			Debug:       neo.config.Debug,
+			CacheSize:   neo.config.CacheSize,
+			EnableCache: neo.config.EnableCache,
 		},
 	)
 

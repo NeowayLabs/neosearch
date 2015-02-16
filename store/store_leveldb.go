@@ -13,13 +13,10 @@ import (
 // KVName is the name of leveldb data store
 const KVName = "leveldb"
 
-// LVDB is the leveldb interface exposed by NeoSearch
-type LVDB struct {
-	Config        *KVConfig
-	_opts         *levigo.Options
-	_db           *levigo.DB
-	_readOptions  *levigo.ReadOptions
-	_writeOptions *levigo.WriteOptions
+// LVDBConstructor build the constructor
+func LVDBConstructor(config *KVConfig) (*KVStore, error) {
+	store, err := NewLVDB(config)
+	return &store, err
 }
 
 // Registry the leveldb module
@@ -40,6 +37,15 @@ func init() {
 	}
 }
 
+// LVDB is the leveldb interface exposed by NeoSearch
+type LVDB struct {
+	Config        *KVConfig
+	_opts         *levigo.Options
+	_db           *levigo.DB
+	_readOptions  *levigo.ReadOptions
+	_writeOptions *levigo.WriteOptions
+}
+
 // NewLVDB creates a new leveldb instance
 func NewLVDB(config *KVConfig) (KVStore, error) {
 	lvdb := LVDB{
@@ -58,9 +64,12 @@ func (lvdb *LVDB) Setup() error {
 	}
 
 	lvdb._opts = levigo.NewOptions()
-	lvdb._opts.SetCache(levigo.NewLRUCache(3 << 30))
-	lvdb._opts.SetCreateIfMissing(true)
 
+	if lvdb.Config.EnableCache {
+		lvdb._opts.SetCache(levigo.NewLRUCache(lvdb.Config.CacheSize))
+	}
+
+	lvdb._opts.SetCreateIfMissing(true)
 	lvdb._readOptions = levigo.NewReadOptions()
 	lvdb._writeOptions = levigo.NewWriteOptions()
 
@@ -158,8 +167,11 @@ func (lvdb *LVDB) Close() {
 	lvdb._db.Close()
 }
 
-// LVDBConstructor build the constructor
-func LVDBConstructor(config *KVConfig) (*KVStore, error) {
-	store, err := NewLVDB(config)
-	return &store, err
+// GetIterator returns a new KVIterator
+func (lvdb *LVDB) GetIterator() KVIterator {
+	var ro = lvdb._readOptions
+
+	ro.SetFillCache(false)
+	it := lvdb._db.NewIterator(ro)
+	return it
 }
