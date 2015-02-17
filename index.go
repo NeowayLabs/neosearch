@@ -1,3 +1,5 @@
+// Package neosearch is a full-text-search library focused in fast search on multiple
+// indices, doing data join between queries.
 package neosearch
 
 import (
@@ -19,12 +21,16 @@ type NeoSearch struct {
 
 // Config stores NeoSearch configurations
 type Config struct {
+	// Root directory where all of the indices will be written.
 	DataDir string
-	Debug   bool
+
+	// Enables debug in every sub-module
+	Debug bool
 
 	// CacheSize is the length of LRU cache used by the storage engine
 	// Default is 1GB
 	CacheSize int
+
 	// EnableCache enable/disable cache support
 	EnableCache bool
 }
@@ -72,6 +78,7 @@ func (neo *NeoSearch) CreateIndex(name string) (*index.Index, error) {
 	return index, nil
 }
 
+// OpenIndex open a existing index for read/write operations.
 func (neo *NeoSearch) OpenIndex(name string) (*index.Index, error) {
 	index, err := index.New(
 		name,
