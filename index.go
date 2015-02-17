@@ -1,5 +1,57 @@
 // Package neosearch is a full-text-search library focused in fast search on multiple
 // indices, doing data join between queries.
+//
+// Create and add documents to NeoSearch is very easy, see below:
+//
+//   func main() {
+//       config := neosearch.Config{
+//           DataDir: "/tmp/",
+//       }
+//
+//       neo := neosearch.New(config)
+//
+//       index, err := neosearch.CreateIndex("test")
+//
+//       if err != nil {
+//           panic(err)
+//       }
+//
+//       err = index.Add(1, `{"name": "Neoway Business Solution", "type": "company"}`)
+//
+//       if err != nil {
+//           panic(err)
+//       }
+//
+//       err = index.Add(2, `{"name": "Facebook Inc", "type": "company"}`)
+//
+//       if err != nil {
+//           panic(err)
+//       }
+//
+//       values, err := index.MatchPrefix([]byte("name"), []byte("neoway"))
+//
+//       if err != nil {
+//           panic(err)
+//       }
+//
+//       for _, value := range values {
+//           fmt.Println(value)
+//       }
+//   }
+//
+// NeoSearch supports the features below:
+//
+// * Create/Delete index
+// * Index JSON documents (No schema)
+// * Bulk writes
+// * Analysers
+//   - Tokenizer
+// * Search
+//   - MatchPrefix
+//   - FilterTerm
+//
+// This project is in active development stage, it is not recommended for
+// production environments.
 package neosearch
 
 import (
