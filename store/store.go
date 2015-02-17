@@ -13,6 +13,8 @@ type KVStore interface {
 	Close()
 
 	GetIterator() KVIterator
+	StartBatch()
+	FlushBatch() error
 }
 
 // KVIterator expose the interface for database iterators.

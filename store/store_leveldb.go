@@ -44,10 +44,12 @@ func init() {
 // LVDB is the leveldb interface exposed by NeoSearch
 type LVDB struct {
 	Config        *KVConfig
+	isBatch       bool
 	_opts         *levigo.Options
 	_db           *levigo.DB
 	_readOptions  *levigo.ReadOptions
 	_writeOptions *levigo.WriteOptions
+	_writeBatch   *levigo.WriteBatch
 }
 
 // NewLVDB creates a new leveldb instance
@@ -97,6 +99,12 @@ func (lvdb *LVDB) Open(path string) error {
 
 // Set put or update the key with the given value
 func (lvdb *LVDB) Set(key []byte, value []byte) error {
+	if lvdb.isBatch {
+		// isBatch == true, we can safely access _writeBatch pointer
+		lvdb._writeBatch.Put(key, value)
+		return nil
+	}
+
 	return lvdb._db.Put(lvdb._writeOptions, key, value)
 }
 
@@ -168,6 +176,11 @@ func (lvdb *LVDB) GetCustom(opt *levigo.ReadOptions, key []byte) ([]byte, error)
 
 // Delete remove the given key
 func (lvdb *LVDB) Delete(key []byte) error {
+	if lvdb.isBatch {
+		lvdb._writeBatch.Delete(key)
+		return nil
+	}
+
 	return lvdb._db.Delete(lvdb._writeOptions, key)
 }
 
@@ -176,9 +189,38 @@ func (lvdb *LVDB) DeleteCustom(opt *levigo.WriteOptions, key []byte) error {
 	return lvdb._db.Delete(opt, key)
 }
 
+// StartBatch start a new batch write processing
+func (lvdb *LVDB) StartBatch() {
+	if lvdb._writeBatch == nil {
+		lvdb._writeBatch = levigo.NewWriteBatch()
+	} else {
+		lvdb._writeBatch.Clear()
+	}
+
+	lvdb.isBatch = true
+}
+
+// FlushBatch writes the batch to disk
+func (lvdb *LVDB) FlushBatch() error {
+	var err error
+	if lvdb._writeBatch != nil {
+		err = lvdb._db.Write(lvdb._writeOptions, lvdb._writeBatch)
+		// After flush, release the writeBatch for future uses
+		lvdb._writeBatch.Clear()
+		lvdb.isBatch = false
+	}
+
+	return err
+}
+
 // Close the database
 func (lvdb *LVDB) Close() {
 	lvdb._db.Close()
+
+	if lvdb._writeBatch != nil {
+		lvdb._writeBatch.Close()
+		lvdb.isBatch = false
+	}
 }
 
 // GetIterator returns a new KVIterator

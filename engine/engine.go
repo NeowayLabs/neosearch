@@ -14,6 +14,11 @@ const (
 	// opened database files. This value can be override by
 	// NGConfig.OpenCacheSize.
 	OpenCacheSize int = 100
+
+	// BatchSize is the default size of cached operations before
+	// a write batch occurs. You can override this value with
+	// NGConfig.BatchSize.
+	BatchSize int = 5000
 )
 
 // NGConfig configure the Engine
@@ -23,6 +28,9 @@ type NGConfig struct {
 	// opened indices. This is a LRU cache, the least used
 	// database opened will be closed when needed.
 	OpenCacheSize int
+
+	// Default batch write size
+	BatchSize int
 }
 
 // Engine type
@@ -38,6 +46,8 @@ type Command struct {
 	Command string
 	Key     []byte
 	Value   []byte
+
+	Batch bool
 }
 
 // New creates a new Engine instance
@@ -52,6 +62,10 @@ func New(config NGConfig) *Engine {
 
 	if ng.config.OpenCacheSize == 0 {
 		ng.config.OpenCacheSize = OpenCacheSize
+	}
+
+	if ng.config.BatchSize == 0 {
+		ng.config.BatchSize = BatchSize
 	}
 
 	return ng
@@ -79,7 +93,7 @@ func (ng *Engine) cacheClean() {
 	ng.storeEntries = ng.storeEntries[0:ng.config.OpenCacheSize]
 }
 
-// Open the index
+// Open the index and cache then for future uses
 func (ng *Engine) open(name string) error {
 	storekv, err := store.KVInit(ng.config.KVCfg)
 
@@ -115,6 +129,12 @@ func (ng *Engine) Execute(cmd Command) ([]byte, error) {
 	}
 
 	switch cmd.Command {
+	case "batch":
+		(*store).StartBatch()
+		return nil, nil
+	case "flushbatch":
+		err = (*store).FlushBatch()
+		return nil, err
 	case "set":
 		err = (*store).Set(cmd.Key, cmd.Value)
 		return nil, err

@@ -61,6 +61,27 @@ func (neo *NeoSearch) CreateIndex(name string) (*index.Index, error) {
 			CacheSize:   neo.config.CacheSize,
 			EnableCache: neo.config.EnableCache,
 		},
+		true,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	neo.Indices = append(neo.Indices, index)
+	return index, nil
+}
+
+func (neo *NeoSearch) OpenIndex(name string) (*index.Index, error) {
+	index, err := index.New(
+		name,
+		index.Config{
+			DataDir:     neo.config.DataDir,
+			Debug:       neo.config.Debug,
+			CacheSize:   neo.config.CacheSize,
+			EnableCache: neo.config.EnableCache,
+		},
+		false,
 	)
 
 	if err != nil {

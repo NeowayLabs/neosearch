@@ -42,7 +42,7 @@ func validateIndexName(name string) bool {
 }
 
 // New creates new index
-func New(name string, cfg Config) (*Index, error) {
+func New(name string, cfg Config, create bool) (*Index, error) {
 	if !validateIndexName(name) {
 		return nil, errors.New("Invalid index name")
 	}
@@ -52,17 +52,19 @@ func New(name string, cfg Config) (*Index, error) {
 		config: cfg,
 	}
 
-	if err := index.setup(); err != nil {
+	if err := index.setup(create); err != nil {
 		return nil, err
 	}
 
 	return index, nil
 }
 
-func (i *Index) setup() error {
+func (i *Index) setup(create bool) error {
 	dataDir := i.config.DataDir + "/" + i.Name
-	if err := os.Mkdir(dataDir, 0755); err != nil {
-		return err
+	if create {
+		if err := os.Mkdir(dataDir, 0755); err != nil {
+			return err
+		}
 	}
 
 	// index dataDir = <neosearch datadir> + "/" + <index name>
