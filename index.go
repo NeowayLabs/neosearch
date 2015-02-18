@@ -4,9 +4,9 @@
 // Create and add documents to NeoSearch is very easy, see below:
 //
 //   func main() {
-//       config := neosearch.Config{
-//           DataDir: "/tmp/",
-//       }
+//       config := neosearch.NewConfig()
+//       config.Option(neosearch.DataDir("/tmp"))
+//       config.Option(neosearch.Debug(false))
 //
 //       neo := neosearch.New(config)
 //
@@ -67,39 +67,23 @@ import (
 type NeoSearch struct {
 	Indices []*index.Index
 
-	config Config
+	config *Config
 	engine *engine.Engine
-}
-
-// Config stores NeoSearch configurations
-type Config struct {
-	// Root directory where all of the indices will be written.
-	DataDir string
-
-	// Enables debug in every sub-module
-	Debug bool
-
-	// CacheSize is the length of LRU cache used by the storage engine
-	// Default is 1GB
-	CacheSize int
-
-	// EnableCache enable/disable cache support
-	EnableCache bool
 }
 
 // New creates the NeoSearch high-level interface.
 // Use that for index/update/delete JSON documents.
-func New(cfg Config) *NeoSearch {
-	if cfg.DataDir == "" {
+func New(cfg *Config) *NeoSearch {
+	if cfg.dataDir == "" {
 		panic(errors.New("DataDir is required for NeoSearch interface"))
 	}
 
-	if cfg.DataDir[len(cfg.DataDir)-1] == '/' {
-		cfg.DataDir = cfg.DataDir[0 : len(cfg.DataDir)-1]
+	if cfg.dataDir[len(cfg.dataDir)-1] == '/' {
+		cfg.dataDir = cfg.dataDir[0 : len(cfg.dataDir)-1]
 	}
 
-	if cfg.CacheSize == 0 && cfg.EnableCache {
-		cfg.CacheSize = 3 << 30
+	if cfg.cacheSize == 0 && cfg.enableCache {
+		cfg.cacheSize = 3 << 30
 	}
 
 	neo := &NeoSearch{
@@ -114,10 +98,10 @@ func (neo *NeoSearch) CreateIndex(name string) (*index.Index, error) {
 	index, err := index.New(
 		name,
 		index.Config{
-			DataDir:     neo.config.DataDir,
-			Debug:       neo.config.Debug,
-			CacheSize:   neo.config.CacheSize,
-			EnableCache: neo.config.EnableCache,
+			DataDir:     neo.config.dataDir,
+			Debug:       neo.config.debug,
+			CacheSize:   neo.config.cacheSize,
+			EnableCache: neo.config.enableCache,
 		},
 		true,
 	)
@@ -135,10 +119,10 @@ func (neo *NeoSearch) OpenIndex(name string) (*index.Index, error) {
 	index, err := index.New(
 		name,
 		index.Config{
-			DataDir:     neo.config.DataDir,
-			Debug:       neo.config.Debug,
-			CacheSize:   neo.config.CacheSize,
-			EnableCache: neo.config.EnableCache,
+			DataDir:     neo.config.dataDir,
+			Debug:       neo.config.debug,
+			CacheSize:   neo.config.cacheSize,
+			EnableCache: neo.config.enableCache,
 		},
 		false,
 	)
