@@ -10,10 +10,11 @@ func TestCreateIndex(t *testing.T) {
 
 	os.Mkdir(dataDir, 0755)
 
-	neo := New(Config{
-		DataDir: dataDir,
-		Debug:   false,
-	})
+	cfg := NewConfig()
+	cfg.Option(DataDir(dataDir))
+	cfg.Option(Debug(false))
+
+	neo := New(cfg)
 
 	_, err := neo.CreateIndex("test")
 
@@ -88,10 +89,12 @@ func TestAddDocument(t *testing.T) {
 
 	os.Mkdir(dataDir, 0755)
 
-	neo := New(Config{
-		DataDir: dataDir,
-		Debug:   false,
-	})
+	cfg := NewConfig()
+
+	cfg.Option(DataDir(dataDir))
+	cfg.Option(Debug(false))
+
+	neo := New(cfg)
 
 	index, err := neo.CreateIndex("test")
 
@@ -174,10 +177,11 @@ func TestPrefixMatch(t *testing.T) {
 
 	os.Mkdir(dataDir, 0755)
 
-	neo := New(Config{
-		DataDir: dataDir,
-		Debug:   false,
-	})
+	cfg := NewConfig()
+	cfg.Option(DataDir(dataDir))
+	cfg.Option(Debug(false))
+
+	neo := New(cfg)
 
 	index, err := neo.CreateIndex("test")
 
