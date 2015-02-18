@@ -12,10 +12,11 @@ func Example() {
 
 	os.Mkdir(dataDir, 0755)
 
-	neo := neosearch.New(neosearch.Config{
-		DataDir: dataDir,
-		Debug:   false,
-	})
+	cfg := neosearch.NewConfig()
+	cfg.Option(neosearch.DataDir(dataDir))
+	cfg.Option(neosearch.Debug(false))
+
+	neo := neosearch.New(cfg)
 
 	index, err := neo.CreateIndex("test")
 
@@ -67,10 +68,11 @@ func ExampleMatchPrefix() {
 
 	os.Mkdir(dataDir, 0755)
 
-	neo := neosearch.New(neosearch.Config{
-		DataDir: dataDir,
-		Debug:   false,
-	})
+	cfg := neosearch.NewConfig()
+	cfg.Option(neosearch.DataDir(dataDir))
+	cfg.Option(neosearch.Debug(false))
+
+	neo := neosearch.New(cfg)
 
 	index, err := neo.CreateIndex("test")
 
