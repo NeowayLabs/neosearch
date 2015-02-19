@@ -71,8 +71,8 @@ func New(config NGConfig) *Engine {
 	return ng
 }
 
-// cacheClean ensures that only OpenCacheSize indexes are opened
-// closing each of the least accessed of them, until the engine has the
+// cacheClean ensures that only OpenCacheSize indexes are opened.
+// Closing each of the least accessed of them, until the engine has the
 // correct max number of database opened (OpenCacheSize config).
 func (ng *Engine) cacheClean() {
 	var entries = len(ng.storeEntries)

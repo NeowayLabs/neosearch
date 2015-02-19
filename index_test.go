@@ -3,6 +3,7 @@ package neosearch
 import (
 	"os"
 	"testing"
+	"time"
 )
 
 func TestCreateIndex(t *testing.T) {
@@ -243,6 +244,101 @@ func TestPrefixMatch(t *testing.T) {
 		values[0] != `{"id": 1, "name": "Neoway Business Solution"}` ||
 		values[1] != `{"id": 4, "name": "Neoway Teste"}` {
 		t.Error("Failed to retrieve documents with 'name' field prefixed with 'neoway'")
+	}
+
+	neo.Close()
+
+	if len(neo.Indices) != 0 {
+		t.Error("Failed to close all neosearch indices")
+	}
+
+	os.RemoveAll(dataDir)
+}
+
+func TestBatchAdd(t *testing.T) {
+	dataDir := "/tmp/neosearch-test"
+
+	os.Mkdir(dataDir, 0755)
+
+	cfg := NewConfig()
+	cfg.Option(DataDir(dataDir))
+	cfg.Option(Debug(false))
+
+	neo := New(cfg)
+
+	index, err := neo.CreateIndex("test")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if _, err := os.Stat(dataDir + "/test"); os.IsNotExist(err) {
+		t.Errorf("no such file or directory: %s", dataDir+"/test")
+		return
+	}
+
+	index.Batch()
+
+	err = index.Add(1, []byte(`{"id": 1, "name": "Neoway Business Solution"}`))
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if _, err := os.Stat(dataDir + "/test/document.db"); os.IsNotExist(err) {
+		t.Errorf("no such file or directory: %s", dataDir+"/test/document.db")
+		return
+	}
+
+	err = index.Add(2, []byte(`{"id": 2, "name": "Google Inc."}`))
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = index.Add(3, []byte(`{"id": 3, "name": "Facebook Company"}`))
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = index.Add(4, []byte(`{"id": 4, "name": "Neoway Teste"}`))
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	data, err := index.Get(1)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if string(data) == `{"id": 1, "name": "Neoway Business Solution"}` {
+		t.Errorf("Failed!!! Batch mode doesnt working")
+	}
+
+	index.FlushBatch()
+
+	batchWork := false
+
+	for i := 0; i < 3; i++ {
+		data, err := index.Get(1)
+
+		if err != nil {
+			t.Error(err)
+		}
+
+		if string(data) == `{"id": 1, "name": "Neoway Business Solution"}` {
+			batchWork = true
+			break
+		}
+
+		time.Sleep(time.Second * 3)
+	}
+
+	if !batchWork {
+		t.Error("Failed to execute batch commands")
 	}
 
 	neo.Close()

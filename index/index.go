@@ -14,13 +14,10 @@ import (
 	"bitbucket.org/i4k/neosearch/store"
 )
 
-// Index represents an entire index
-type Index struct {
-	Name string
-
-	engine *engine.Engine
-	config Config
-}
+const (
+	dbName   string = "document.db"
+	indexExt string = "idx"
+)
 
 // Config index
 type Config struct {
@@ -30,6 +27,19 @@ type Config struct {
 	Debug       bool
 	CacheSize   int
 	EnableCache bool
+}
+
+// Index represents an entire index
+type Index struct {
+	Name string
+
+	engine *engine.Engine
+	config Config
+
+	// Indicates that index abstraction should batch each write command
+	shouldBatch bool
+
+	flushStorages []string
 }
 
 func validateIndexName(name string) bool {
@@ -82,8 +92,39 @@ func (i *Index) setup(create bool) error {
 	return nil
 }
 
+// Batch enables write cache of command before FlushBatch is executed
+func (i *Index) Batch() {
+	i.shouldBatch = true
+}
+
+// FlushBatch writes the cached commands to disk
+// Simple and ugly approach. Only to test the concepts.
+func (i *Index) FlushBatch() {
+	// flush the WriteBatch
+	for _, storeName := range i.flushStorages {
+		i.engine.Execute(engine.Command{
+			Index:   storeName,
+			Command: "flushbatch",
+		})
+
+		if i.config.Debug {
+			fmt.Printf("Flushing batch storage '%s' of index '%s'.\n",
+				storeName,
+				i.Name)
+		}
+	}
+
+	i.flushStorages = make([]string, 0)
+}
+
 // Add creates new document
 func (i *Index) Add(id uint64, doc []byte) error {
+	if i.shouldBatch {
+		defer func() {
+			i.shouldBatch = false
+		}()
+	}
+
 	err := i.add(id, doc)
 
 	if err != nil {
@@ -102,6 +143,26 @@ func (i *Index) Add(id uint64, doc []byte) error {
 }
 
 func (i *Index) add(id uint64, doc []byte) error {
+	if i.shouldBatch {
+		_, err := i.engine.Execute(engine.Command{
+			Index:   dbName,
+			Command: "batch",
+		})
+
+		if err != nil {
+			return err
+		}
+
+		i.flushStorages = append(i.flushStorages, dbName)
+
+		if i.config.Debug {
+			fmt.Printf("Batch mode enabled for storage '%s' of index '%s'.\n",
+				dbName,
+				i.Name,
+			)
+		}
+	}
+
 	cmd := engine.Command{}
 
 	cmd.Index = "document.db"
@@ -120,6 +181,15 @@ func (i *Index) Get(id uint64) ([]byte, error) {
 		Command: "get",
 		Key:     strconv.AppendUint([]byte(""), id, 10),
 	})
+}
+
+func (i *Index) enableBatchOn(storage string) error {
+	_, err := i.engine.Execute(engine.Command{
+		Index:   storage,
+		Command: "batch",
+	})
+
+	return err
 }
 
 func (i *Index) indexFields(id uint64, structData *map[string]interface{}) error {
@@ -166,9 +236,21 @@ func (i *Index) indexString(id uint64, key []byte, value string) error {
 	value = strings.ToLower(value)
 	tokens := strings.Split(value, " ")
 
+	storageName := string(key) + ".idx"
+
+	if i.shouldBatch {
+		if err := i.enableBatchOn(storageName); err != nil {
+			return err
+		}
+
+		i.flushStorages = append(i.flushStorages, storageName)
+	}
+
+	// Index each token part
+	// TODO: Optimize array of tokens. Need be *unique* tokens
 	for _, t := range tokens {
 		cmd := engine.Command{}
-		cmd.Index = string(key) + ".idx"
+		cmd.Index = storageName
 		cmd.Command = "mergeset"
 		cmd.Key = []byte(t)
 		cmd.Value = strconv.AppendUint([]byte(""), id, 10)
@@ -180,6 +262,7 @@ func (i *Index) indexString(id uint64, key []byte, value string) error {
 		}
 	}
 
+	// Index all string
 	cmd := engine.Command{}
 	cmd.Index = string(key) + ".idx"
 	cmd.Command = "mergeset"
@@ -192,8 +275,18 @@ func (i *Index) indexString(id uint64, key []byte, value string) error {
 }
 
 func (i *Index) indexFloat64(id uint64, key []byte, value float64) error {
+	storageName := string(key) + ".idx"
+
+	if i.shouldBatch {
+		if err := i.enableBatchOn(storageName); err != nil {
+			return err
+		}
+
+		i.flushStorages = append(i.flushStorages, storageName)
+	}
+
 	cmd := engine.Command{}
-	cmd.Index = string(key) + ".idx"
+	cmd.Index = storageName
 	cmd.Command = "set"
 	cmd.Key = strconv.AppendFloat([]byte(""), value, 'f', -1, 64)
 	cmd.Value = strconv.AppendUint([]byte(""), id, 10)
