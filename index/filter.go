@@ -72,7 +72,7 @@ func (i *Index) matchPrefix(field []byte, value []byte) ([]uint64, error) {
 		return nil, err
 	}
 
-	it := (*store).GetIterator()
+	it := store.GetIterator()
 
 	defer it.Close()
 

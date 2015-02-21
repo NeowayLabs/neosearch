@@ -6,274 +6,286 @@ import (
 	"time"
 )
 
+const DataDirTmp = "/tmp/neosearch-tests"
+
+func init() {
+	os.Mkdir(DataDirTmp, 0755)
+}
+
 func TestCreateIndex(t *testing.T) {
-	dataDir := "/tmp/neosearch-test"
-
-	os.Mkdir(dataDir, 0755)
-
 	cfg := NewConfig()
-	cfg.Option(DataDir(dataDir))
+	cfg.Option(DataDir(DataDirTmp))
 	cfg.Option(Debug(false))
 
 	neo := New(cfg)
 
-	_, err := neo.CreateIndex("test")
-
-	if err != nil {
-		t.Error(err)
+	shouldPass := []string{
+		"test",
+		"test2",
 	}
 
-	if _, err := os.Stat(dataDir + "/test"); os.IsNotExist(err) {
-		t.Errorf("no such file or directory: %s", dataDir+"/test")
-		return
+	shouldFail := []string{
+		"test", // already created index
+		"test/",
+		"test/kdhakhd",
+		"#",
+		"a",
+		"aa",
+		"@",
+		"$%¨&*",
 	}
 
-	_, err = neo.CreateIndex("test")
+	for _, indexName := range shouldPass {
+		indexDir := DataDirTmp + "/" + indexName
+		_, err := neo.CreateIndex(indexName)
 
-	if err == nil {
-		t.Error("Should FAIL because index already exists")
+		if err != nil {
+			t.Error(err)
+			goto cleanup
+		}
+
+		if _, err := os.Stat(indexDir); os.IsNotExist(err) {
+			t.Errorf("no such file or directory: %s", indexDir)
+			goto cleanup
+		}
 	}
 
-	_, err = neo.CreateIndex("test2")
+	for _, indexName := range shouldFail {
+		_, err := neo.CreateIndex(indexName)
 
-	if err != nil {
-		t.Error(err)
+		if err == nil {
+			t.Error("Should FAIL because index already exists OR invalid name")
+			goto cleanup
+		}
 	}
 
-	if _, err := os.Stat(dataDir + "/test2"); os.IsNotExist(err) {
-		t.Errorf("no such file or directory: %s", dataDir+"/test2")
-		return
-	}
-
-	_, err = neo.CreateIndex("test//")
-
-	if err == nil {
-		t.Error("Has invalid name, should fail")
-	}
-
-	_, err = neo.CreateIndex("#")
-
-	if err == nil {
-		t.Error("Has invalid name, should fail")
-	}
-
-	_, err = neo.CreateIndex("-")
-
-	if err == nil {
-		t.Error("Has invalid name, should fail")
-	}
-
-	_, err = neo.CreateIndex("a")
-
-	if err == nil {
-		t.Error("Has invalid name, should fail")
-	}
-
-	_, err = neo.CreateIndex("aa")
-
-	if err == nil {
-		t.Error("Has invalid name, should fail")
-	}
-
-	_, err = neo.CreateIndex("test-$")
-
-	if err == nil {
-		t.Error("Has invalid name, should fail")
-	}
-
+cleanup:
 	neo.Close()
-	os.RemoveAll(dataDir)
+
+	for _, indexName := range shouldPass {
+		indexDir := DataDirTmp + "/" + indexName
+		os.RemoveAll(indexDir)
+	}
 }
 
 func TestAddDocument(t *testing.T) {
-	dataDir := "/tmp/neosearch-test"
-
-	os.Mkdir(dataDir, 0755)
+	var (
+		data       []byte
+		filterData []string
+		indexName  = "document-sample"
+		indexDir   = DataDirTmp + "/" + indexName
+	)
 
 	cfg := NewConfig()
 
-	cfg.Option(DataDir(dataDir))
+	cfg.Option(DataDir(DataDirTmp))
 	cfg.Option(Debug(false))
 
 	neo := New(cfg)
 
-	index, err := neo.CreateIndex("test")
+	index, err := neo.CreateIndex(indexName)
 
 	if err != nil {
 		t.Error(err)
+		goto cleanup
 	}
 
-	if _, err := os.Stat(dataDir + "/test"); os.IsNotExist(err) {
-		t.Errorf("no such file or directory: %s", dataDir+"/test")
-		return
+	if _, err := os.Stat(indexDir); os.IsNotExist(err) {
+		t.Errorf("no such file or directory: %s", indexDir)
+		goto cleanup
 	}
 
 	err = index.Add(1, []byte(`{"id": 1, "name": "Neoway Business Solution"}`))
 
 	if err != nil {
-		t.Error(err)
+		t.Error(err.Error())
+		goto cleanup
 	}
 
-	if _, err := os.Stat(dataDir + "/test/document.db"); os.IsNotExist(err) {
-		t.Errorf("no such file or directory: %s", dataDir+"/test/document.db")
-		return
+	if _, err := os.Stat(indexDir + "/document.db"); os.IsNotExist(err) {
+		t.Errorf("no such file or directory: %s", indexDir+"/document.db")
+		goto cleanup
 	}
 
 	err = index.Add(2, []byte(`{"id": 2, "name": "Google Inc."}`))
 
 	if err != nil {
 		t.Error(err)
+		goto cleanup
 	}
 
 	err = index.Add(3, []byte(`{"id": 3, "name": "Facebook Company"}`))
 
 	if err != nil {
 		t.Error(err)
+		goto cleanup
 	}
 
 	err = index.Add(4, []byte(`{"id": 4, "name": "Neoway Teste"}`))
 
 	if err != nil {
 		t.Error(err)
+		goto cleanup
 	}
 
-	data, err := index.Get(1)
+	data, err = index.Get(1)
 
 	if err != nil {
 		t.Error(err)
+		goto cleanup
 	}
 
 	if string(data) != `{"id": 1, "name": "Neoway Business Solution"}` {
 		t.Errorf("Failed to retrieve indexed document")
+		goto cleanup
 	}
 
-	filterData, err := index.FilterTerm([]byte("name"), []byte("neoway business solution"))
+	filterData, err = index.FilterTerm([]byte("name"), []byte("neoway business solution"))
 
 	if err != nil {
 		t.Error(err)
+		goto cleanup
 	}
 
 	if len(filterData) != 1 ||
 		filterData[0] != `{"id": 1, "name": "Neoway Business Solution"}` {
 		t.Errorf("Failed to filter by field name: %v != %s", filterData, `{"id": 1, "name": "Neoway Business Solution"}`)
+		goto cleanup
 	}
 
 	filterData, err = index.FilterTerm([]byte("name"), []byte("neoway"))
 
 	if err != nil {
 		t.Error(err)
+		goto cleanup
 	}
 
 	if len(filterData) != 2 || filterData[0] != `{"id": 1, "name": "Neoway Business Solution"}` ||
 		filterData[1] != `{"id": 4, "name": "Neoway Teste"}` {
 		t.Errorf("Failed to filter by field name: %s != %s", filterData, `[{"id": 1, "name": "Neoway Business Solution"} {"id": 4, "name": "Neoway Teste"}]`)
+		goto cleanup
 	}
 
+cleanup:
 	neo.Close()
-	os.RemoveAll(dataDir)
+	os.RemoveAll(indexDir)
 }
 
 func TestPrefixMatch(t *testing.T) {
-	dataDir := "/tmp/neosearch-test"
-
-	os.Mkdir(dataDir, 0755)
+	var (
+		data      []byte
+		values    []string
+		indexName = "test-prefix"
+		indexDir  = DataDirTmp + "/" + indexName
+	)
 
 	cfg := NewConfig()
-	cfg.Option(DataDir(dataDir))
+	cfg.Option(DataDir(DataDirTmp))
 	cfg.Option(Debug(false))
 
 	neo := New(cfg)
 
-	index, err := neo.CreateIndex("test")
+	index, err := neo.CreateIndex(indexName)
 
 	if err != nil {
 		t.Error(err)
+		goto cleanup
 	}
 
-	if _, err := os.Stat(dataDir + "/test"); os.IsNotExist(err) {
-		t.Errorf("no such file or directory: %s", dataDir+"/test")
-		return
+	if _, err := os.Stat(indexDir); os.IsNotExist(err) {
+		t.Errorf("no such file or directory: %s", indexDir)
+		goto cleanup
 	}
 
 	err = index.Add(1, []byte(`{"id": 1, "name": "Neoway Business Solution"}`))
 
 	if err != nil {
-		t.Error(err)
+		t.Error(err.Error())
+		goto cleanup
 	}
 
-	if _, err := os.Stat(dataDir + "/test/document.db"); os.IsNotExist(err) {
-		t.Errorf("no such file or directory: %s", dataDir+"/test/document.db")
-		return
+	if _, err := os.Stat(indexDir + "/document.db"); os.IsNotExist(err) {
+		t.Errorf("no such file or directory: %s", indexDir+"/document.db")
+		goto cleanup
 	}
 
 	err = index.Add(2, []byte(`{"id": 2, "name": "Google Inc."}`))
 
 	if err != nil {
 		t.Error(err)
+		goto cleanup
 	}
 
 	err = index.Add(3, []byte(`{"id": 3, "name": "Facebook Company"}`))
 
 	if err != nil {
 		t.Error(err)
+		goto cleanup
 	}
 
 	err = index.Add(4, []byte(`{"id": 4, "name": "Neoway Teste"}`))
 
 	if err != nil {
 		t.Error(err)
+		goto cleanup
 	}
 
-	data, err := index.Get(1)
+	data, err = index.Get(1)
 
 	if err != nil {
 		t.Error(err)
+		goto cleanup
 	}
 
 	if string(data) != `{"id": 1, "name": "Neoway Business Solution"}` {
 		t.Errorf("Failed to retrieve indexed document")
+		goto cleanup
 	}
 
-	values, err := index.MatchPrefix([]byte("name"), []byte("neoway"))
+	values, err = index.MatchPrefix([]byte("name"), []byte("neoway"))
 
 	if err != nil {
 		t.Error(err)
+		goto cleanup
 	}
 
 	if len(values) != 2 ||
 		values[0] != `{"id": 1, "name": "Neoway Business Solution"}` ||
 		values[1] != `{"id": 4, "name": "Neoway Teste"}` {
 		t.Error("Failed to retrieve documents with 'name' field prefixed with 'neoway'")
+		goto cleanup
 	}
 
+cleanup:
 	neo.Close()
 
 	if len(neo.Indices) != 0 {
 		t.Error("Failed to close all neosearch indices")
 	}
 
-	os.RemoveAll(dataDir)
+	os.RemoveAll(indexDir)
 }
 
 func TestBatchAdd(t *testing.T) {
-	dataDir := "/tmp/neosearch-test"
-
-	os.Mkdir(dataDir, 0755)
+	var (
+		indexName = "test-batch"
+		indexDir  = DataDirTmp + "/" + indexName
+	)
 
 	cfg := NewConfig()
-	cfg.Option(DataDir(dataDir))
+	cfg.Option(DataDir(DataDirTmp))
 	cfg.Option(Debug(false))
 
 	neo := New(cfg)
 
-	index, err := neo.CreateIndex("test")
+	index, err := neo.CreateIndex(indexName)
 
 	if err != nil {
 		t.Error(err)
 	}
 
-	if _, err := os.Stat(dataDir + "/test"); os.IsNotExist(err) {
-		t.Errorf("no such file or directory: %s", dataDir+"/test")
+	if _, err := os.Stat(indexDir); os.IsNotExist(err) {
+		t.Errorf("no such file or directory: %s", indexDir)
 		return
 	}
 
@@ -285,8 +297,8 @@ func TestBatchAdd(t *testing.T) {
 		t.Error(err)
 	}
 
-	if _, err := os.Stat(dataDir + "/test/document.db"); os.IsNotExist(err) {
-		t.Errorf("no such file or directory: %s", dataDir+"/test/document.db")
+	if _, err := os.Stat(indexDir + "/document.db"); os.IsNotExist(err) {
+		t.Errorf("no such file or directory: %s", indexDir+"/document.db")
 		return
 	}
 
@@ -347,5 +359,5 @@ func TestBatchAdd(t *testing.T) {
 		t.Error("Failed to close all neosearch indices")
 	}
 
-	os.RemoveAll(dataDir)
+	os.RemoveAll(indexDir)
 }

@@ -135,7 +135,7 @@ func (neo *NeoSearch) OpenIndex(name string) (*index.Index, error) {
 	return index, nil
 }
 
-// Close all of the opened indices
+// Close all of the open indices
 func (neo *NeoSearch) Close() {
 	for idx := range neo.Indices {
 		index := neo.Indices[idx]

@@ -25,13 +25,12 @@ func LVDBConstructor(config *KVConfig) (*KVStore, error) {
 
 // Registry the leveldb module
 func init() {
-	initFn := func(config *KVConfig) (*KVStore, error) {
+	initFn := func(config *KVConfig) (KVStore, error) {
 		if config.Debug {
 			fmt.Println("Initializing leveldb backend store")
 		}
 
-		store, err := NewLVDB(config)
-		return &store, err
+		return NewLVDB(config)
 	}
 
 	err := SetDefault(KVName, &initFn)
@@ -58,13 +57,13 @@ func NewLVDB(config *KVConfig) (KVStore, error) {
 		Config: config,
 	}
 
-	lvdb.Setup()
+	lvdb.setup()
 
 	return &lvdb, nil
 }
 
 // Setup the leveldb instance
-func (lvdb *LVDB) Setup() error {
+func (lvdb *LVDB) setup() {
 	if lvdb.Config.Debug {
 		fmt.Println("Setup leveldb")
 	}
@@ -78,23 +77,30 @@ func (lvdb *LVDB) Setup() error {
 	lvdb._opts.SetCreateIfMissing(true)
 	lvdb._readOptions = levigo.NewReadOptions()
 	lvdb._writeOptions = levigo.NewWriteOptions()
-
-	return nil
 }
 
 // Open the database
-func (lvdb *LVDB) Open(path string) error {
+func (lvdb *LVDB) Open(dbname string) error {
 	var err error
 
+	if !validateDatabaseName(dbname) {
+		return fmt.Errorf("Invalid database name: %s", dbname)
+	}
+
 	// We avoid some cycles by not checking the last '/'
-	fullPath := lvdb.Config.DataDir + "/" + path
+	fullPath := lvdb.Config.DataDir + "/" + dbname
 	lvdb._db, err = levigo.Open(fullPath, lvdb._opts)
 
 	if lvdb.Config.Debug {
-		fmt.Printf("Database '%s' opened: %s\n", path, err)
+		fmt.Printf("Database '%s' open: %s\n", fullPath, err)
 	}
 
 	return err
+}
+
+// IsOpen returns true if database is open
+func (lvdb *LVDB) IsOpen() bool {
+	return lvdb._db != nil
 }
 
 // Set put or update the key with the given value
@@ -200,6 +206,11 @@ func (lvdb *LVDB) StartBatch() {
 	lvdb.isBatch = true
 }
 
+// IsBatch returns true if LVDB is in batch mode
+func (lvdb *LVDB) IsBatch() bool {
+	return lvdb.isBatch
+}
+
 // FlushBatch writes the batch to disk
 func (lvdb *LVDB) FlushBatch() error {
 	var err error
@@ -215,10 +226,14 @@ func (lvdb *LVDB) FlushBatch() error {
 
 // Close the database
 func (lvdb *LVDB) Close() {
-	lvdb._db.Close()
+	if lvdb._db != nil {
+		lvdb._db.Close()
+		lvdb._db = nil
+	}
 
 	if lvdb._writeBatch != nil {
 		lvdb._writeBatch.Close()
+		lvdb._writeBatch = nil
 		lvdb.isBatch = false
 	}
 }

@@ -8,7 +8,7 @@ import (
 )
 
 func Example() {
-	dataDir := "/tmp/neosearch-test"
+	dataDir := "/tmp/example-test"
 
 	os.Mkdir(dataDir, 0755)
 
