@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"bitbucket.org/i4k/neosearch"
+	"github.com/neowaylabs/neosearch"
 )
 
 func Example() {

@@ -5,8 +5,8 @@ import (
 
 	"bytes"
 
-	"bitbucket.org/i4k/neosearch/engine"
-	"bitbucket.org/i4k/neosearch/utils"
+	"github.com/neowaylabs/neosearch/engine"
+	"github.com/neowaylabs/neosearch/utils"
 )
 
 func (i *Index) filterTerm(field, value []byte) ([]uint64, error) {

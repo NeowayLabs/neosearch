@@ -1,6 +1,6 @@
 package engine
 
-import "bitbucket.org/i4k/neosearch/store"
+import "github.com/neowaylabs/neosearch/store"
 
 // StoreEntry have the KVStore and LastAccess of the index
 // to implement a simple LRU cache.

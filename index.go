@@ -57,8 +57,8 @@ package neosearch
 import (
 	"errors"
 
-	"bitbucket.org/i4k/neosearch/engine"
-	"bitbucket.org/i4k/neosearch/index"
+	"github.com/neowaylabs/neosearch/engine"
+	"github.com/neowaylabs/neosearch/index"
 )
 
 // NeoSearch is the core of the neosearch package.

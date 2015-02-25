@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"bitbucket.org/i4k/neosearch/engine"
-	"bitbucket.org/i4k/neosearch/store"
+	"github.com/neowaylabs/neosearch/engine"
+	"github.com/neowaylabs/neosearch/store"
 )
 
 const (

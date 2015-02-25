@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"bitbucket.org/i4k/neosearch/store"
+	"github.com/neowaylabs/neosearch/store"
 )
 
 const (
