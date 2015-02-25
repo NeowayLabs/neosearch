@@ -7,7 +7,7 @@ import "github.com/neowaylabs/neosearch/store"
 // The length of this cache is set by NGConfig.OpenCacheSize.
 // Default value is 100.
 type StoreEntry struct {
-	Store      *store.KVStore
+	Store      store.KVStore
 	Name       string
 	LastAccess int
 }

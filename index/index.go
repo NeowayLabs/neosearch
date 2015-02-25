@@ -144,10 +144,7 @@ func (i *Index) Add(id uint64, doc []byte) error {
 
 func (i *Index) add(id uint64, doc []byte) error {
 	if i.shouldBatch {
-		_, err := i.engine.Execute(engine.Command{
-			Index:   dbName,
-			Command: "batch",
-		})
+		err := i.enableBatchOn(dbName)
 
 		if err != nil {
 			return err
@@ -184,6 +181,13 @@ func (i *Index) Get(id uint64) ([]byte, error) {
 }
 
 func (i *Index) enableBatchOn(storage string) error {
+	if i.config.Debug {
+		fmt.Printf("Batch mode enabled for storage '%s' of index '%s'.\n",
+			storage,
+			i.Name,
+		)
+	}
+
 	_, err := i.engine.Execute(engine.Command{
 		Index:   storage,
 		Command: "batch",

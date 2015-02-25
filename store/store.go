@@ -15,6 +15,9 @@ type KVStore interface {
 	GetIterator() KVIterator
 	StartBatch()
 	FlushBatch() error
+
+	IsBatch() bool
+	IsOpen() bool
 }
 
 // KVIterator expose the interface for database iterators.
@@ -41,21 +44,21 @@ type KVConfig struct {
 }
 
 // KVStoreConstructor is a pointer to constructor of default KVStore
-var KVStoreConstructor *func(*KVConfig) (*KVStore, error)
+var KVStoreConstructor *func(*KVConfig) (KVStore, error)
 
 // KVStoreName have the name of kv store
 var KVStoreName string
 
 // SetDefault set the default kv store
-func SetDefault(name string, initPtr *func(*KVConfig) (*KVStore, error)) error {
+func SetDefault(name string, initPtr *func(*KVConfig) (KVStore, error)) error {
 	KVStoreName = name
 	KVStoreConstructor = initPtr
 
 	return nil
 }
 
-// KVInit initialize the default KV store.
-func KVInit(config *KVConfig) (*KVStore, error) {
+// New initialize the default KV store.
+func New(config *KVConfig) (KVStore, error) {
 	if KVStoreConstructor != nil {
 		return (*KVStoreConstructor)(config)
 	}
