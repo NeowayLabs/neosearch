@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-const DataDirTmp = "/tmp/neosearch-tests"
+const DataDirTmp = "/tmp/neosearch-store-tests"
 
 func openDatabase(t *testing.T, name string) KVStore {
 	var (
