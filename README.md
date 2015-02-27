@@ -11,13 +11,15 @@ It's not yet complete, still in active development, then stay tuned for updates.
 
 # Dependencies
 
-* leveldb
+* leveldb >= 1.15
 * snappy (opcional, only required for compressed data)
 * Go > 1.3
 
 # Install
 
 ```bash
+export CGO_CFLAGS='-I <path/to/leveldb/include>'
+export CGO_LDFLAGS='-L /home/secplus/projects/3rdparty/leveldb/'
 git clone git@bitbucket.org:i4k/neosearch.git
 cd neosearch
 go get -u -v .
