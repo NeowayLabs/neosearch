@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/NeowayLabs/neosearch.svg?branch=master)](https://travis-ci.org/NeowayLabs/neosearch)
+
 NeoSearch - Neoway Full Text Search Index
 ==========================================
 
