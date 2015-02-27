@@ -6,6 +6,7 @@ go:
 install: 
   - cd /tmp && git clone https://github.com/google/leveldb.git && cd /tmp/leveldb && make
   - cd $HOME/gopath/src/github.com/NeowayLabs/neosearch
+  - go get -v github.com/jmhodges/levigo
   - go get -d -v ./...
   - go build -tags leveldb -v
 script:
