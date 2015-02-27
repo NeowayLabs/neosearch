@@ -26,7 +26,6 @@ func openDatabase(t *testing.T, name string) KVStore {
 
 	cfg := KVConfig{
 		DataDir: DataDirTmp,
-		Debug:   true,
 	}
 
 	store, err = New(&cfg)
