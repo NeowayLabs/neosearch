@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/neowaylabs/neosearch/store"
+	"github.com/NeowayLabs/neosearch/store"
 )
 
 const (

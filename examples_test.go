@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/neowaylabs/neosearch"
+	"github.com/NeowayLabs/neosearch"
 )
 
 func Example() {

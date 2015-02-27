@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/neowaylabs/neosearch/utils"
+	"github.com/NeowayLabs/neosearch/utils"
 
 	"github.com/jmhodges/levigo"
 )

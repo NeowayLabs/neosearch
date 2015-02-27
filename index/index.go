@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/neowaylabs/neosearch/engine"
-	"github.com/neowaylabs/neosearch/store"
+	"github.com/NeowayLabs/neosearch/engine"
+	"github.com/NeowayLabs/neosearch/store"
 )
 
 const (
