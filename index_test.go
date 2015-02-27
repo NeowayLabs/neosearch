@@ -1,15 +1,21 @@
 package neosearch
 
 import (
+	"io/ioutil"
 	"os"
 	"testing"
 	"time"
 )
 
-const DataDirTmp = "/tmp/neosearch-tests"
+var DataDirTmp string
 
 func init() {
-	os.Mkdir(DataDirTmp, 0755)
+	var err error
+	DataDirTmp, err = ioutil.TempDir("/tmp", "neosearch-index-")
+
+	if err != nil {
+		panic(err)
+	}
 }
 
 func TestCreateIndex(t *testing.T) {
