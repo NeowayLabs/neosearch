@@ -20,9 +20,8 @@ It's not yet complete, still in active development, then stay tuned for updates.
 ```bash
 export CGO_CFLAGS='-I <path/to/leveldb/include>'
 export CGO_LDFLAGS='-L /home/secplus/projects/3rdparty/leveldb/'
-git clone git@bitbucket.org:i4k/neosearch.git
-cd neosearch
-go get -u -v .
-go build -tags leveldb -v .
+go get -u -v github.com/NeowayLabs/neosearch
+
+cd $GOPATH/src/github/NeowayLabs/neosearch
 go test -tags leveldb -v .
 ```
