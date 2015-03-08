@@ -14,7 +14,7 @@ It's not yet complete, still in active development, then stay tuned for updates.
 # Dependencies
 
 * leveldb >= 1.15
-* snappy (opcional, only required for compressed data)
+* snappy (optional, only required for compressed data)
 * Go > 1.3
 
 # Install
