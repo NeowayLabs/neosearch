@@ -7,13 +7,17 @@ import (
 	"os"
 )
 
+func OnErrorPanic(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
 func Example() {
 	dataDir, err := ioutil.TempDir("", "neosearchExample")
 	defer os.RemoveAll(dataDir)
 
-	if err != nil {
-		panic(err)
-	}
+	OnErrorPanic(err)
 
 	cfg := neosearch.NewConfig()
 	cfg.Option(neosearch.DataDir(dataDir))
@@ -23,40 +27,22 @@ func Example() {
 	defer neo.Close()
 
 	index, err := neo.CreateIndex("test")
-
-	if err != nil {
-		panic(err)
-	}
+	OnErrorPanic(err)
 
 	err = index.Add(1, []byte(`{"id": 1, "name": "Neoway Business Solution"}`))
-
-	if err != nil {
-		panic(err)
-	}
+	OnErrorPanic(err)
 
 	err = index.Add(2, []byte(`{"id": 2, "name": "Google Inc."}`))
-
-	if err != nil {
-		panic(err)
-	}
+	OnErrorPanic(err)
 
 	err = index.Add(3, []byte(`{"id": 3, "name": "Facebook Company"}`))
-
-	if err != nil {
-		panic(err)
-	}
+	OnErrorPanic(err)
 
 	err = index.Add(4, []byte(`{"id": 4, "name": "Neoway Teste"}`))
-
-	if err != nil {
-		panic(err)
-	}
+	OnErrorPanic(err)
 
 	data, err := index.Get(1)
-
-	if err != nil {
-		panic(err)
-	}
+	OnErrorPanic(err)
 
 	fmt.Println(string(data))
 	// Output:
@@ -67,9 +53,7 @@ func ExampleMatchPrefix() {
 	dataDir, err := ioutil.TempDir("", "neosearchExample")
 	defer os.RemoveAll(dataDir)
 
-	if err != nil {
-		panic(err)
-	}
+	OnErrorPanic(err)
 
 	cfg := neosearch.NewConfig()
 	cfg.Option(neosearch.DataDir(dataDir))
@@ -79,40 +63,22 @@ func ExampleMatchPrefix() {
 	defer neo.Close()
 
 	index, err := neo.CreateIndex("test")
-
-	if err != nil {
-		panic(err)
-	}
+	OnErrorPanic(err)
 
 	err = index.Add(1, []byte(`{"id": 1, "name": "Neoway Business Solution"}`))
-
-	if err != nil {
-		panic(err)
-	}
+	OnErrorPanic(err)
 
 	err = index.Add(2, []byte(`{"id": 2, "name": "Google Inc."}`))
-
-	if err != nil {
-		panic(err)
-	}
+	OnErrorPanic(err)
 
 	err = index.Add(3, []byte(`{"id": 3, "name": "Facebook Company"}`))
-
-	if err != nil {
-		panic(err)
-	}
+	OnErrorPanic(err)
 
 	err = index.Add(4, []byte(`{"id": 4, "name": "Neoway Teste"}`))
-
-	if err != nil {
-		panic(err)
-	}
+	OnErrorPanic(err)
 
 	values, err := index.MatchPrefix([]byte("name"), []byte("neoway"))
-
-	if err != nil {
-		panic(err)
-	}
+	OnErrorPanic(err)
 
 	for _, value := range values {
 		fmt.Println(value)
