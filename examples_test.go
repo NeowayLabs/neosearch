@@ -2,21 +2,25 @@ package neosearch_test
 
 import (
 	"fmt"
-	"os"
-
 	"github.com/NeowayLabs/neosearch"
+	"io/ioutil"
+	"os"
 )
 
 func Example() {
-	dataDir := "/tmp/example-test"
+	dataDir, err := ioutil.TempDir("", "neosearchExample")
+	defer os.RemoveAll(dataDir)
 
-	os.Mkdir(dataDir, 0755)
+	if err != nil {
+		panic(err)
+	}
 
 	cfg := neosearch.NewConfig()
 	cfg.Option(neosearch.DataDir(dataDir))
 	cfg.Option(neosearch.Debug(false))
 
 	neo := neosearch.New(cfg)
+	defer neo.Close()
 
 	index, err := neo.CreateIndex("test")
 
@@ -57,22 +61,22 @@ func Example() {
 	fmt.Println(string(data))
 	// Output:
 	// {"id": 1, "name": "Neoway Business Solution"}
-
-	neo.Close()
-
-	os.RemoveAll(dataDir)
 }
 
 func ExampleMatchPrefix() {
-	dataDir := "/tmp/neosearch-test"
+	dataDir, err := ioutil.TempDir("", "neosearchExample")
+	defer os.RemoveAll(dataDir)
 
-	os.Mkdir(dataDir, 0755)
+	if err != nil {
+		panic(err)
+	}
 
 	cfg := neosearch.NewConfig()
 	cfg.Option(neosearch.DataDir(dataDir))
 	cfg.Option(neosearch.Debug(false))
 
 	neo := neosearch.New(cfg)
+	defer neo.Close()
 
 	index, err := neo.CreateIndex("test")
 
@@ -117,8 +121,4 @@ func ExampleMatchPrefix() {
 	// Output:
 	// {"id": 1, "name": "Neoway Business Solution"}
 	// {"id": 4, "name": "Neoway Teste"}
-
-	neo.Close()
-
-	os.RemoveAll(dataDir)
 }
