@@ -5,6 +5,7 @@ MAINTAINER Tiago Katcipis <tiagokatcipis@gmail.com> (@tiagokatcipis)
 
 # Packaged dependencies
 RUN apt-get update && apt-get install -y \
+        ca-certificates \
 	libleveldb-dev \
 	build-essential \
 	curl \
