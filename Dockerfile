@@ -6,27 +6,9 @@ MAINTAINER Tiago Katcipis <tiagokatcipis@gmail.com> (@tiagokatcipis)
 # Packaged dependencies
 RUN apt-get update && apt-get install -y \
 	libleveldb-dev \
-	apparmor \
-	aufs-tools \
-	automake \
-	btrfs-tools \
 	build-essential \
 	curl \
-	dpkg-sig \
 	git \
-	iptables \
-	libapparmor-dev \
-	libcap-dev \
-	libsqlite3-dev \
-	mercurial \
-	parallel \
-	python-mock \
-	python-pip \
-	python-websocket \
-	reprepro \
-	ruby1.9.1 \
-	ruby1.9.1-dev \
-	s3cmd=1.1.0* \
 	--no-install-recommends
 
 # Install Go
