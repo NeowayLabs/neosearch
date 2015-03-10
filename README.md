@@ -11,19 +11,29 @@ NeoSearch is like a Lucene library but without all of the complexities of a comp
 
 It's not yet complete, still in active development, then stay tuned for updates.
 
-# Dependencies
 
-* leveldb >= 1.15
-* snappy (optional, only required for compressed data)
-* Go > 1.3
+# Contributing
 
-# Install
+Looking for some fun ? Starting to develop on NeoSearch is as easy as installing docker :D
 
-```bash
-export CGO_CFLAGS='-I <path/to/leveldb/include>'
-export CGO_LDFLAGS='-L /home/secplus/projects/3rdparty/leveldb/'
-go get -u -v github.com/NeowayLabs/neosearch
+First of all install [Docker](https://docs.docker.com/installation/).
 
-cd $GOPATH/src/github/NeowayLabs/neosearch
-go test -tags leveldb -v .
-```
+After you get docker installed, just get the code:
+
+    git clone git@github.com:NeowayLabs/neosearch.git
+
+And build it:
+
+    make build
+
+If you get no errors, you are good to go :D. Just start messing around with the code on your preferred editor/IDE.
+
+Compiling the code:
+
+    make
+
+Running the tests:
+
+    make check
+
+Yeah, simple like that :D
