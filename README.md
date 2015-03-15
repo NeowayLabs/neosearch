@@ -11,6 +11,16 @@ NeoSearch is like a Lucene library but without all of the complexities of a comp
 
 It's not yet complete, still in active development, then stay tuned for updates.
 
+# Install
+
+```bash
+	export CGO_CFLAGS='-I <path/to/leveldb/include>'
+	export CGO_LDFLAGS='-L /home/secplus/projects/3rdparty/leveldb/'
+	go get -u -v github.com/NeowayLabs/neosearch
+	
+	cd $GOPATH/src/github/NeowayLabs/neosearch
+	go test -tags leveldb -v .
+```
 
 # Contributing
 
