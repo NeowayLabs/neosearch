@@ -23,15 +23,7 @@ RUN cd /usr/local/go/src && ./make.bash --no-clean 2>&1
 # Grab Go's cover tool for dead-simple code coverage testing
 RUN go get golang.org/x/tools/cmd/cover
 
-# Add an unprivileged user to be used for tests which need it
-RUN groupadd -r neosearch
-RUN useradd --create-home --gid neosearch unprivilegeduser
-
-VOLUME /var/lib/docker
 WORKDIR /go/src/github.com/NeowayLabs/neosearch
-
-# Let us use a .bashrc file
-RUN ln -sfv $PWD/.bashrc ~/.bashrc
 
 # Upload docker source
 COPY . /go/src/github.com/NeowayLabs/neosearch
