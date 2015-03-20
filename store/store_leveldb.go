@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"sort"
 
 	"github.com/NeowayLabs/neosearch/utils"
 
@@ -123,12 +122,11 @@ func (lvdb *LVDB) SetCustom(opt *levigo.WriteOptions, key []byte, value []byte) 
 // is already on the key, than the set will be skipped.
 func (lvdb *LVDB) MergeSet(key []byte, value uint64) error {
 	var (
-		buf    *bytes.Buffer
-		values []uint64
-		err    error
-		pos    uint64
-		v      uint64
-		i      uint64
+		buf      *bytes.Buffer
+		err      error
+		v        uint64
+		i        uint64
+		inserted bool
 	)
 
 	data, err := lvdb.Get(key)
@@ -137,31 +135,35 @@ func (lvdb *LVDB) MergeSet(key []byte, value uint64) error {
 		return err
 	}
 
+	buf = new(bytes.Buffer)
 	lenBytes := uint64(len(data))
-	pos = lenBytes / 8
-	values = make([]uint64, pos+1)
 
-	if data != nil && lenBytes > 0 {
-		for i = 0; i < lenBytes; i += 8 {
-			v = utils.BytesToUint64(data[i : i+8])
+	// O(n)
+	for i = 0; i < lenBytes; i += 8 {
+		v = utils.BytesToUint64(data[i : i+8])
 
-			// returns if value is already stored
-			if v == value {
-				return nil
+		// returns if value is already stored
+		if v == value {
+			return nil
+		}
+
+		if value < v {
+			err = binary.Write(buf, binary.BigEndian, value)
+			if err != nil {
+				return err
 			}
 
-			values[i] = v
+			inserted = true
+		}
+
+		err = binary.Write(buf, binary.BigEndian, v)
+		if err != nil {
+			return err
 		}
 	}
 
-	values[pos] = value
-	sort.Sort(utils.Uint64Slice(values))
-
-	// the code below can be goroutine ?
-	buf = new(bytes.Buffer)
-
-	for _, v = range values {
-		err = binary.Write(buf, binary.BigEndian, v)
+	if lenBytes == 0 || !inserted {
+		err = binary.Write(buf, binary.BigEndian, value)
 		if err != nil {
 			return err
 		}
