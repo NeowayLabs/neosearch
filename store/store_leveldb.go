@@ -5,7 +5,7 @@ package store
 
 import (
 	"bytes"
-	"encoding/gob"
+	"encoding/binary"
 	"fmt"
 	"sort"
 
@@ -123,51 +123,51 @@ func (lvdb *LVDB) SetCustom(opt *levigo.WriteOptions, key []byte, value []byte) 
 // is already on the key, than the set will be skipped.
 func (lvdb *LVDB) MergeSet(key []byte, value uint64) error {
 	var (
-		valueBytes bytes.Buffer
-		values     []uint64
-		err        error
+		buf    *bytes.Buffer
+		values []uint64
+		err    error
+		pos    uint64
+		v      uint64
+		i      uint64
 	)
 
-	dataGob, err := lvdb.Get(key)
+	data, err := lvdb.Get(key)
 
 	if err != nil {
 		return err
 	}
 
-	if len(dataGob) > 0 {
-		valueBytes.Write(dataGob)
-		decoder := gob.NewDecoder(&valueBytes)
+	lenBytes := uint64(len(data))
+	pos = lenBytes / 8
+	values = make([]uint64, pos+1)
 
-		err = decoder.Decode(&values)
+	if data != nil && lenBytes > 0 {
+		for i = 0; i < lenBytes; i += 8 {
+			v = utils.BytesToUint64(data[i : i+8])
 
+			// returns if value is already stored
+			if v == value {
+				return nil
+			}
+
+			values[i] = v
+		}
+	}
+
+	values[pos] = value
+	sort.Sort(utils.Uint64Slice(values))
+
+	// the code below can be goroutine ?
+	buf = new(bytes.Buffer)
+
+	for _, v = range values {
+		err = binary.Write(buf, binary.BigEndian, v)
 		if err != nil {
 			return err
 		}
 	}
 
-	exists := false
-	// only testing, we need a efficient solution
-	for i := 0; i < len(values); i++ {
-		if values[i] == value {
-			exists = true
-			break
-		}
-	}
-
-	if !exists {
-		values = append(values, value)
-		sort.Sort(utils.Uint64Slice(values))
-
-		encoder := gob.NewEncoder(&valueBytes)
-		if err = encoder.Encode(values); err == nil {
-			return lvdb.Set(key, valueBytes.Bytes())
-		}
-
-		return err
-	}
-
-	// value already in the set
-	return nil
+	return lvdb.Set(key, buf.Bytes())
 }
 
 // Get returns the value of the given key

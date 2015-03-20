@@ -3,6 +3,7 @@ package neosearch
 import (
 	"io/ioutil"
 	"os"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -166,8 +167,10 @@ func TestAddDocument(t *testing.T) {
 		goto cleanup
 	}
 
-	if len(filterData) != 2 || filterData[0] != `{"id": 1, "name": "Neoway Business Solution"}` ||
-		filterData[1] != `{"id": 4, "name": "Neoway Teste"}` {
+	if len(filterData) != 2 || !reflect.DeepEqual(filterData, []string{
+		`{"id": 1, "name": "Neoway Business Solution"}`,
+		`{"id": 4, "name": "Neoway Teste"}`,
+	}) {
 		t.Errorf("Failed to filter by field name: %s != %s", filterData, `[{"id": 1, "name": "Neoway Business Solution"} {"id": 4, "name": "Neoway Teste"}]`)
 		goto cleanup
 	}

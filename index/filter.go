@@ -1,8 +1,6 @@
 package index
 
 import (
-	"encoding/gob"
-
 	"bytes"
 
 	"github.com/NeowayLabs/neosearch/engine"
@@ -11,9 +9,7 @@ import (
 
 func (i *Index) filterTerm(field, value []byte) ([]uint64, error) {
 	var (
-		valueBytes bytes.Buffer
-		decoder    = gob.NewDecoder(&valueBytes)
-		docIDs     []uint64
+		docIDs []uint64
 	)
 
 	cmd := engine.Command{}
@@ -27,12 +23,11 @@ func (i *Index) filterTerm(field, value []byte) ([]uint64, error) {
 	}
 
 	if len(data) > 0 {
-		valueBytes.Write(data)
-		err = decoder.Decode(&docIDs)
-
-		if err != nil {
-			return nil, err
+		for i := 0; i < len(data); i += 8 {
+			v := utils.BytesToUint64(data[i : i+8])
+			docIDs = append(docIDs, v)
 		}
+
 	}
 
 	return docIDs, nil
@@ -62,8 +57,7 @@ func (i *Index) FilterTerm(field []byte, value []byte) ([]string, error) {
 
 func (i *Index) matchPrefix(field []byte, value []byte) ([]uint64, error) {
 	var (
-		docIDs     []uint64
-		valueBytes bytes.Buffer
+		docIDs []uint64
 	)
 
 	store, err := i.engine.GetStore(string(field) + ".idx")
@@ -85,20 +79,9 @@ func (i *Index) matchPrefix(field []byte, value []byte) ([]uint64, error) {
 				continue
 			}
 
-			valueBytes.Write(dataBytes)
-
-			// We have some problem with encoding/gob here.
-			// NewDecoder is a expansive call, but I'm having the
-			// error "extra data in buffer". Aparently, the decoder
-			// isn't cleaning something internal after successful
-			// decoding the integer array
-			decoder := gob.NewDecoder(&valueBytes)
-
-			// ids will be a quick sorted array
-			err := decoder.Decode(&ids)
-
-			if err != nil {
-				return nil, err
+			for i := 0; i < len(dataBytes); i += 8 {
+				v := utils.BytesToUint64(dataBytes[i : i+8])
+				ids = append(ids, v)
 			}
 
 			if len(docIDs) == 0 {

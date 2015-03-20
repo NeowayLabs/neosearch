@@ -3,10 +3,10 @@ package engine
 import (
 	"errors"
 	"sort"
-	"strconv"
 	"time"
 
 	"github.com/NeowayLabs/neosearch/store"
+	"github.com/NeowayLabs/neosearch/utils"
 )
 
 const (
@@ -141,7 +141,7 @@ func (ng *Engine) Execute(cmd Command) ([]byte, error) {
 	case "get":
 		return store.Get(cmd.Key)
 	case "mergeset":
-		v, _ := strconv.ParseInt(string(cmd.Value), 10, 64)
+		v := utils.BytesToUint64(cmd.Value)
 		return nil, store.MergeSet(cmd.Key, uint64(v))
 	case "delete":
 		err = store.Delete(cmd.Key)

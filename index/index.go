@@ -7,11 +7,11 @@ import (
 	"os"
 	"reflect"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/NeowayLabs/neosearch/engine"
 	"github.com/NeowayLabs/neosearch/store"
+	"github.com/NeowayLabs/neosearch/utils"
 )
 
 const (
@@ -164,7 +164,7 @@ func (i *Index) add(id uint64, doc []byte) error {
 
 	cmd.Index = "document.db"
 	cmd.Command = "set"
-	cmd.Key = strconv.AppendUint([]byte(""), id, 10)
+	cmd.Key = utils.Uint64ToBytes(id)
 	cmd.Value = doc
 
 	_, err := i.engine.Execute(cmd)
@@ -176,7 +176,7 @@ func (i *Index) Get(id uint64) ([]byte, error) {
 	return i.engine.Execute(engine.Command{
 		Index:   "document.db",
 		Command: "get",
-		Key:     strconv.AppendUint([]byte(""), id, 10),
+		Key:     utils.Uint64ToBytes(id),
 	})
 }
 
@@ -257,7 +257,7 @@ func (i *Index) indexString(id uint64, key []byte, value string) error {
 		cmd.Index = storageName
 		cmd.Command = "mergeset"
 		cmd.Key = []byte(t)
-		cmd.Value = strconv.AppendUint([]byte(""), id, 10)
+		cmd.Value = utils.Uint64ToBytes(id)
 
 		_, err := i.engine.Execute(cmd)
 
@@ -271,7 +271,7 @@ func (i *Index) indexString(id uint64, key []byte, value string) error {
 	cmd.Index = string(key) + ".idx"
 	cmd.Command = "mergeset"
 	cmd.Key = []byte(value)
-	cmd.Value = strconv.AppendUint([]byte(""), id, 10)
+	cmd.Value = utils.Uint64ToBytes(id)
 
 	_, err := i.engine.Execute(cmd)
 
@@ -292,8 +292,8 @@ func (i *Index) indexFloat64(id uint64, key []byte, value float64) error {
 	cmd := engine.Command{}
 	cmd.Index = storageName
 	cmd.Command = "set"
-	cmd.Key = strconv.AppendFloat([]byte(""), value, 'f', -1, 64)
-	cmd.Value = strconv.AppendUint([]byte(""), id, 10)
+	cmd.Key = utils.Float64ToBytes(value)
+	cmd.Value = utils.Uint64ToBytes(id)
 
 	_, err := i.engine.Execute(cmd)
 	return err
