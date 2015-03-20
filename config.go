@@ -1,7 +1,7 @@
 package neosearch
 
 // Option is a internal type used for setting config options.
-// This need this exported only because the usage of the
+// This need be exported only because the usage of the
 // self-referential functions in the option assignments.
 // More details on the Rob Pike blog post below:
 // http://commandcenter.blogspot.com.br/2014/01/self-referential-functions-and-design.html
