@@ -42,7 +42,7 @@ type Index struct {
 	flushStorages []string
 }
 
-func validateIndexName(name string) bool {
+func ValidateIndexName(name string) bool {
 	if len(name) < 3 {
 		return false
 	}
@@ -53,7 +53,7 @@ func validateIndexName(name string) bool {
 
 // New creates new index
 func New(name string, cfg Config, create bool) (*Index, error) {
-	if !validateIndexName(name) {
+	if !ValidateIndexName(name) {
 		return nil, errors.New("Invalid index name")
 	}
 
@@ -189,10 +189,18 @@ func (i *Index) enableBatchOn(storage string) error {
 		)
 	}
 
+	for _, flush := range i.flushStorages {
+		if flush == storage {
+			return nil
+		}
+	}
+
 	_, err := i.engine.Execute(engine.Command{
 		Index:   storage,
 		Command: "batch",
 	})
+
+	i.flushStorages = append(i.flushStorages, storage)
 
 	return err
 }
@@ -224,13 +232,39 @@ func (i *Index) indexField(id uint64, key []byte, value interface{}) error {
 
 		break
 	case reflect.Int:
-		err = i.indexInt(id, key, value.(int))
+		err = i.indexInt64(id, key, value.(int64))
 		break
 	case reflect.Float64:
 		err = i.indexFloat64(id, key, value.(float64))
 		break
+	case reflect.Slice:
+		err = i.indexSlice(id, key, value.([]interface{}))
+		break
 	default:
 		fmt.Printf("Unknown type %s: %s\n", v.Kind(), value)
+	}
+
+	return err
+}
+
+func (i *Index) indexSlice(id uint64, key []byte, values []interface{}) error {
+	var err error
+
+	storageName := string(key) + ".idx"
+
+	if i.shouldBatch {
+		if err := i.enableBatchOn(storageName); err != nil {
+			return err
+		}
+	}
+
+	for _, value := range values {
+		err = i.indexField(id, key, value)
+
+		if err != nil {
+			return err
+		}
+
 	}
 
 	return err
@@ -247,8 +281,6 @@ func (i *Index) indexString(id uint64, key []byte, value string) error {
 		if err := i.enableBatchOn(storageName); err != nil {
 			return err
 		}
-
-		i.flushStorages = append(i.flushStorages, storageName)
 	}
 
 	// Index each token part
@@ -286,13 +318,11 @@ func (i *Index) indexFloat64(id uint64, key []byte, value float64) error {
 		if err := i.enableBatchOn(storageName); err != nil {
 			return err
 		}
-
-		i.flushStorages = append(i.flushStorages, storageName)
 	}
 
 	cmd := engine.Command{}
 	cmd.Index = storageName
-	cmd.Command = "set"
+	cmd.Command = "mergeset"
 	cmd.Key = utils.Float64ToBytes(value)
 	cmd.Value = utils.Uint64ToBytes(id)
 
@@ -300,8 +330,23 @@ func (i *Index) indexFloat64(id uint64, key []byte, value float64) error {
 	return err
 }
 
-func (i *Index) indexInt(id uint64, key []byte, value int) error {
-	return nil
+func (i *Index) indexInt64(id uint64, key []byte, value int64) error {
+	storageName := string(key) + ".idx"
+
+	if i.shouldBatch {
+		if err := i.enableBatchOn(storageName); err != nil {
+			return err
+		}
+	}
+
+	cmd := engine.Command{}
+	cmd.Index = storageName
+	cmd.Command = "mergeset"
+	cmd.Key = utils.Int64ToBytes(value)
+	cmd.Value = utils.Uint64ToBytes(id)
+
+	_, err := i.engine.Execute(cmd)
+	return err
 }
 
 // Close the index

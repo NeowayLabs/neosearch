@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"time"
 
@@ -124,6 +125,10 @@ func (ng *Engine) Execute(cmd Command) ([]byte, error) {
 
 	store, err := ng.GetStore(cmd.Index)
 
+	if ng.config.KVCfg.Debug {
+		fmt.Println(cmd)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +147,7 @@ func (ng *Engine) Execute(cmd Command) ([]byte, error) {
 		return store.Get(cmd.Key)
 	case "mergeset":
 		v := utils.BytesToUint64(cmd.Value)
-		return nil, store.MergeSet(cmd.Key, uint64(v))
+		return nil, store.MergeSet(cmd.Key, v)
 	case "delete":
 		err = store.Delete(cmd.Key)
 		return nil, err
