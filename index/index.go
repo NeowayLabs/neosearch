@@ -142,6 +142,7 @@ func (i *Index) Add(id uint64, doc []byte) error {
 	return i.indexFields(id, &structData)
 }
 
+// add index the string doc into document.db
 func (i *Index) add(id uint64, doc []byte) error {
 	if i.shouldBatch {
 		err := i.enableBatchOn(dbName)
