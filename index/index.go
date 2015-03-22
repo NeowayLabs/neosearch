@@ -31,13 +31,13 @@ type Config struct {
 
 // Index represents an entire index
 type Index struct {
-	Name string
+	Name string `json:"name"`
 
-	engine *engine.Engine
-	config Config
+	engine *engine.Engine `json:"engine"`
+	config Config         `json:"config"`
 
 	// Indicates that index abstraction should batch each write command
-	shouldBatch bool
+	batchMode bool
 
 	flushStorages []string
 }
@@ -94,7 +94,7 @@ func (i *Index) setup(create bool) error {
 
 // Batch enables write cache of command before FlushBatch is executed
 func (i *Index) Batch() {
-	i.shouldBatch = true
+	i.batchMode = true
 }
 
 // FlushBatch writes the cached commands to disk
@@ -119,9 +119,9 @@ func (i *Index) FlushBatch() {
 
 // Add creates new document
 func (i *Index) Add(id uint64, doc []byte) error {
-	if i.shouldBatch {
+	if i.batchMode {
 		defer func() {
-			i.shouldBatch = false
+			i.batchMode = false
 		}()
 	}
 
@@ -144,7 +144,7 @@ func (i *Index) Add(id uint64, doc []byte) error {
 
 // add index the string doc into document.db
 func (i *Index) add(id uint64, doc []byte) error {
-	if i.shouldBatch {
+	if i.batchMode {
 		err := i.enableBatchOn(dbName)
 
 		if err != nil {
@@ -252,7 +252,7 @@ func (i *Index) indexSlice(id uint64, key []byte, values []interface{}) error {
 
 	storageName := string(key) + ".idx"
 
-	if i.shouldBatch {
+	if i.batchMode {
 		if err := i.enableBatchOn(storageName); err != nil {
 			return err
 		}
@@ -277,7 +277,7 @@ func (i *Index) indexString(id uint64, key []byte, value string) error {
 
 	storageName := string(key) + ".idx"
 
-	if i.shouldBatch {
+	if i.batchMode {
 		if err := i.enableBatchOn(storageName); err != nil {
 			return err
 		}
@@ -314,7 +314,7 @@ func (i *Index) indexString(id uint64, key []byte, value string) error {
 func (i *Index) indexFloat64(id uint64, key []byte, value float64) error {
 	storageName := string(key) + ".idx"
 
-	if i.shouldBatch {
+	if i.batchMode {
 		if err := i.enableBatchOn(storageName); err != nil {
 			return err
 		}
@@ -333,7 +333,7 @@ func (i *Index) indexFloat64(id uint64, key []byte, value float64) error {
 func (i *Index) indexInt64(id uint64, key []byte, value int64) error {
 	storageName := string(key) + ".idx"
 
-	if i.shouldBatch {
+	if i.batchMode {
 		if err := i.enableBatchOn(storageName); err != nil {
 			return err
 		}

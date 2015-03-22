@@ -89,6 +89,8 @@ package neosearch
 
 import (
 	"errors"
+	"fmt"
+	"os"
 
 	"github.com/NeowayLabs/neosearch/engine"
 	"github.com/NeowayLabs/neosearch/index"
@@ -149,6 +151,14 @@ func (neo *NeoSearch) CreateIndex(name string) (*index.Index, error) {
 
 // OpenIndex open a existing index for read/write operations.
 func (neo *NeoSearch) OpenIndex(name string) (*index.Index, error) {
+	exists, err := neo.IndexExists(name)
+
+	if err == nil && !exists {
+		return nil, fmt.Errorf("Index '%s' not found in directory '%s'.", name, neo.config.DataDir)
+	} else if err != nil {
+		return nil, err
+	}
+
 	index, err := index.New(
 		name,
 		index.Config{
@@ -166,6 +176,21 @@ func (neo *NeoSearch) OpenIndex(name string) (*index.Index, error) {
 
 	neo.Indices = append(neo.Indices, index)
 	return index, nil
+}
+
+func (neo *NeoSearch) IndexExists(name string) (bool, error) {
+	indexPath := neo.config.DataDir + "/" + name
+	_, err := os.Stat(indexPath)
+
+	if err == nil {
+		return true, nil
+	}
+
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+
+	return false, err
 }
 
 // Close all of the open indices
