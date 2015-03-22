@@ -107,16 +107,16 @@ type NeoSearch struct {
 // New creates the NeoSearch high-level interface.
 // Use that for index/update/delete JSON documents.
 func New(cfg *Config) *NeoSearch {
-	if cfg.dataDir == "" {
+	if cfg.DataDir == "" {
 		panic(errors.New("DataDir is required for NeoSearch interface"))
 	}
 
-	if cfg.dataDir[len(cfg.dataDir)-1] == '/' {
-		cfg.dataDir = cfg.dataDir[0 : len(cfg.dataDir)-1]
+	if cfg.DataDir[len(cfg.DataDir)-1] == '/' {
+		cfg.DataDir = cfg.DataDir[0 : len(cfg.DataDir)-1]
 	}
 
-	if cfg.cacheSize == 0 && cfg.enableCache {
-		cfg.cacheSize = 3 << 30
+	if cfg.CacheSize == 0 && cfg.EnableCache {
+		cfg.CacheSize = 3 << 30
 	}
 
 	neo := &NeoSearch{
@@ -131,10 +131,10 @@ func (neo *NeoSearch) CreateIndex(name string) (*index.Index, error) {
 	index, err := index.New(
 		name,
 		index.Config{
-			DataDir:     neo.config.dataDir,
-			Debug:       neo.config.debug,
-			CacheSize:   neo.config.cacheSize,
-			EnableCache: neo.config.enableCache,
+			DataDir:     neo.config.DataDir,
+			Debug:       neo.config.Debug,
+			CacheSize:   neo.config.CacheSize,
+			EnableCache: neo.config.EnableCache,
 		},
 		true,
 	)
@@ -152,10 +152,10 @@ func (neo *NeoSearch) OpenIndex(name string) (*index.Index, error) {
 	index, err := index.New(
 		name,
 		index.Config{
-			DataDir:     neo.config.dataDir,
-			Debug:       neo.config.debug,
-			CacheSize:   neo.config.cacheSize,
-			EnableCache: neo.config.enableCache,
+			DataDir:     neo.config.DataDir,
+			Debug:       neo.config.Debug,
+			CacheSize:   neo.config.CacheSize,
+			EnableCache: neo.config.EnableCache,
 		},
 		false,
 	)
