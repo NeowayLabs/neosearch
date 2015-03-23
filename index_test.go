@@ -75,6 +75,32 @@ cleanup:
 	}
 }
 
+func TestDeleteIndex(t *testing.T) {
+	cfg := NewConfig()
+	cfg.Option(DataDir(DataDirTmp))
+	cfg.Option(Debug(false))
+
+	neo := New(cfg)
+
+	err := neo.DeleteIndex("lsdlas")
+
+	if err == nil {
+		t.Error("Failed: Index does not exists yet")
+	}
+
+	_, err = neo.CreateIndex("test")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = neo.DeleteIndex("test")
+
+	if err != nil {
+		t.Error(err)
+	}
+}
+
 func TestAddDocument(t *testing.T) {
 	var (
 		data       []byte
