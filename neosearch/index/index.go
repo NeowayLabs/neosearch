@@ -7,7 +7,6 @@ import (
 	"github.com/NeowayLabs/neosearch"
 	"github.com/NeowayLabs/neosearch/index"
 	"github.com/NeowayLabs/neosearch/neosearch/handler"
-	"github.com/gorilla/mux"
 )
 
 type IndexHandler struct {
@@ -24,9 +23,8 @@ func New(search *neosearch.NeoSearch) *IndexHandler {
 }
 
 func (handler *IndexHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	requestVars := mux.Vars(req)
-
-	indexName := requestVars["index"]
+	handler.ProcessVars(req)
+	indexName := handler.GetIndexName()
 
 	if indexName == "" {
 		handler.Error(res, "no index supplied")
