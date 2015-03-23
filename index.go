@@ -149,6 +149,18 @@ func (neo *NeoSearch) CreateIndex(name string) (*index.Index, error) {
 	return index, nil
 }
 
+func (neo *NeoSearch) DeleteIndex(name string) error {
+	for i, index := range neo.Indices {
+		if index.Name == name {
+			index.Close()
+			neo.Indices = append(neo.Indices[:i], neo.Indices[i+1:]...)
+		}
+	}
+
+	err := os.RemoveAll(neo.config.DataDir + "/" + name)
+	return err
+}
+
 // OpenIndex open a existing index for read/write operations.
 func (neo *NeoSearch) OpenIndex(name string) (*index.Index, error) {
 	exists, err := neo.IndexExists(name)
