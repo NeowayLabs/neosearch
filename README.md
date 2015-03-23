@@ -3,6 +3,8 @@
 NeoSearch - Neoway Full Text Search Index
 ==========================================
 
+[![Join the chat at https://gitter.im/NeowayLabs/neosearch](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/NeowayLabs/neosearch?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 NeoSearch is a feature-limited full-text-search library with focus on indices relationships, its main goal is provide very fast JOIN operations between information stored on different indices.
 
 It's not a complete FTS (Full Text Search) engine, in the common sense, but aims to solve very specific problems of FTS. At the moment, NeoSearch is a laboratory for research, not recommended for production usage, here we will test various technology for fast storage and search algorithms. In the future, maybe, we can proud of a very nice tech for solve search in big data companies.
