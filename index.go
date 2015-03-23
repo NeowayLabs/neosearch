@@ -157,8 +157,12 @@ func (neo *NeoSearch) DeleteIndex(name string) error {
 		}
 	}
 
-	err := os.RemoveAll(neo.config.DataDir + "/" + name)
-	return err
+	if exists, err := neo.IndexExists(name); exists == true && err == nil {
+		err := os.RemoveAll(neo.config.DataDir + "/" + name)
+		return err
+	}
+
+	return errors.New("Index '" + name + "' not found.")
 }
 
 // OpenIndex open a existing index for read/write operations.
