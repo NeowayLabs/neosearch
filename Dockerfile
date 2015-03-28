@@ -18,7 +18,8 @@ RUN curl -sSL https://golang.org/dl/go${GO_VERSION}.src.tar.gz | tar -v -C /usr/
 	&& mkdir -p /go/bin
 ENV PATH /go/bin:/usr/local/go/bin:$PATH
 ENV GOPATH /go
-RUN cd /usr/local/go/src && ./make.bash --no-clean 2>&1
+ENV CGO_ENABLED 0
+RUN cd /usr/local/go/src && CGO_ENABLED=0 ./make.bash --no-clean 2>&1
 
 # Grab Go's cover tool for dead-simple code coverage testing
 RUN go get golang.org/x/tools/cmd/cover
