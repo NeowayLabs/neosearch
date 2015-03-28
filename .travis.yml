@@ -19,4 +19,10 @@ script:
 notifications:
   email:
     - tiago.natel@neoway.com.br
-    - tiagokatcipis@gmail.com 
+    - tiagokatcipis@gmail.com
+  webhooks:
+    urls:
+      - "https://webhooks.gitter.im/e/5c49f66645e9c101199e"
+    on_success: change
+    on_failure: always
+    on_start: false
