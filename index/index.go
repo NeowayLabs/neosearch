@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/NeowayLabs/neosearch/engine"
@@ -33,15 +34,16 @@ type Config struct {
 type Index struct {
 	Name string `json:"name"`
 
-	engine *engine.Engine `json:"engine"`
-	config Config         `json:"config"`
+	engine *engine.Engine
+	config Config
 
 	// Indicates that index abstraction should batch each write command
-	batchMode bool
+	enableBatchMode bool
 
 	flushStorages []string
 }
 
+// ValidateIndexName verifies if name is valid NeoSearch index name
 func ValidateIndexName(name string) bool {
 	if len(name) < 3 {
 		return false
@@ -94,7 +96,7 @@ func (i *Index) setup(create bool) error {
 
 // Batch enables write cache of command before FlushBatch is executed
 func (i *Index) Batch() {
-	i.batchMode = true
+	i.enableBatchMode = true
 }
 
 // FlushBatch writes the cached commands to disk
@@ -117,100 +119,16 @@ func (i *Index) FlushBatch() {
 	i.flushStorages = make([]string, 0)
 }
 
-// Add creates new document
+// Add executes the sequence of commands necessary to index the document `doc`.
 func (i *Index) Add(id uint64, doc []byte) error {
-	if i.batchMode {
-		defer func() {
-			i.batchMode = false
-		}()
-	}
-
-	err := i.add(id, doc)
+	commands, err := i.BuildAdd(id, doc)
 
 	if err != nil {
 		return err
 	}
 
-	structData := map[string]interface{}{}
-
-	err = json.Unmarshal(doc, &structData)
-
-	if err != nil {
-		return err
-	}
-
-	return i.indexFields(id, &structData)
-}
-
-// add index the string doc into document.db
-func (i *Index) add(id uint64, doc []byte) error {
-	if i.batchMode {
-		err := i.enableBatchOn(dbName)
-
-		if err != nil {
-			return err
-		}
-
-		i.flushStorages = append(i.flushStorages, dbName)
-
-		if i.config.Debug {
-			fmt.Printf("Batch mode enabled for storage '%s' of index '%s'.\n",
-				dbName,
-				i.Name,
-			)
-		}
-	}
-
-	cmd := engine.Command{}
-
-	cmd.Index = "document.db"
-	cmd.Command = "set"
-	cmd.Key = utils.Uint64ToBytes(id)
-	cmd.Value = doc
-
-	_, err := i.engine.Execute(cmd)
-	return err
-}
-
-// Get retrieves the document by id
-func (i *Index) Get(id uint64) ([]byte, error) {
-	return i.engine.Execute(engine.Command{
-		Index:   "document.db",
-		Command: "get",
-		Key:     utils.Uint64ToBytes(id),
-	})
-}
-
-func (i *Index) enableBatchOn(storage string) error {
-	if i.config.Debug {
-		fmt.Printf("Batch mode enabled for storage '%s' of index '%s'.\n",
-			storage,
-			i.Name,
-		)
-	}
-
-	for _, flush := range i.flushStorages {
-		if flush == storage {
-			return nil
-		}
-	}
-
-	_, err := i.engine.Execute(engine.Command{
-		Index:   storage,
-		Command: "batch",
-	})
-
-	i.flushStorages = append(i.flushStorages, storage)
-
-	return err
-}
-
-func (i *Index) indexFields(id uint64, structData *map[string]interface{}) error {
-	var err error
-
-	for key, value := range *structData {
-		// optimize here?
-		err = i.indexField(id, []byte(key), value)
+	for _, cmd := range commands {
+		_, err := i.engine.Execute(cmd)
 
 		if err != nil {
 			return err
@@ -220,66 +138,226 @@ func (i *Index) indexFields(id uint64, structData *map[string]interface{}) error
 	return nil
 }
 
-func (i *Index) indexField(id uint64, key []byte, value interface{}) error {
-	var err error
+func (i *Index) BuildAdd(id uint64, doc []byte) ([]engine.Command, error) {
+	var commands []engine.Command
+
+	if i.enableBatchMode {
+		// batchMode says if the BATCH operation is pending on indices
+		// If true, then we need run USING <idx> BATCH; on each index.
+		// When the Add method returns, this means that every index is
+		// propertly in batchMode, then we can disable here.
+		defer func() {
+			i.enableBatchMode = false
+		}()
+	}
+
+	docCommands, err := i.buildAddDocument(id, doc)
+
+	if err != nil {
+		return nil, err
+	}
+
+	structData := map[string]interface{}{}
+
+	err = json.Unmarshal(doc, &structData)
+
+	if err != nil {
+		return nil, err
+	}
+
+	fieldCommands, err := i.buildIndexFields(id, &structData)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, cmd := range docCommands {
+		commands = append(commands, cmd)
+	}
+
+	for _, cmd := range fieldCommands {
+		commands = append(commands, cmd)
+	}
+
+	return commands, nil
+}
+
+func (i *Index) buildAddDocument(id uint64, doc []byte) ([]engine.Command, error) {
+	var commands []engine.Command
+
+	if i.enableBatchMode {
+		cmd, err := i.buildBatchOn(dbName)
+
+		if err == nil {
+			commands = append(commands, cmd)
+		}
+	}
+
+	cmd := engine.Command{}
+	cmd.Index = dbName
+	cmd.Key = utils.Uint64ToBytes(id)
+	cmd.KeyType = engine.TypeUint
+	cmd.Value = doc
+	cmd.ValueType = engine.TypeString
+	cmd.Command = "set"
+
+	commands = append(commands, cmd)
+	return commands, nil
+}
+
+// Get retrieves the document by id
+func (i *Index) Get(id uint64) ([]byte, error) {
+	return i.engine.Execute(engine.Command{
+		Index:   "document.db",
+		Command: "get",
+		Key:     utils.Uint64ToBytes(id),
+		KeyType: engine.TypeUint,
+	})
+}
+
+func (i *Index) buildBatchOn(storage string) (engine.Command, error) {
+	if i.config.Debug {
+		fmt.Printf("Batch mode enabled for storage '%s' of index '%s'.\n",
+			storage,
+			i.Name,
+		)
+	}
+
+	for _, flush := range i.flushStorages {
+		if flush == storage {
+			return engine.Command{}, errors.New("Index already in batch mode")
+		}
+	}
+
+	i.flushStorages = append(i.flushStorages, storage)
+
+	command := engine.Command{
+		Index:   storage,
+		Command: "batch",
+	}
+
+	return command, nil
+}
+
+func (i *Index) enableBatchOn(storage string) error {
+	cmd, err := i.buildBatchOn(storage)
+
+	if err != nil {
+		return nil
+	}
+
+	_, err = i.engine.Execute(cmd)
+
+	return err
+}
+
+// buildIndexFields builds the list of commands to index document fields. Note that
+// the order os commands generated by field is sorted lexicografically (sort.Strings)
+func (i *Index) buildIndexFields(id uint64, structData *map[string]interface{}) ([]engine.Command, error) {
+	var (
+		commands []engine.Command
+		dataKeys []string
+	)
+
+	for key := range *structData {
+		dataKeys = append(dataKeys, key)
+	}
+
+	sort.Strings(dataKeys)
+
+	for _, key := range dataKeys {
+		value := (*structData)[key]
+		cmds, err := i.buildIndexField(id, []byte(key), value)
+
+		if err != nil {
+			return nil, err
+		}
+
+		for _, cmd := range cmds {
+			commands = append(commands, cmd)
+		}
+	}
+
+	return commands, nil
+}
+
+func (i *Index) buildIndexField(id uint64, key []byte, value interface{}) ([]engine.Command, error) {
+	var (
+		err      error
+		commands []engine.Command
+	)
+
 	v := reflect.TypeOf(value)
 
 	err = nil
 
 	switch v.Kind() {
 	case reflect.String:
-		err = i.indexString(id, key, value.(string))
-
+		commands, err = i.buildIndexString(id, key, value.(string))
 		break
 	case reflect.Int:
-		err = i.indexInt64(id, key, value.(int64))
+		commands, err = i.buildIndexInt64(id, key, value.(int64))
 		break
 	case reflect.Float64:
-		err = i.indexFloat64(id, key, value.(float64))
+		commands, err = i.buildIndexFloat64(id, key, value.(float64))
 		break
 	case reflect.Slice:
-		err = i.indexSlice(id, key, value.([]interface{}))
+		commands, err = i.buildIndexSlice(id, key, value.([]interface{}))
 		break
 	default:
-		fmt.Printf("Unknown type %s: %s\n", v.Kind(), value)
+		errMsg := fmt.Sprintf("Unknown type %s: %s\n", v.Kind(), value)
+
+		if i.config.Debug {
+			fmt.Printf(errMsg)
+		}
+
+		return nil, errors.New(errMsg)
 	}
 
-	return err
+	return commands, err
 }
 
-func (i *Index) indexSlice(id uint64, key []byte, values []interface{}) error {
-	var err error
+func (i *Index) buildIndexSlice(id uint64, key []byte, values []interface{}) ([]engine.Command, error) {
+	var commands []engine.Command
 
 	storageName := string(key) + ".idx"
 
-	if i.batchMode {
-		if err := i.enableBatchOn(storageName); err != nil {
-			return err
+	if i.enableBatchMode {
+		cmd, err := i.buildBatchOn(storageName)
+		if err == nil {
+			commands = append(commands, cmd)
 		}
 	}
 
 	for _, value := range values {
-		err = i.indexField(id, key, value)
+		cmds, err := i.buildIndexField(id, key, value)
 
 		if err != nil {
-			return err
+			return nil, err
 		}
 
+		for _, cmd := range cmds {
+			commands = append(commands, cmd)
+		}
 	}
 
-	return err
+	return commands, nil
 }
 
-func (i *Index) indexString(id uint64, key []byte, value string) error {
+func (i *Index) buildIndexString(id uint64, key []byte, value string) ([]engine.Command, error) {
+	var commands []engine.Command
+
 	// default/hardcoded analyser == tokenizer
+	value = strings.Trim(value, " ")
 	value = strings.ToLower(value)
 	tokens := strings.Split(value, " ")
 
 	storageName := string(key) + ".idx"
 
-	if i.batchMode {
-		if err := i.enableBatchOn(storageName); err != nil {
-			return err
+	if i.enableBatchMode {
+		cmd, err := i.buildBatchOn(storageName)
+		if err == nil {
+			commands = append(commands, cmd)
 		}
 	}
 
@@ -290,13 +368,11 @@ func (i *Index) indexString(id uint64, key []byte, value string) error {
 		cmd.Index = storageName
 		cmd.Command = "mergeset"
 		cmd.Key = []byte(t)
+		cmd.KeyType = engine.TypeString
 		cmd.Value = utils.Uint64ToBytes(id)
+		cmd.ValueType = engine.TypeUint
 
-		_, err := i.engine.Execute(cmd)
-
-		if err != nil {
-			return err
-		}
+		commands = append(commands, cmd)
 	}
 
 	// Index all string
@@ -304,19 +380,24 @@ func (i *Index) indexString(id uint64, key []byte, value string) error {
 	cmd.Index = string(key) + ".idx"
 	cmd.Command = "mergeset"
 	cmd.Key = []byte(value)
+	cmd.KeyType = engine.TypeString
 	cmd.Value = utils.Uint64ToBytes(id)
+	cmd.ValueType = engine.TypeUint
 
-	_, err := i.engine.Execute(cmd)
-
-	return err
+	commands = append(commands, cmd)
+	return commands, nil
 }
 
-func (i *Index) indexFloat64(id uint64, key []byte, value float64) error {
+func (i *Index) buildIndexFloat64(id uint64, key []byte, value float64) ([]engine.Command, error) {
+	var commands []engine.Command
+
 	storageName := string(key) + ".idx"
 
-	if i.batchMode {
-		if err := i.enableBatchOn(storageName); err != nil {
-			return err
+	if i.enableBatchMode {
+		cmd, err := i.buildBatchOn(storageName)
+
+		if err == nil {
+			commands = append(commands, cmd)
 		}
 	}
 
@@ -324,18 +405,23 @@ func (i *Index) indexFloat64(id uint64, key []byte, value float64) error {
 	cmd.Index = storageName
 	cmd.Command = "mergeset"
 	cmd.Key = utils.Float64ToBytes(value)
+	cmd.KeyType = engine.TypeFloat
 	cmd.Value = utils.Uint64ToBytes(id)
+	cmd.ValueType = engine.TypeUint
 
-	_, err := i.engine.Execute(cmd)
-	return err
+	commands = append(commands, cmd)
+	return commands, nil
 }
 
-func (i *Index) indexInt64(id uint64, key []byte, value int64) error {
+func (i *Index) buildIndexInt64(id uint64, key []byte, value int64) ([]engine.Command, error) {
+	var commands []engine.Command
+
 	storageName := string(key) + ".idx"
 
-	if i.batchMode {
-		if err := i.enableBatchOn(storageName); err != nil {
-			return err
+	if i.enableBatchMode {
+		cmd, err := i.buildBatchOn(storageName)
+		if err == nil {
+			commands = append(commands, cmd)
 		}
 	}
 
@@ -343,10 +429,13 @@ func (i *Index) indexInt64(id uint64, key []byte, value int64) error {
 	cmd.Index = storageName
 	cmd.Command = "mergeset"
 	cmd.Key = utils.Int64ToBytes(value)
+	cmd.KeyType = engine.TypeInt
 	cmd.Value = utils.Uint64ToBytes(id)
+	cmd.ValueType = engine.TypeUint
 
-	_, err := i.engine.Execute(cmd)
-	return err
+	commands = append(commands, cmd)
+
+	return commands, nil
 }
 
 // Close the index
