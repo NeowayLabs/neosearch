@@ -1,0 +1,22 @@
+language: go
+
+go:
+  - 1.3
+  - tip
+install: 
+  - cd /tmp && git clone https://github.com/google/leveldb.git && cd /tmp/leveldb && make
+  - cd $HOME/gopath/src/github.com/NeowayLabs/neosearch-cli
+  - go get -v github.com/jmhodges/levigo
+  - go get -d -v ./...
+  - go build -tags leveldb -v
+script:
+  - go get golang.org/x/tools/cmd/vet
+  - go get github.com/axw/gocov/gocov
+  - go get github.com/mattn/goveralls
+  - if ! go get code.google.com/p/go.tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
+  - go test -tags leveldb -v ./... 
+
+notifications:
+  email:
+    - tiago.natel@neoway.com.br
+    - tiagokatcipis@gmail.com

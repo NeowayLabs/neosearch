@@ -1,0 +1,203 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>NeoSearch - Proposal</title><style></style></head><body>
+<h1 id="neosearch-neoway-full-text-search-index">NeoSearch - Neoway Full Text Search Index</h1>
+<p>Proposal of a new buzzwords-complete solution to big data!</p>
+<h1 id="features">Features</h1>
+<ul>
+<li>Schemaless</li>
+<li>Sharding</li>
+<li>Replicas</li>
+<li>Rest API</li>
+<li>Spatial Index</li>
+</ul>
+<h1 id="indexed-documents">Indexed Documents</h1>
+<p>Indexed with key/value data storage.</p>
+<pre><code>Example document 1:
+{
+  id: 1,
+  name: &quot;Hello NeoSearch&quot;,
+  title: &quot;NeoSearch - High Performance Distributed Search Index&quot;
+}
+</code></pre><h1 id="using-the-rest-to-create-the-document-1">Using the REST to create the document 1</h1>
+<p>POST /index/example.idx/</p>
+<p>Will result for name.idx index:</p>
+<pre><code>neosearch&gt; using name.idx MERGESET &quot;hello&quot; 1
+hello: [1]
+neosearch&gt; using name.idx MERGESET &quot;neosearch&quot; 1
+neosearch: [1]
+</code></pre><p>Will result for title.idx index:</p>
+<pre><code>neosearch&gt; using title.idx MERGESET &quot;neosearch&quot; 1
+neosearch: [1]
+neosearch&gt; using title.idx MERGESET &quot;high&quot;
+high: [1]
+neosearch&gt; using title.idx MERGESET &quot;performance&quot; 1
+performance: [1]
+neosearch: using title.idx MERGESET &quot;distributed&quot; 1
+distributed: [1]
+neosearch&gt; using title.idx MERGESET &quot;search&quot; 1
+search: [1]
+neosearch&gt; using title.idx MERGESET &quot;index&quot; 1
+index: [1]
+</code></pre><p>Lets index a new document:</p>
+<p>Example document 2:</p>
+<pre><code>{
+  id: 2,
+  name: &quot;Do we need the Paxos algorithm for master-slave election consensus on NeoSearch?&quot;,
+  title: &quot;NeoSearch - Buzz-words complete index solution&quot;
+}
+</code></pre><h1 id="save-the-document-2">Save the document 2</h1>
+<p>POST /index/example.idx</p>
+<p>Will result for name.idx index (example for a English analyser):</p>
+<pre><code>neosearch&gt; using name.idx MERGESET &quot;need&quot; 2
+need: [2]
+neosearch&gt; using name.idx MERGESET &quot;paxos&quot; 2
+paxos: [2]
+neosearch&gt; using name.idx MERGESET &quot;algorithm&quot; 2
+paxos: [2]
+neosearch&gt; using name.idx MERGESET &quot;master-slave&quot; 2
+master-slave: [2]
+neosearch&gt; using name.idx MERGESET &quot;election&quot; 2
+election: [2]
+neosearch&gt; using name.idx MERGESET &quot;consensus&quot; 2
+consensus: [2]
+neosearch&gt; using name.idx MERGESET &quot;neosearch&quot; 2
+neosearch: [1, 2] // HEY, LOOK THE MERGESET here!!
+</code></pre><p>Then, store the document:</p>
+<pre><code>neosearch&gt; using document.db SET 2 &quot;{
+  id: 2,
+  name: &quot;Do we need the Paxos algorithm for master-slave election consensus on NeoSearch?&quot;,
+  title: &quot;NeoSearch - Buzz-words complete index solution&quot;
+}&quot;
+</code></pre><p>After the two documents indexed we have (ignoring the &quot;id&quot; field fow now):</p>
+<pre><code class="lang-bash">$ ls /neosearch_data/indexes/
+example.idx
+</code></pre>
+<pre><code class="lang-bash">$ ls /neosearch_data/indexes/example.idx/
+metadata.json name.idx title.idx document.db
+</code></pre>
+<h1 id="retrieving-documents-by-shard-id">Retrieving documents by shard-id</h1>
+<pre><code>neosearch&gt; using document.db GET 1
+{
+  document: {
+    id: 1,
+    name: &quot;Hello NeoSearch&quot;,
+    title: &quot;NeoSearch - High Performance Distributed Search Index&quot;
+  }
+}
+</code></pre><h1 id="neosearch-key-value-datastore-interface">NeoSearch Key/Value datastore interface</h1>
+<p>Low-level searching documents in index using the key/value interface. This is much closer to the pure key-value interface.</p>
+<pre><code>neosearch&gt; using index id.idx GET 1
+{
+  results: 1
+  documents: [1]
+}
+</code></pre><pre><code>neosearch&gt; using index name.idx GET &quot;test&quot;
+{
+  results: 0
+}
+</code></pre><pre><code>neosearch&gt; using index name.idx GET &quot;hello&quot;
+{
+  results: 1,
+  documents: [1],
+  highlight: {
+    &quot;1&quot;: {
+      start: 0,
+      end: 4
+    }
+  }
+}
+</code></pre><pre><code>neosearch&gt; using index name.idx GET &quot;NeoSearch&quot;
+{
+  results: 2,
+  documents: [1,2],
+  highlight: {
+    &quot;1&quot;: {
+      start: 6,
+      end: 15
+    },
+    &quot;2&quot;: {
+      start: 70,
+      end: 79
+    }
+}
+</code></pre><pre><code>neosearch&gt; using index title.idx GET &quot;buzz-words&quot;
+{
+  results: 1,
+  documents: [2],
+  highlight: {
+    &quot;2&quot;: {
+      start: 12,
+      end: 22
+    }
+}
+</code></pre><h1 id="algorithm-for-query-operations">Algorithm for query operations</h1>
+<h3 id="and-algorithm">AND algorithm</h3>
+<p>High-level query DSL search:</p>
+<pre><code>GET /search/example.idx
+{
+  query: {
+    group: {
+      operator: &quot;AND&quot; 
+      filters: [
+        {name: &quot;hello&quot;},
+        {title: &quot;buzz-words&quot;}
+      ]
+    },
+    operator: &quot;OR&quot;,
+    filters: [
+      {name: &quot;NeoSearch&quot;}
+    ]
+  }
+}
+</code></pre><p>This query DSL will result in the query below:</p>
+<pre><code>(name: &quot;hello&quot; AND title: &quot;buzz-words&quot;) OR name: &quot;NeoSearch&quot;
+</code></pre><p>Each &quot;group&quot; field is a &quot;parenthesized&quot; subquery that need be searched in the specified order.</p>
+<p>1- First the subquery get the documents that have &quot;hello&quot; from name.idx;</p>
+<pre><code>neosearch&gt; using index name.idx GET &quot;hello&quot;
+{
+  results: 1,
+  documents: [1],
+  highlight: {
+    &quot;1&quot;: {
+      start: 0,
+      end: 4
+    }
+  }
+}
+</code></pre><p>2- Then get documents that have &quot;buzz-words&quot; from title.idx;</p>
+<pre><code>neosearch&gt; using index title.idx GET &quot;buzz-words&quot;
+{
+  results: 1,
+  documents: [2],
+  highlight: {
+    &quot;2&quot;: {
+      start: 12,
+      end: 22
+    }
+}
+</code></pre><p>After that, use the algorithms for union/merge/intersect the arrays to provide AND, OR, XOR, NOT, etc, in the results. </p>
+<h2 id="basic-algorithm-for-and-merge-result-sets-">Basic Algorithm for AND-merge result sets;</h2>
+<pre><code>name_docs = name_index.get(&quot;hello&quot;) // returns [1]
+title_docs = title_index.get(&quot;buzz-words&quot;) // returns [2]
+result_docs = array_intersects(name_docs, title_docs) // []
+</code></pre><h2 id="basic-algorithm-for-or-merge-result-sets">Basic algorithm for OR-merge result-sets</h2>
+<pre><code>name_docs = name_index.get(&quot;hello&quot;) // returns [1]
+title_docs = title_index.get(&quot;buzz-words&quot;) // returns [2]
+result_docs = array_union_uniques(name_docs, title_docs) // [1, 2]
+</code></pre><p>Then for the query below:</p>
+<pre><code>(name: &quot;hello&quot; AND title: &quot;buzz-words&quot;) OR name: &quot;NeoSearch&quot;
+</code></pre><p>We have this algorithm:</p>
+<pre><code>name_docs = name_index.get(&quot;hello&quot;) // returns [1]
+title_docs = title_index.get(&quot;buzz-words&quot;) // returns [2]
+name2_docs = name_index.get(&quot;NeoSearch&quot;) // returns [1,2]
+# first apply the AND operation
+result_docs = array_intersects(name_docs, title_docs) // returns []
+# Then, apply the OR in the results
+result_docs = array_union_unique(result_docs, name2_docs) // returns [1, 2]
+</code></pre><h1 id="sharding-partitioning-to-be-defined-">Sharding / Partitioning (TO BE DEFINED)</h1>
+<p>The sharding should support <em>Routing</em> for single key-field, combined key-fields, document hash or timestamp.</p>
+<p>Warning: The wrong architecture can fuck up everything...
+Eg.: Data migration/realloc when shards entering the cluster? Problems....</p>
+<h1 id="replication-to-be-defined-">Replication (TO BE DEFINED)</h1>
+<p>Every master can have one or more replicas. Each replica contains all of the indexed documents at the master node. The master node can be a shard, then the replicas will contains only the sharded data.</p>
+
+</body></html>
