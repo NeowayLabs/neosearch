@@ -58,3 +58,11 @@ func (h *DefaultHandler) GetIndexName() string {
 
 	return h.requestVars["index"]
 }
+
+func (h *DefaultHandler) GetDocumentID() string {
+	if h.requestVars == nil {
+		return ""
+	}
+
+	return h.requestVars["id"]
+}

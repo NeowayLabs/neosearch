@@ -40,9 +40,14 @@ func New(search *neosearch.NeoSearch, config *ServerConfig) (*HTTPServer, error)
 func (server *HTTPServer) createRoutes() {
 	homeHandler := home.HomeHandler{}
 	indexHandler := index.New(server.search)
+	createIndexHandler := index.NewCreateHandler(server.search)
+	indexAddHandler := index.NewAddHandler(server.search)
 
-	server.router.Handle("/", &homeHandler)
-	server.router.Handle("/{index}", indexHandler)
+	server.router.Handle("/", &homeHandler).Methods("GET")
+	server.router.Handle("/{index}", indexHandler).Methods("GET")
+	server.router.Handle("/{index}", createIndexHandler).Methods("PUT")
+	server.router.Handle("/{index}/{id}", indexAddHandler).Methods("POST")
+	//	server.router.Handle("/{index}", indexAddHandler).Methods("POST")
 }
 
 func (server *HTTPServer) Start() error {

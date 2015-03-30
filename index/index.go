@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"reflect"
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/NeowayLabs/neosearch/engine"
 	"github.com/NeowayLabs/neosearch/store"
@@ -18,6 +20,8 @@ import (
 const (
 	dbName   string = "document.db"
 	indexExt string = "idx"
+
+	infoFilename string = "info.json"
 )
 
 // Config index
@@ -41,6 +45,9 @@ type Index struct {
 	enableBatchMode bool
 
 	flushStorages []string
+
+	info      *IndexInfo
+	infoMutex *sync.Mutex
 }
 
 // ValidateIndexName verifies if name is valid NeoSearch index name
@@ -60,8 +67,10 @@ func New(name string, cfg Config, create bool) (*Index, error) {
 	}
 
 	index := &Index{
-		Name:   name,
-		config: cfg,
+		Name:      name,
+		config:    cfg,
+		info:      NewIndexInfo(),
+		infoMutex: &sync.Mutex{},
 	}
 
 	if err := index.setup(create); err != nil {
@@ -91,7 +100,53 @@ func (i *Index) setup(create bool) error {
 		},
 	})
 
-	return nil
+	return i.createInfoFile()
+}
+
+func (i *Index) createInfoFile() error {
+	statsFile := i.config.DataDir + "/" + infoFilename
+	jsonContent, err := json.Marshal(i.info)
+
+	if err != nil {
+		return err
+	}
+
+	file, err := os.Create(statsFile)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = file.Write(jsonContent)
+	return err
+}
+
+func (i *Index) updateInfo(indexCounter map[string]uint64) {
+	var (
+		field FieldInfo
+		ok    bool
+	)
+
+	for index, counter := range indexCounter {
+		field, ok = i.info.Fields[index]
+
+		if ok {
+			field.Size += counter
+		} else {
+			field = FieldInfo{
+				Size: counter,
+			}
+		}
+
+		i.info.Fields[index] = field
+	}
+
+	log.Println(i.info.Fields)
+
+	i.infoMutex.Lock()
+	os.Remove(i.config.DataDir + "/" + infoFilename)
+	i.createInfoFile()
+	i.infoMutex.Unlock()
 }
 
 // Batch enables write cache of command before FlushBatch is executed
@@ -121,6 +176,8 @@ func (i *Index) FlushBatch() {
 
 // Add executes the sequence of commands necessary to index the document `doc`.
 func (i *Index) Add(id uint64, doc []byte) error {
+	indicesCounter := make(map[string]uint64)
+
 	commands, err := i.BuildAdd(id, doc)
 
 	if err != nil {
@@ -133,7 +190,12 @@ func (i *Index) Add(id uint64, doc []byte) error {
 		if err != nil {
 			return err
 		}
+
+		val := indicesCounter[cmd.Index] + 1
+		indicesCounter[cmd.Index] = val
 	}
+
+	go i.updateInfo(indicesCounter)
 
 	return nil
 }

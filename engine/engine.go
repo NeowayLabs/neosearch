@@ -43,7 +43,7 @@ type Engine struct {
 }
 
 const (
-	TypeUint   = iota
+	TypeUint   = iota + 1
 	TypeInt    = iota
 	TypeFloat  = iota
 	TypeString = iota
@@ -82,7 +82,7 @@ func (c Command) Reverse() string {
 		} else if c.KeyType == TypeInt {
 			keyStr = `int(` + strconv.Itoa(int(utils.BytesToInt64(c.Key))) + `)`
 		} else {
-			panic(fmt.Errorf("Invalid command value type: %s", c.ValueType))
+			panic(fmt.Errorf("Invalid command value type: %d", c.ValueType))
 		}
 	}
 
@@ -94,7 +94,7 @@ func (c Command) Reverse() string {
 		} else if c.ValueType == TypeInt {
 			valStr = `int(` + strconv.Itoa(int(utils.BytesToInt64(c.Value))) + `)`
 		} else {
-			panic(fmt.Errorf("Invalid command key type: %s", c.KeyType))
+			panic(fmt.Errorf("Invalid command key type: %d", c.KeyType))
 		}
 	}
 
@@ -103,8 +103,8 @@ func (c Command) Reverse() string {
 		line = fmt.Sprintf("USING %s %s %s %s;", c.Index, c.Command, keyStr, valStr)
 	case "batch", "flushbatch":
 		line = fmt.Sprintf("USING %s %s;", c.Index, c.Command)
-	case "get":
-		line = fmt.Sprintf("USING %s get %s;", c.Index, keyStr)
+	case "get", "delete":
+		line = fmt.Sprintf("USING %s %s %s;", c.Index, c.Command, keyStr)
 	default:
 		panic(fmt.Errorf("Invalid command: %s: %v", c.Command, c))
 	}
