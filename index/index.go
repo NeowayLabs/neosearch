@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"reflect"
 	"regexp"
@@ -140,8 +139,6 @@ func (i *Index) updateInfo(indexCounter map[string]uint64) {
 
 		i.info.Fields[index] = field
 	}
-
-	log.Println(i.info.Fields)
 
 	i.infoMutex.Lock()
 	os.Remove(i.config.DataDir + "/" + infoFilename)
