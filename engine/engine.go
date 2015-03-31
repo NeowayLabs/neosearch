@@ -174,7 +174,7 @@ func (ng *Engine) open(name string) error {
 
 	ng.stores[name] = &entry
 
-	ng.cacheClean()
+	go ng.cacheClean()
 
 	err = storekv.Open(name)
 	return err
