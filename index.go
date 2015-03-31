@@ -74,14 +74,14 @@
 //
 // NeoSearch supports the features below:
 //
-// - Create/Delete index
-// - Index JSON documents (No schema)
-// - Bulk writes
-// - Analysers
-//   - Tokenizer
-// - Search
-//   - MatchPrefix
-//   - FilterTerm
+//   - Create/Delete index
+//   - Index JSON documents (No schema)
+//   - Bulk writes
+//   - Analysers
+//     - Tokenizer
+//   - Search
+//     - MatchPrefix
+//     - FilterTerm
 //
 // This project is in active development stage, it is not recommended for
 // production environments.
