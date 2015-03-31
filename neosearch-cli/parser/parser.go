@@ -22,6 +22,8 @@ type parserState struct {
 	IsSingleQuotedString        bool
 	IsEscapedDoubleQuotedString bool
 	IsEscapedSingleQuotedString bool
+	IsCastOpen                  bool
+	KVType                      uint8
 }
 
 // We define our lexer tokens starting from the pre-defined EOF token
@@ -89,8 +91,10 @@ func setQuotedString(token string, command *engine.Command, pState *parserState)
 		command.Index += token
 	} else if pState.IsCommand {
 		command.Key = []byte(string(command.Key) + token)
+		command.KeyType = engine.TypeString
 	} else if pState.IsValue {
 		command.Value = []byte(string(command.Value) + token)
+		command.ValueType = engine.TypeString
 	}
 }
 
@@ -192,27 +196,57 @@ func FromReader(file io.Reader, listCommands *[]engine.Command) error {
 					// TokenWord is the key of command?
 					// using document.db mergeset <TokenWord> ...
 				} else if pState.IsCommand {
-					command.Key = []byte(tokenValue)
-					pState.IsCommand = false
-					pState.IsValue = true
+					if strings.HasPrefix(tokenValue, "int(") {
+						pState.KVType = engine.TypeInt
+						pState.IsCastOpen = true
+					} else if strings.HasPrefix(tokenValue, "uint(") {
+						pState.KVType = engine.TypeUint
+						pState.IsCastOpen = true
+					} else if strings.HasPrefix(tokenValue, "float(") {
+						pState.KVType = engine.TypeFloat
+						pState.IsCastOpen = true
+					} else {
+						command.Key = []byte(tokenValue)
+						command.KeyType = engine.TypeString
+						pState.IsCommand = false
+						pState.IsValue = true
+					}
 
 					// TokenWord is the command value?
 					// using document.db mergeset name <TokenWord>
 				} else if pState.IsValue {
-					command.Value = []byte(tokenValue)
-					pState.IsValue = false
+					if tokenValue == ")" && pState.IsCastOpen {
+						pState.IsCastOpen = false
+					} else if strings.HasPrefix(tokenValue, "uint(") {
+						pState.IsCastOpen = true
+						pState.KVType = engine.TypeUint
+					} else if strings.HasPrefix(tokenValue, "int(") {
+						pState.IsCastOpen = true
+						pState.KVType = engine.TypeInt
+					} else if strings.HasPrefix(tokenValue, "float(") {
+						pState.IsCastOpen = true
+						pState.KVType = engine.TypeFloat
+					} else {
+						command.Value = []byte(tokenValue)
+						command.ValueType = engine.TypeString
+						pState.IsValue = false
+					}
 				} else {
 					// Here we handle the available KEYWORDS
 
-					// Keyword USING
-					if !pState.IsUsing && strings.ToLower(tokenValue) == "using" {
+					if pState.IsCastOpen && strings.HasPrefix(tokenValue, ")") {
+						pState.IsCastOpen = false
+						pState.KVType = 0
+
+						// Keyword USING
+					} else if !pState.IsUsing && strings.ToLower(tokenValue) == "using" {
 						pState.IsUsing = true
 					} else if !pState.IsCommand {
 						// Must be a command KEYWORD
 						// see commandsAvailable
 
 						if !isValidCommand(tokenValue) {
-							return errors.New("Invalid keyword '" + tokenValue + "'")
+							return fmt.Errorf("Invalid keyword '"+tokenValue+"': %s", command)
 						}
 
 						pState.IsCommand = true
@@ -292,11 +326,6 @@ func FromReader(file io.Reader, listCommands *[]engine.Command) error {
 			}
 		case TokenNumbers:
 			tokenValue := string(t.Bytes())
-			tokenIntValue, err := strconv.Atoi(tokenValue)
-
-			if err != nil {
-				return fmt.Errorf("Failed to convert %s to integer", tokenValue)
-			}
 
 			if pState.IsSingleQuotedString || pState.IsDoubleQuotedString {
 				setQuotedString(tokenValue, &command, &pState)
@@ -309,23 +338,90 @@ func FromReader(file io.Reader, listCommands *[]engine.Command) error {
 					// using document.db mergeset <TokenNumbers> ...
 				}
 			} else if pState.IsCommand {
-				command.Key = utils.Int64ToBytes(int64(tokenIntValue))
+				var (
+					keyBytes []byte
+					keyType  uint8
+				)
+
+				if strings.Contains(tokenValue, ".") {
+					tokenFloatValue, err := strconv.ParseFloat(tokenValue, 64)
+
+					if err != nil {
+						return fmt.Errorf("Failed to convert %s to float", tokenValue)
+					}
+
+					keyBytes = utils.Float64ToBytes(tokenFloatValue)
+					keyType = engine.TypeFloat
+				} else {
+					tokenIntValue, err := strconv.Atoi(tokenValue)
+
+					if err != nil {
+						return fmt.Errorf("Failed to convert %s to integer", tokenValue)
+					}
+
+					if pState.KVType == engine.TypeUint {
+						keyBytes = utils.Uint64ToBytes(uint64(tokenIntValue))
+						keyType = engine.TypeUint
+					} else if pState.KVType == engine.TypeFloat {
+						keyBytes = utils.Float64ToBytes(float64(tokenIntValue))
+						keyType = engine.TypeFloat
+					} else {
+						keyBytes = utils.Int64ToBytes(int64(tokenIntValue))
+						keyType = engine.TypeInt
+					}
+				}
+
+				command.Key = keyBytes
+				command.KeyType = keyType
 				pState.IsCommand = false
 				pState.IsValue = true
+
+				pState.KVType = 0
 
 				// TokenNumbers is the command value?
 				// using document.db mergeset name <TokenNumbers>
 			} else if pState.IsValue {
-				tokenIntValue, err := strconv.Atoi(tokenValue)
+				var (
+					valueBytes      []byte
+					valueType       uint8
+					tokenIntValue   int64
+					tokenFloatValue float64
+					err             error
+				)
 
-				if err != nil {
-					return err
+				if strings.Contains(tokenValue, ".") {
+					tokenFloatValue, err = strconv.ParseFloat(tokenValue, 64)
+
+					if err != nil {
+						return fmt.Errorf("Failed to convert %s to float", tokenValue)
+					}
+
+					valueBytes = utils.Float64ToBytes(tokenFloatValue)
+					valueType = engine.TypeFloat
+				} else {
+					tokenInt, err := strconv.Atoi(tokenValue)
+
+					if err != nil {
+						return fmt.Errorf("Failed to convert %s to integer", tokenValue)
+					}
+
+					tokenIntValue = int64(tokenInt)
+					valueBytes = utils.Int64ToBytes(int64(tokenIntValue))
+					valueType = engine.TypeInt
 				}
 
 				if command.Command == "mergeset" {
+					if valueType == engine.TypeFloat {
+						return fmt.Errorf("Failed to parse command. "+
+							"MergeSet value shall be a unsigned integer "+
+							"value: %v", tokenValue)
+					}
+
 					command.Value = utils.Uint64ToBytes(uint64(tokenIntValue))
+					command.ValueType = engine.TypeUint
 				} else {
-					command.Value = utils.Int64ToBytes(int64(tokenIntValue))
+					command.Value = valueBytes
+					command.ValueType = valueType
 				}
 
 				pState.IsValue = false
