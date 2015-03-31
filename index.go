@@ -28,10 +28,10 @@
 //
 // Install
 //
-//     git clone git@bitbucket.org:i4k/neosearch.git
-//     cd neosearch
-//     go get -u -v .
-//     go build -tags leveldb -v .
+//     export CGO_CFLAGS='-I <path/to/leveldb/include>'
+//     export CGO_LDFLAGS='-L /home/secplus/projects/3rdparty/leveldb/'
+//     go get -u -v github.com/NeowayLabs/neosearch
+//     cd $GOPATH/src/github/NeowayLabs/neosearch
 //     go test -tags leveldb -v .
 //
 // Create and add documents to NeoSearch is very easy, see below:
