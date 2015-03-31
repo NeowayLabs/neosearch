@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/NeowayLabs/neosearch.svg?branch=master)](https://travis-ci.org/NeowayLabs/neosearch) [![Build Status](https://drone.io/github.com/NeowayLabs/neosearch/status.png)](https://drone.io/github.com/NeowayLabs/neosearch/latest)
+[![Build Status](https://travis-ci.org/NeowayLabs/neosearch.svg?branch=master)](https://travis-ci.org/NeowayLabs/neosearch) [![Build Status](https://drone.io/github.com/NeowayLabs/neosearch/status.png)](https://drone.io/github.com/NeowayLabs/neosearch/latest) [![GoDoc](https://godoc.org/github.com/NeowayLabs/neosearch?status.svg)](https://godoc.org/github.com/NeowayLabs/neosearch)
 
 NeoSearch - Neoway Full Text Search Index
 ==========================================
