@@ -13,7 +13,7 @@ import (
 
 const (
 	DefaultPort = uint16(9500)
-	DefaultHost = "127.0.0.1"
+	DefaultHost = "0.0.0.0"
 )
 
 func main() {
@@ -35,7 +35,7 @@ func main() {
 	optarg.Add("d", "data-dir", "Data directory", "")
 	optarg.Add("g", "maximum-concurrence", "Set the maximum number of concurrent go routines", 0)
 	optarg.Add("t", "trace-debug", "Enable debug traces", false)
-	optarg.Add("s", "server-address", "Server host and port", "127.0.0.1:9500")
+	optarg.Add("s", "server-address", "Server host and port", "0.0.0.0:9500")
 	optarg.Add("h", "help", "Display this help", false)
 
 	for opt := range optarg.Parse() {
@@ -54,10 +54,10 @@ func main() {
 
 				portInt, err := strconv.Atoi(port)
 
-				if err != nil {
+				if err == nil {
 					portOpt = uint16(portInt)
 				} else {
-					log.Fatalf("Invalid port number: %s", port)
+					log.Fatalf("Invalid port number: %s (%s)", port, err)
 					return
 				}
 			} else {
