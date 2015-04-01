@@ -31,13 +31,13 @@ func execSequence(t *testing.T, ng *Engine, cmds []Command) {
 }
 
 func cmpIterator(t *testing.T, itReturns []map[int64]string, ng *Engine, seek []byte, index string) {
-	store, err := ng.GetStore(index)
+	storekv, err := ng.GetStore(index)
 
 	if err != nil {
 		t.Error(err)
 	}
 
-	it := store.GetIterator()
+	it := storekv.GetIterator()
 
 	it.Seek(seek)
 

@@ -17,9 +17,9 @@ import (
 const KVName = "leveldb"
 
 // LVDBConstructor build the constructor
-func LVDBConstructor(config *KVConfig) (*KVStore, error) {
+func LVDBConstructor(config *KVConfig) (KVStore, error) {
 	store, err := NewLVDB(config)
-	return &store, err
+	return store, err
 }
 
 // Registry the leveldb module
@@ -32,7 +32,7 @@ func init() {
 		return NewLVDB(config)
 	}
 
-	err := SetDefault(KVName, &initFn)
+	err := SetDefault(KVName, initFn)
 
 	if err != nil {
 		fmt.Println("Failed to initialize leveldb backend")
@@ -51,7 +51,7 @@ type LVDB struct {
 }
 
 // NewLVDB creates a new leveldb instance
-func NewLVDB(config *KVConfig) (KVStore, error) {
+func NewLVDB(config *KVConfig) (*LVDB, error) {
 	lvdb := LVDB{
 		Config: config,
 	}

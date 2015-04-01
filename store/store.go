@@ -43,14 +43,16 @@ type KVConfig struct {
 	CacheSize   int
 }
 
+type KVFuncConstructor func(*KVConfig) (KVStore, error)
+
 // KVStoreConstructor is a pointer to constructor of default KVStore
-var KVStoreConstructor *func(*KVConfig) (KVStore, error)
+var KVStoreConstructor KVFuncConstructor
 
 // KVStoreName have the name of kv store
 var KVStoreName string
 
 // SetDefault set the default kv store
-func SetDefault(name string, initPtr *func(*KVConfig) (KVStore, error)) error {
+func SetDefault(name string, initPtr KVFuncConstructor) error {
 	KVStoreName = name
 	KVStoreConstructor = initPtr
 
@@ -60,7 +62,7 @@ func SetDefault(name string, initPtr *func(*KVConfig) (KVStore, error)) error {
 // New initialize the default KV store.
 func New(config *KVConfig) (KVStore, error) {
 	if KVStoreConstructor != nil {
-		return (*KVStoreConstructor)(config)
+		return KVStoreConstructor(config)
 	}
 
 	return nil, errors.New("No store backend configured...")

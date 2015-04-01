@@ -60,13 +60,13 @@ func (i *Index) matchPrefix(field []byte, value []byte) ([]uint64, error) {
 		docIDs []uint64
 	)
 
-	store, err := i.engine.GetStore(string(field) + ".idx")
+	storekv, err := i.engine.GetStore(string(field) + ".idx")
 
 	if err != nil {
 		return nil, err
 	}
 
-	it := store.GetIterator()
+	it := storekv.GetIterator()
 
 	defer it.Close()
 
