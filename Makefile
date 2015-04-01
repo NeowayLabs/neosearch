@@ -19,10 +19,10 @@ cli: build
 
 check: build
 	@-docker rm -vf neosearch-ctn
-	docker run --name neosearch-ctn -v `pwd`:/go/src/github.com/NeowayLabs/neosearch -i -t neosearch-dev-env hack/check.sh
+	docker run --name neosearch-ctn -v `pwd`:/go/src/github.com/NeowayLabs/neosearch -i -t $(DOCKER_DEVIMAGE) hack/check.sh
 
 shell: build
-	docker run --rm -v `pwd`:/go/src/github.com/NeowayLabs/neosearch --privileged -i -t neosearch-dev-env bash
+	docker run --rm -v `pwd`:/go/src/github.com/NeowayLabs/neosearch --privileged -i -t $(DOCKER_DEVIMAGE) bash
 
 build:
 	docker build -t $(DOCKER_DEVIMAGE) .
