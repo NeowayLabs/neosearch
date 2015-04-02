@@ -22,7 +22,9 @@ ENV GOPATH /go
 RUN cd /usr/local/go/src && ./make.bash --no-clean 2>&1
 
 # Grab Go's cover tool for dead-simple code coverage testing
-RUN go get golang.org/x/tools/cmd/cover
-RUN go get github.com/nielsdraaisma/godep
+RUN go get golang.org/x/tools/cmd/cover && \
+    go get github.com/nielsdraaisma/godep && \
+    go get github.com/axw/gocov/gocov && \
+    go get golang.org/x/tools/cmd/cover
 
 WORKDIR /go/src/github.com/NeowayLabs/neosearch
