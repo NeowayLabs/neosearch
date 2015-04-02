@@ -14,8 +14,7 @@ script:
   - go get github.com/axw/gocov/gocov
   - go get github.com/mattn/goveralls
   - if ! go get code.google.com/p/go.tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
-  - go test -coverprofile=coverage.out -tags leveldb -v .
-  - goveralls -coverprofile=coverage.out -service=travis-ci
+  - hack/check.sh
 
 notifications:
   email:
