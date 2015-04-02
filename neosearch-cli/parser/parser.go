@@ -10,7 +10,6 @@ import (
 	"github.com/NeowayLabs/neosearch/engine"
 	"github.com/NeowayLabs/neosearch/index"
 	"github.com/NeowayLabs/neosearch/utils"
-
 	"github.com/iNamik/go_lexer"
 )
 

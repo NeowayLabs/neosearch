@@ -2,9 +2,10 @@ package neosearch_test
 
 import (
 	"fmt"
-	"github.com/NeowayLabs/neosearch"
 	"io/ioutil"
 	"os"
+
+	"github.com/NeowayLabs/neosearch"
 )
 
 func OnErrorPanic(err error) {

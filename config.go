@@ -92,6 +92,7 @@ func KVCacheSize(size int) Option {
 	}
 }
 
+// MaxIndicesOpen set the maximum number of open indices
 func MaxIndicesOpen(size int) Option {
 	return func(c *Config) Option {
 		previous := c.MaxIndicesOpen
@@ -101,6 +102,7 @@ func MaxIndicesOpen(size int) Option {
 	}
 }
 
+// ConfigFromFile loads configuration from YAML file
 func ConfigFromFile(filename string) (*Config, error) {
 	// Load config from file
 	file, err := os.Open(filename)

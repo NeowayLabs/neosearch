@@ -165,6 +165,7 @@ func (neo *NeoSearch) CreateIndex(name string) (*index.Index, error) {
 	return indx, nil
 }
 
+// DeleteIndex does exactly what the name says.
 func (neo *NeoSearch) DeleteIndex(name string) error {
 	neo.Indices.Remove(name)
 
@@ -205,6 +206,7 @@ func (neo *NeoSearch) OpenIndex(name string) (*index.Index, error) {
 	return indx, nil
 }
 
+// IndexExists verifies if the directory of the index given by name exists
 func (neo *NeoSearch) IndexExists(name string) (bool, error) {
 	indexPath := neo.config.DataDir + "/" + name
 	_, err := os.Stat(indexPath)

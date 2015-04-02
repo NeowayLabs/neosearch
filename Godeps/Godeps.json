@@ -1,25 +1,10 @@
 {
 	"ImportPath": "github.com/NeowayLabs/neosearch",
 	"GoVersion": "go1.4.2",
-	"Packages": [
-		"./..."
-	],
 	"Deps": [
-		{
-			"ImportPath": "github.com/gorilla/context",
-			"Rev": "215affda49addc4c8ef7e2534915df2c8c35c6cd"
-		},
-		{
-			"ImportPath": "github.com/gorilla/mux",
-			"Rev": "8096f47503459bcc74d1f4c487b7e6e42e5746b5"
-		},
 		{
 			"ImportPath": "github.com/jmhodges/levigo",
 			"Rev": "1ddad808d437abb2b8a55a950ec2616caa88969b"
-		},
-		{
-			"ImportPath": "github.com/peterh/liner",
-			"Rev": "101d00149fa2a26f55d1ad10e3abe3f17462d6ff"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
