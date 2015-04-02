@@ -38,6 +38,10 @@ func (lru *LRUCache) MaxEntries(max int) {
 	lru.max = max
 }
 
+func (lru *LRUCache) Len() int {
+	return lru.ll.Len()
+}
+
 // Add new interface{} to LRUCache. If already exists an entry with
 // key `key` returns `false` and nothing happens. If the entry
 // not exists in cache, then will be added and returns `true`.

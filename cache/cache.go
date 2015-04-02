@@ -20,4 +20,6 @@ type Cache interface {
 	MaxEntries(max int)
 
 	Clean()
+
+	Len() int
 }
