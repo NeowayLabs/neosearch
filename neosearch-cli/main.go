@@ -5,6 +5,7 @@ import (
 
 	"github.com/NeowayLabs/neosearch/engine"
 	"github.com/NeowayLabs/neosearch/store"
+	"github.com/jteeuwen/go-pkg-optarg"
 )
 
 func main() {
