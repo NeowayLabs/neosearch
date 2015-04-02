@@ -98,12 +98,7 @@ func (ng *Engine) open(name string) (store.KVStore, error) {
 			return nil, err
 		}
 
-		ok = ng.stores.Add(name, storekv)
-
-		if ok == false {
-			panic("Some problem with lru cache")
-		}
-
+		ng.stores.Add(name, storekv)
 		err = storekv.Open(name)
 
 		return storekv, err

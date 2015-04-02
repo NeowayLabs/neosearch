@@ -42,26 +42,15 @@ func (lru *LRUCache) Len() int {
 	return lru.ll.Len()
 }
 
-// Add new interface{} to LRUCache. If already exists an entry with
-// key `key` returns `false` and nothing happens. If the entry
-// not exists in cache, then will be added and returns `true`.
-// If you only need to rank the given key to top, use Get(key).
-func (lru *LRUCache) Add(key string, value interface{}) bool {
+// Add new interface{} value to LRUCache.
+func (lru *LRUCache) Add(key string, value interface{}) {
 	var (
 		elem *list.Element
 		ok   bool
 	)
 
 	if elem, ok = lru.cache[key]; ok {
-		// we can't simply use ll.MoveToFront and
-		// elem.(*entry).value = value
-		// because this way we lost the old ref of
-		// interface{}, GC will deallocate the pointer leaving
-		// the database locked.
-		// Then, be sure of always try lru.Get() and then
-		// lru.Add()
-
-		return false
+		lru.removeElement(elem)
 	}
 
 	elem = lru.ll.PushFront(&entry{key, value})
@@ -70,8 +59,6 @@ func (lru *LRUCache) Add(key string, value interface{}) bool {
 	if lru.ll.Len() > lru.max {
 		lru.removeOldest()
 	}
-
-	return true
 }
 
 // Get the given `key` from cache. If the key exists, it will be ranked

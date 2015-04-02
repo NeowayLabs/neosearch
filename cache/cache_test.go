@@ -39,10 +39,7 @@ func TestLRUAllowAddInfiniValues(t *testing.T) {
 		t.Error("... i dont beliece that ...")
 	}
 
-	if ok := lru.Add("a", 10); !ok {
-		t.Error("Failed to add first entry")
-		return
-	}
+	lru.Add("a", 10)
 
 	if vi, ok = lru.Get("a"); !ok || vi == nil {
 		t.Error("Failed to get entry")
@@ -58,9 +55,7 @@ func TestLRUAllowAddInfiniValues(t *testing.T) {
 		t.Error("Invalid length")
 	}
 
-	if ok := lru.Add("b", 11); !ok {
-		t.Error("Failed to add entry")
-	}
+	lru.Add("b", 11)
 
 	if vi, ok = lru.Get("b"); !ok || vi == nil {
 		t.Error("Failed to get entry")
@@ -80,9 +75,7 @@ func TestLRUAllowAddInfiniValues(t *testing.T) {
 		t.Error("Invalid Length")
 	}
 
-	if ok := lru.Add("c", 12); !ok {
-		t.Error("Failed to add entry")
-	}
+	lru.Add("c", 12)
 
 	if vi, ok = lru.Get("c"); !ok || vi == nil {
 		t.Error("Failed to get entry")
@@ -110,25 +103,19 @@ func TestLRUAllowAddInfiniValues(t *testing.T) {
 
 	lru = NewLRUCache(2)
 
-	if ok := lru.Add("a", 1); !ok {
-		t.Error("Failed to add entry")
-	}
+	lru.Add("a", 1)
 
 	if lru.Len() != 1 {
 		t.Error("Invalid Length")
 	}
 
-	if ok := lru.Add("b", 2); !ok {
-		t.Error("Failed to add entry")
-	}
+	lru.Add("b", 2)
 
 	if lru.Len() != 2 {
 		t.Error("Invalid Length")
 	}
 
-	if ok := lru.Add("c", 3); !ok {
-		t.Error("Failed to add entry")
-	}
+	lru.Add("c", 3)
 
 	if lru.Len() != 2 {
 		t.Error("Invalid Length")

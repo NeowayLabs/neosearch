@@ -92,15 +92,18 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/NeowayLabs/neosearch/cache"
 	"github.com/NeowayLabs/neosearch/engine"
 	"github.com/NeowayLabs/neosearch/index"
 )
+
+const maxIndicesOpen = 50
 
 // NeoSearch is the core of the neosearch package.
 // This structure handles all of the user's interactions with the indices,
 // like CreateIndex, DeleteIndex, UpdateIndex and others.
 type NeoSearch struct {
-	Indices []*index.Index
+	Indices cache.Cache
 
 	config *Config
 	engine *engine.Engine
@@ -117,25 +120,38 @@ func New(cfg *Config) *NeoSearch {
 		cfg.DataDir = cfg.DataDir[0 : len(cfg.DataDir)-1]
 	}
 
-	if cfg.CacheSize == 0 && cfg.EnableCache {
-		cfg.CacheSize = 3 << 30
+	if cfg.KVCacheSize == 0 && cfg.EnableCache {
+		cfg.KVCacheSize = 3 << 30
+	}
+
+	if cfg.MaxIndicesOpen == 0 {
+		cfg.MaxIndicesOpen = maxIndicesOpen
 	}
 
 	neo := &NeoSearch{
-		config: cfg,
+		config:  cfg,
+		Indices: cache.NewLRUCache(cfg.MaxIndicesOpen),
 	}
+
+	neo.Indices.OnRemove(func(key string, value interface{}) {
+		v, ok := value.(*index.Index)
+
+		if ok {
+			v.Close()
+		}
+	})
 
 	return neo
 }
 
 // CreateIndex creates and setup a new index
 func (neo *NeoSearch) CreateIndex(name string) (*index.Index, error) {
-	index, err := index.New(
+	indx, err := index.New(
 		name,
 		index.Config{
 			DataDir:     neo.config.DataDir,
 			Debug:       neo.config.Debug,
-			CacheSize:   neo.config.CacheSize,
+			CacheSize:   neo.config.KVCacheSize,
 			EnableCache: neo.config.EnableCache,
 		},
 		true,
@@ -145,17 +161,12 @@ func (neo *NeoSearch) CreateIndex(name string) (*index.Index, error) {
 		return nil, err
 	}
 
-	neo.Indices = append(neo.Indices, index)
-	return index, nil
+	neo.Indices.Add(name, indx)
+	return indx, nil
 }
 
 func (neo *NeoSearch) DeleteIndex(name string) error {
-	for i, index := range neo.Indices {
-		if index.Name == name {
-			index.Close()
-			neo.Indices = append(neo.Indices[:i], neo.Indices[i+1:]...)
-		}
-	}
+	neo.Indices.Remove(name)
 
 	if exists, err := neo.IndexExists(name); exists == true && err == nil {
 		err := os.RemoveAll(neo.config.DataDir + "/" + name)
@@ -175,12 +186,12 @@ func (neo *NeoSearch) OpenIndex(name string) (*index.Index, error) {
 		return nil, err
 	}
 
-	index, err := index.New(
+	indx, err := index.New(
 		name,
 		index.Config{
 			DataDir:     neo.config.DataDir,
 			Debug:       neo.config.Debug,
-			CacheSize:   neo.config.CacheSize,
+			CacheSize:   neo.config.KVCacheSize,
 			EnableCache: neo.config.EnableCache,
 		},
 		false,
@@ -190,8 +201,8 @@ func (neo *NeoSearch) OpenIndex(name string) (*index.Index, error) {
 		return nil, err
 	}
 
-	neo.Indices = append(neo.Indices, index)
-	return index, nil
+	neo.Indices.Add(name, indx)
+	return indx, nil
 }
 
 func (neo *NeoSearch) IndexExists(name string) (bool, error) {
@@ -211,10 +222,5 @@ func (neo *NeoSearch) IndexExists(name string) (bool, error) {
 
 // Close all of the open indices
 func (neo *NeoSearch) Close() {
-	for idx := range neo.Indices {
-		index := neo.Indices[idx]
-		index.Close()
-	}
-
-	neo.Indices = make([]*index.Index, 0)
+	neo.Indices.Clean()
 }

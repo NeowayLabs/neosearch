@@ -4,7 +4,7 @@ type OnRemoveCb func(key string, value interface{})
 
 type Cache interface {
 	// Add new entry to cache
-	Add(key string, value interface{}) bool
+	Add(key string, value interface{})
 
 	// Get the entry with `key`
 	Get(key string) (interface{}, bool)

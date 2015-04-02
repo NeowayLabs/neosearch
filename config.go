@@ -25,7 +25,10 @@ type Config struct {
 
 	// CacheSize is the length of LRU cache used by the storage engine
 	// Default is 1GB
-	CacheSize int `yaml:"cacheSize"`
+	KVCacheSize int `yaml:"cacheSize"`
+
+	// IndicesCacheSize is the max number of indices maintained open
+	MaxIndicesOpen int `yaml:"maxIndicesOpen"`
 
 	// EnableCache enable/disable cache support
 	EnableCache bool `yaml:"enableCache"`
@@ -75,17 +78,26 @@ func DataDir(path string) Option {
 	}
 }
 
-// CacheSize set the size of the cache for the LRU storage cache.
+// KVCacheSize set the size of the cache for the LRU storage cache.
 // The link below have more details on the cache mechanism of the
 // leveldb (or any other LSM compatible):
 // More details in the section "Performance" of the link below:
 // http://htmlpreview.github.io/?https://github.com/google/leveldb/blob/master/doc/index.html
-func CacheSize(size int) Option {
+func KVCacheSize(size int) Option {
 	return func(c *Config) Option {
-		previous := c.CacheSize
-		c.CacheSize = size
+		previous := c.KVCacheSize
+		c.KVCacheSize = size
 
-		return CacheSize(previous)
+		return KVCacheSize(previous)
+	}
+}
+
+func MaxIndicesOpen(size int) Option {
+	return func(c *Config) Option {
+		previous := c.MaxIndicesOpen
+		c.MaxIndicesOpen = size
+
+		return MaxIndicesOpen(previous)
 	}
 }
 
