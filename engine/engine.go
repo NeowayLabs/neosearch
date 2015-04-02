@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/NeowayLabs/neosearch/cache"
 	"github.com/NeowayLabs/neosearch/store"
 	"github.com/NeowayLabs/neosearch/utils"
 )
@@ -34,7 +35,7 @@ type NGConfig struct {
 
 // Engine type
 type Engine struct {
-	stores store.Cache
+	stores cache.Cache
 	config NGConfig
 }
 
@@ -61,7 +62,7 @@ func New(config NGConfig) *Engine {
 
 	ng := &Engine{
 		config: config,
-		stores: store.NewLRUCache(config.OpenCacheSize),
+		stores: cache.NewLRUCache(config.OpenCacheSize),
 	}
 
 	ng.stores.OnRemove(func(key string, value interface{}) {

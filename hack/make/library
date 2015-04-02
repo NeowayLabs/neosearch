@@ -2,6 +2,6 @@
 
 set -e
 
-go build -tags "$STORAGE_ENGINE" -v
+godep go build -tags "$STORAGE_ENGINE" -v
 
 

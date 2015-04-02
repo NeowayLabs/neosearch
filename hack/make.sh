@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-./hack/deps.sh
-
 VERSION=0.1.0
 
 DEFAULT_BUNDLES=(

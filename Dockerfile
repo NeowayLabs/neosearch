@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
 	build-essential \
 	curl \
 	git \
+	mercurial \
 	--no-install-recommends
 
 # Install Go
@@ -22,7 +23,6 @@ RUN cd /usr/local/go/src && ./make.bash --no-clean 2>&1
 
 # Grab Go's cover tool for dead-simple code coverage testing
 RUN go get golang.org/x/tools/cmd/cover
+RUN go get github.com/nielsdraaisma/godep
 
 WORKDIR /go/src/github.com/NeowayLabs/neosearch
-
-COPY . /go/src/github.com/NeowayLabs/neosearch
