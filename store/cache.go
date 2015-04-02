@@ -2,14 +2,14 @@ package store
 
 import "container/list"
 
-type OnRemoveCb func(key string, value KVStore)
+type OnRemoveCb func(key string, value interface{})
 
 type Cache interface {
 	// Add new entry to cache
-	Add(key string, value KVStore) bool
+	Add(key string, value interface{}) bool
 
 	// Get the entry with `key`
-	Get(key string) (KVStore, bool)
+	Get(key string) (interface{}, bool)
 
 	// Remove `key` from cache
 	Remove(key string) bool
@@ -35,11 +35,15 @@ type LRUCache struct {
 
 type entry struct {
 	key   string
-	value KVStore
+	value interface{}
 }
 
-// NewCache returns a new LRU cache for KVStore entries
+// NewCache returns a new LRU cache for interface{} entries
 func NewLRUCache(max int) *LRUCache {
+	if max <= 0 {
+		return nil
+	}
+
 	return &LRUCache{
 		max:   max,
 		ll:    list.New(),
@@ -56,11 +60,11 @@ func (lru *LRUCache) MaxEntries(max int) {
 	lru.max = max
 }
 
-// Add new KVStore to LRUCache. If already exists an entry with
+// Add new interface{} to LRUCache. If already exists an entry with
 // key `key` returns `false` and nothing happens. If the entry
 // not exists in cache, then will be added and returns `true`.
 // If you only need to rank the given key to top, use Get(key).
-func (lru *LRUCache) Add(key string, value KVStore) bool {
+func (lru *LRUCache) Add(key string, value interface{}) bool {
 	var (
 		elem *list.Element
 		ok   bool
@@ -70,7 +74,7 @@ func (lru *LRUCache) Add(key string, value KVStore) bool {
 		// we can't simply use ll.MoveToFront and
 		// elem.(*entry).value = value
 		// because this way we lost the old ref of
-		// KVStore, GC will deallocate the pointer leaving
+		// interface{}, GC will deallocate the pointer leaving
 		// the database locked.
 		// Then, be sure of always try lru.Get() and then
 		// lru.Add()
@@ -90,7 +94,7 @@ func (lru *LRUCache) Add(key string, value KVStore) bool {
 
 // Get the given `key` from cache. If the key exists, it will be ranked
 // to top of the cache.
-func (lru *LRUCache) Get(key string) (KVStore, bool) {
+func (lru *LRUCache) Get(key string) (interface{}, bool) {
 	var (
 		elem *list.Element
 		ok   bool
@@ -161,7 +165,7 @@ func (lru *LRUCache) Clean() {
 		cacheLen int = len(lru.cache)
 		elem     *list.Element
 		key      string
-		value    KVStore
+		value    interface{}
 	)
 
 	if lru.cache == nil || cacheLen == 0 {

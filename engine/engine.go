@@ -64,9 +64,15 @@ func New(config NGConfig) *Engine {
 		stores: store.NewLRUCache(config.OpenCacheSize),
 	}
 
-	ng.stores.OnRemove(func(key string, value store.KVStore) {
-		if value.IsOpen() {
-			value.Close()
+	ng.stores.OnRemove(func(key string, value interface{}) {
+		storekv, ok := value.(store.KVStore)
+
+		if !ok {
+			panic("Unexpected value in cache")
+		}
+
+		if storekv.IsOpen() {
+			storekv.Close()
 		}
 	})
 
@@ -78,11 +84,13 @@ func (ng *Engine) open(name string) (store.KVStore, error) {
 	var (
 		err     error
 		storekv store.KVStore
+		ok      bool
+		value   interface{}
 	)
 
-	storekv, ok := ng.stores.Get(name)
+	value, ok = ng.stores.Get(name)
 
-	if ok == false || storekv == nil {
+	if ok == false || value == nil {
 		storekv, err = store.New(ng.config.KVCfg)
 
 		if err != nil {
@@ -100,7 +108,13 @@ func (ng *Engine) open(name string) (store.KVStore, error) {
 		return storekv, err
 	}
 
-	return storekv, err
+	storekv, ok = value.(store.KVStore)
+
+	if ok {
+		return storekv, nil
+	}
+
+	return nil, errors.New("Failed to convert cache entry to KVStore")
 }
 
 // Execute the given command
