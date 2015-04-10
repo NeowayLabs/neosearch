@@ -56,6 +56,10 @@ func (server *HTTPServer) createRoutes() {
 	//	server.router.Handle("/{index}", indexAddHandler).Methods("POST")
 }
 
+func (server *HTTPServer) GetRoutes() *mux.Router {
+	return server.router
+}
+
 func (server *HTTPServer) Start() error {
 	hostPort := server.config.Host + ":" + strconv.Itoa(int(server.config.Port))
 	log.Printf("Listening on %s", hostPort)
