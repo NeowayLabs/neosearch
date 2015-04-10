@@ -264,14 +264,22 @@ func (i *Index) buildAddDocument(id uint64, doc []byte) ([]engine.Command, error
 	return commands, nil
 }
 
-// Get retrieves the document by id
-func (i *Index) Get(id uint64) ([]byte, error) {
-	return i.engine.Execute(engine.Command{
+func (i *Index) buildGet(id uint64) engine.Command {
+	return engine.Command{
 		Index:   "document.db",
 		Command: "get",
 		Key:     utils.Uint64ToBytes(id),
 		KeyType: engine.TypeUint,
-	})
+	}
+}
+
+// Get retrieves the document by id
+func (i *Index) Get(id uint64) ([]byte, error) {
+	return i.engine.Execute(i.buildGet(id))
+}
+
+func (i *Index) GetAnalyze(id uint64) (engine.Command, error) {
+	return i.buildGet(id), nil
 }
 
 func (i *Index) buildBatchOn(storage string) (engine.Command, error) {

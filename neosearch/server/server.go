@@ -43,6 +43,7 @@ func (server *HTTPServer) createRoutes() {
 	createIndexHandler := index.NewCreateHandler(server.search)
 	deleteIndexHandler := index.NewDeleteHandler(server.search)
 	indexGetHandler := index.NewGetHandler(server.search)
+	indexGetAnalyzeHandler := index.NewGetAnalyzeHandler(server.search)
 	indexAddHandler := index.NewAddHandler(server.search)
 
 	server.router.Handle("/debug/vars", http.DefaultServeMux)
@@ -52,6 +53,7 @@ func (server *HTTPServer) createRoutes() {
 	server.router.Handle("/{index}", createIndexHandler).Methods("PUT")
 	server.router.Handle("/{index}", deleteIndexHandler).Methods("DELETE")
 	server.router.Handle("/{index}/{id}", indexGetHandler).Methods("GET")
+	server.router.Handle("/{index}/{id}/analyze", indexGetAnalyzeHandler).Methods("GET")
 	server.router.Handle("/{index}/{id}", indexAddHandler).Methods("POST")
 	//	server.router.Handle("/{index}", indexAddHandler).Methods("POST")
 }
