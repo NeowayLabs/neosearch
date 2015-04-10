@@ -89,12 +89,17 @@ package neosearch
 
 import (
 	"errors"
+	"expvar"
 	"fmt"
 	"os"
 
 	"github.com/NeowayLabs/neosearch/cache"
 	"github.com/NeowayLabs/neosearch/engine"
 	"github.com/NeowayLabs/neosearch/index"
+)
+
+var (
+	cachedIndices = expvar.NewInt("cachedIndices")
 )
 
 const maxIndicesOpen = 50
@@ -167,12 +172,14 @@ func (neo *NeoSearch) CreateIndex(name string) (*index.Index, error) {
 	}
 
 	neo.indices.Add(name, indx)
+	go cachedIndices.Set(int64(neo.indices.Len()))
 	return indx, nil
 }
 
 // DeleteIndex does exactly what the name says.
 func (neo *NeoSearch) DeleteIndex(name string) error {
 	neo.indices.Remove(name)
+	go cachedIndices.Set(int64(neo.indices.Len()))
 
 	if exists, err := neo.IndexExists(name); exists == true && err == nil {
 		err := os.RemoveAll(neo.config.DataDir + "/" + name)
@@ -227,6 +234,7 @@ func (neo *NeoSearch) OpenIndex(name string) (*index.Index, error) {
 	}
 
 	neo.indices.Add(name, indx)
+	go cachedIndices.Set(int64(neo.indices.Len()))
 	return indx, nil
 }
 
@@ -249,4 +257,5 @@ func (neo *NeoSearch) IndexExists(name string) (bool, error) {
 // Close all of the open indices
 func (neo *NeoSearch) Close() {
 	neo.indices.Clean()
+	go cachedIndices.Set(int64(neo.indices.Len()))
 }
