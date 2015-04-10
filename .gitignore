@@ -1,1 +1,4 @@
 /neosearch/neosearch
+bundles/
+*.test
+profile.cov
