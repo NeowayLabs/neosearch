@@ -184,15 +184,34 @@ func (neo *NeoSearch) DeleteIndex(name string) error {
 
 // OpenIndex open a existing index for read/write operations.
 func (neo *NeoSearch) OpenIndex(name string) (*index.Index, error) {
-	exists, err := neo.IndexExists(name)
+	var (
+		ok         bool
+		cacheIndex interface{}
+		indx       *index.Index
+		err        error
+	)
 
-	if err == nil && !exists {
+	cacheIndex, ok = neo.indices.Get(name)
+
+	if ok && cacheIndex != nil {
+		indx, ok = cacheIndex.(*index.Index)
+
+		if !ok {
+			panic("NeoSearch has inconsistent data stored in cache")
+		}
+
+		return indx, nil
+	}
+
+	ok, err = neo.IndexExists(name)
+
+	if err == nil && !ok {
 		return nil, fmt.Errorf("Index '%s' not found in directory '%s'.", name, neo.config.DataDir)
 	} else if err != nil {
 		return nil, err
 	}
 
-	indx, err := index.New(
+	indx, err = index.New(
 		name,
 		index.Config{
 			DataDir:     neo.config.DataDir,

@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/NeowayLabs/neosearch/index"
 )
 
 var DataDirTmp string
@@ -73,6 +75,69 @@ cleanup:
 		indexDir := DataDirTmp + "/" + indexName
 		os.RemoveAll(indexDir)
 	}
+}
+
+func TestOpenIndexCache(t *testing.T) {
+	var (
+		err  error
+		indx *index.Index
+	)
+
+	cfg := NewConfig()
+	cfg.Option(DataDir(DataDirTmp))
+	cfg.Option(Debug(false))
+
+	neo := New(cfg)
+
+	_, err = neo.CreateIndex("test-cache")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if neo.GetIndices().Len() != 1 {
+		t.Error("Cache problem")
+		goto cleanup
+	}
+
+	indx, err = neo.OpenIndex("test-cache")
+
+	if err != nil {
+		t.Error(err)
+		goto cleanup
+	}
+
+	if indx == nil {
+		t.Error("Failed to open index")
+		goto cleanup
+	}
+
+	if neo.GetIndices().Len() != 1 {
+		t.Error("Cache problem")
+		goto cleanup
+	}
+
+	indx, err = neo.OpenIndex("test-cache")
+
+	if err != nil {
+		t.Error(err)
+		goto cleanup
+	}
+
+	if indx == nil {
+		t.Error("Failed to open index")
+		goto cleanup
+	}
+
+	if neo.GetIndices().Len() != 1 {
+		t.Error("Cache problem")
+		goto cleanup
+	}
+
+cleanup:
+	neo.Close()
+	neo.DeleteIndex("test-cache")
+
 }
 
 func TestDeleteIndex(t *testing.T) {
