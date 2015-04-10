@@ -103,7 +103,7 @@ const maxIndicesOpen = 50
 // This structure handles all of the user's interactions with the indices,
 // like CreateIndex, DeleteIndex, UpdateIndex and others.
 type NeoSearch struct {
-	Indices cache.Cache
+	indices cache.Cache
 
 	config *Config
 	engine *engine.Engine
@@ -130,10 +130,10 @@ func New(cfg *Config) *NeoSearch {
 
 	neo := &NeoSearch{
 		config:  cfg,
-		Indices: cache.NewLRUCache(cfg.MaxIndicesOpen),
+		indices: cache.NewLRUCache(cfg.MaxIndicesOpen),
 	}
 
-	neo.Indices.OnRemove(func(key string, value interface{}) {
+	neo.indices.OnRemove(func(key string, value interface{}) {
 		v, ok := value.(*index.Index)
 
 		if ok {
@@ -142,6 +142,11 @@ func New(cfg *Config) *NeoSearch {
 	})
 
 	return neo
+}
+
+// GetIndices returns cache indices
+func (neo *NeoSearch) GetIndices() cache.Cache {
+	return neo.indices
 }
 
 // CreateIndex creates and setup a new index
@@ -161,13 +166,13 @@ func (neo *NeoSearch) CreateIndex(name string) (*index.Index, error) {
 		return nil, err
 	}
 
-	neo.Indices.Add(name, indx)
+	neo.indices.Add(name, indx)
 	return indx, nil
 }
 
 // DeleteIndex does exactly what the name says.
 func (neo *NeoSearch) DeleteIndex(name string) error {
-	neo.Indices.Remove(name)
+	neo.indices.Remove(name)
 
 	if exists, err := neo.IndexExists(name); exists == true && err == nil {
 		err := os.RemoveAll(neo.config.DataDir + "/" + name)
@@ -202,7 +207,7 @@ func (neo *NeoSearch) OpenIndex(name string) (*index.Index, error) {
 		return nil, err
 	}
 
-	neo.Indices.Add(name, indx)
+	neo.indices.Add(name, indx)
 	return indx, nil
 }
 
@@ -224,5 +229,5 @@ func (neo *NeoSearch) IndexExists(name string) (bool, error) {
 
 // Close all of the open indices
 func (neo *NeoSearch) Close() {
-	neo.Indices.Clean()
+	neo.indices.Clean()
 }

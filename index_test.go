@@ -294,7 +294,7 @@ func TestPrefixMatch(t *testing.T) {
 cleanup:
 	neo.Close()
 
-	if neo.Indices.Len() != 0 {
+	if neo.GetIndices().Len() != 0 {
 		t.Error("Failed to close all neosearch indices")
 	}
 
@@ -390,7 +390,7 @@ func TestBatchAdd(t *testing.T) {
 
 	neo.Close()
 
-	if neo.Indices.Len() != 0 {
+	if neo.GetIndices().Len() != 0 {
 		t.Error("Failed to close all neosearch indices")
 	}
 
