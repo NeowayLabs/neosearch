@@ -5,6 +5,7 @@ set -e
 DEST=$1
 BINARY_NAME="neosearch-$VERSION"
 
+echo "Building with -tags $STORAGE_ENGINE"
 godep go build \
    -tags "$STORAGE_ENGINE" \
    -o "$DEST/$BINARY_NAME" \

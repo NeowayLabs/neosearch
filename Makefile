@@ -2,8 +2,14 @@
 
 DOCKER_DEVIMAGE = neosearch-dev-env
 DOCKER_PATH = /go/src/github.com/NeowayLabs/neosearch
+CURRENT_PATH = $(shell pwd)
+SHELL_EXPORT := $(foreach v,$(MAKE_ENV),$(v)='$($(v))')
 
-export STORAGE_ENGINE="leveldb"
+ifeq ($(STORAGE_ENGINE),)
+	export STORAGE_ENGINE=leveldb
+else
+	export STORAGE_ENGINE
+endif
 
 all: build
 	@-docker rm -vf neosearch-ctn
@@ -11,7 +17,8 @@ all: build
 
 server: build
 	@-docker rm -vf neosearch-ctn
-	docker run --name neosearch-ctn -v `pwd`:$(DOCKER_PATH) -i -t $(DOCKER_DEVIMAGE) hack/make.sh server
+	@echo "STORAGE_ENGINE: $(STORAGE_ENGINE)"
+	docker run --name neosearch-ctn -e STORAGE_ENGINE=$(STORAGE_ENGINE) -v $(CURRENT_PATH):$(DOCKER_PATH) -i -t $(DOCKER_DEVIMAGE) hack/make.sh server
 
 cli: build
 	@-docker rm -vf neosearch-ctn
