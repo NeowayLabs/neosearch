@@ -10,6 +10,7 @@ import (
 )
 
 var DataDirTmp string
+var sampleIndex = "sample"
 
 func init() {
 	var err error
@@ -18,6 +19,8 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	os.Mkdir(DataDirTmp+"/"+sampleIndex, 0755)
 }
 
 func execSequence(t *testing.T, ng *Engine, cmds []Command) {
@@ -30,8 +33,8 @@ func execSequence(t *testing.T, ng *Engine, cmds []Command) {
 	}
 }
 
-func cmpIterator(t *testing.T, itReturns []map[int64]string, ng *Engine, seek []byte, index string) {
-	storekv, err := ng.GetStore(index)
+func cmpIterator(t *testing.T, itReturns []map[int64]string, ng *Engine, seek []byte, index, database string) {
+	storekv, err := ng.GetStore(index, database)
 
 	if err != nil {
 		t.Error(err)
@@ -72,58 +75,67 @@ func TestEngineIntegerKeyOrder(t *testing.T) {
 
 	cmds := []Command{
 		{
-			Index:   "test.idx",
-			Key:     []byte("AAA"),
-			Value:   []byte("value AAA"),
-			Command: "set",
+			Index:    "sample",
+			Database: "test.idx",
+			Key:      []byte("AAA"),
+			Value:    []byte("value AAA"),
+			Command:  "set",
 		},
 		{
-			Index:   "test.idx",
-			Key:     utils.Uint64ToBytes(1),
-			Value:   []byte("value 1"),
-			Command: "set",
+			Index:    "sample",
+			Database: "test.idx",
+			Key:      utils.Uint64ToBytes(1),
+			Value:    []byte("value 1"),
+			Command:  "set",
 		},
 		{
-			Index:   "test.idx",
-			Key:     []byte("BBB"),
-			Value:   []byte("value BBB"),
-			Command: "set",
+			Index:    "sample",
+			Database: "test.idx",
+			Key:      []byte("BBB"),
+			Value:    []byte("value BBB"),
+			Command:  "set",
 		},
 		{
-			Index:   "test.idx",
-			Key:     utils.Uint64ToBytes(2),
-			Value:   []byte("value 2"),
-			Command: "set",
+			Index:    "sample",
+			Database: "test.idx",
+			Key:      utils.Uint64ToBytes(2),
+			Value:    []byte("value 2"),
+			Command:  "set",
 		},
 		{
-			Index:   "test.idx",
-			Key:     utils.Uint64ToBytes(2000),
-			Value:   []byte("value 2000"),
-			Command: "set",
+			Index:    "sample",
+			Database: "test.idx",
+			Key:      utils.Uint64ToBytes(2000),
+			Value:    []byte("value 2000"),
+			Command:  "set",
 		},
 		{
-			Index:   "test.idx",
-			Key:     []byte("2000"),
-			Value:   []byte("value 2000"),
-			Command: "set",
+			Index:    "sample",
+			Database: "test.idx",
+			Key:      []byte("2000"),
+			Value:    []byte("value 2000"),
+			Command:  "set",
 		},
 		{
-			Index:   "test.idx",
-			Key:     utils.Uint64ToBytes(100000),
-			Value:   []byte("value 100000"),
-			Command: "set",
+			Index:    "sample",
+			Database: "test.idx",
+			Key:      utils.Uint64ToBytes(100000),
+			Value:    []byte("value 100000"),
+			Command:  "set",
 		},
 		{
-			Index:   "test.idx",
-			Key:     utils.Uint64ToBytes(1000000),
-			Value:   []byte("value 1000000"),
-			Command: "set",
+			Index:    "sample",
+			Database: "test.idx",
+			Key:      utils.Uint64ToBytes(1000000),
+			Value:    []byte("value 1000000"),
+			Command:  "set",
 		},
 		{
-			Index:   "test.idx",
-			Key:     utils.Uint64ToBytes(10000000000000),
-			Value:   []byte("value 10000000000000"),
-			Command: "set",
+			Index:    "sample",
+			Database: "test.idx",
+			Key:      utils.Uint64ToBytes(10000000000000),
+			Value:    []byte("value 10000000000000"),
+			Command:  "set",
 		},
 	}
 
@@ -150,8 +162,8 @@ func TestEngineIntegerKeyOrder(t *testing.T) {
 		},
 	}
 
-	cmpIterator(t, itReturns, ng, utils.Uint64ToBytes(1), "test.idx")
+	cmpIterator(t, itReturns, ng, utils.Uint64ToBytes(1), "sample", "test.idx")
 
 	defer ng.Close()
-	os.RemoveAll(DataDirTmp + "/test.idx")
+	os.RemoveAll(DataDirTmp)
 }

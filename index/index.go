@@ -47,6 +47,8 @@ type Index struct {
 
 	info      *IndexInfo
 	infoMutex *sync.Mutex
+
+	fullDir string
 }
 
 // ValidateIndexName verifies if name is valid NeoSearch index name
@@ -87,8 +89,7 @@ func (i *Index) setup(create bool) error {
 		}
 	}
 
-	// index dataDir = <neosearch datadir> + "/" + <index name>
-	i.config.DataDir = dataDir
+	i.fullDir = dataDir
 
 	i.engine = engine.New(engine.NGConfig{
 		KVCfg: &store.KVConfig{
@@ -103,7 +104,7 @@ func (i *Index) setup(create bool) error {
 }
 
 func (i *Index) createInfoFile() error {
-	statsFile := i.config.DataDir + "/" + infoFilename
+	statsFile := i.fullDir + "/" + infoFilename
 	jsonContent, err := json.Marshal(i.info)
 
 	if err != nil {
@@ -141,7 +142,7 @@ func (i *Index) updateInfo(indexCounter map[string]uint64) {
 	}
 
 	i.infoMutex.Lock()
-	os.Remove(i.config.DataDir + "/" + infoFilename)
+	os.Remove(i.fullDir + "/" + infoFilename)
 	i.createInfoFile()
 	i.infoMutex.Unlock()
 }
@@ -157,8 +158,9 @@ func (i *Index) FlushBatch() {
 	// flush the WriteBatch
 	for _, storeName := range i.flushStorages {
 		i.engine.Execute(engine.Command{
-			Index:   storeName,
-			Command: "flushbatch",
+			Index:    i.Name,
+			Database: storeName,
+			Command:  "flushbatch",
 		})
 
 		if i.config.Debug {
@@ -253,7 +255,8 @@ func (i *Index) buildAddDocument(id uint64, doc []byte) ([]engine.Command, error
 	}
 
 	cmd := engine.Command{}
-	cmd.Index = dbName
+	cmd.Database = dbName
+	cmd.Index = i.Name
 	cmd.Key = utils.Uint64ToBytes(id)
 	cmd.KeyType = engine.TypeUint
 	cmd.Value = doc
@@ -266,10 +269,11 @@ func (i *Index) buildAddDocument(id uint64, doc []byte) ([]engine.Command, error
 
 func (i *Index) buildGet(id uint64) engine.Command {
 	return engine.Command{
-		Index:   "document.db",
-		Command: "get",
-		Key:     utils.Uint64ToBytes(id),
-		KeyType: engine.TypeUint,
+		Index:    i.Name,
+		Database: dbName,
+		Command:  "get",
+		Key:      utils.Uint64ToBytes(id),
+		KeyType:  engine.TypeUint,
 	}
 }
 
@@ -299,8 +303,9 @@ func (i *Index) buildBatchOn(storage string) (engine.Command, error) {
 	i.flushStorages = append(i.flushStorages, storage)
 
 	command := engine.Command{
-		Index:   storage,
-		Command: "batch",
+		Index:    i.Name,
+		Database: storage,
+		Command:  "batch",
 	}
 
 	return command, nil
@@ -432,7 +437,8 @@ func (i *Index) buildIndexString(id uint64, key []byte, value string) ([]engine.
 	// TODO: Optimize array of tokens. Need be *unique* tokens
 	for _, t := range tokens {
 		cmd := engine.Command{}
-		cmd.Index = storageName
+		cmd.Index = i.Name
+		cmd.Database = storageName
 		cmd.Command = "mergeset"
 		cmd.Key = []byte(t)
 		cmd.KeyType = engine.TypeString
@@ -444,7 +450,8 @@ func (i *Index) buildIndexString(id uint64, key []byte, value string) ([]engine.
 
 	// Index all string
 	cmd := engine.Command{}
-	cmd.Index = string(key) + ".idx"
+	cmd.Index = i.Name
+	cmd.Database = string(key) + ".idx"
 	cmd.Command = "mergeset"
 	cmd.Key = []byte(value)
 	cmd.KeyType = engine.TypeString
@@ -469,7 +476,8 @@ func (i *Index) buildIndexFloat64(id uint64, key []byte, value float64) ([]engin
 	}
 
 	cmd := engine.Command{}
-	cmd.Index = storageName
+	cmd.Index = i.Name
+	cmd.Database = storageName
 	cmd.Command = "mergeset"
 	cmd.Key = utils.Float64ToBytes(value)
 	cmd.KeyType = engine.TypeFloat
@@ -493,7 +501,8 @@ func (i *Index) buildIndexInt64(id uint64, key []byte, value int64) ([]engine.Co
 	}
 
 	cmd := engine.Command{}
-	cmd.Index = storageName
+	cmd.Index = i.Name
+	cmd.Database = storageName
 	cmd.Command = "mergeset"
 	cmd.Key = utils.Int64ToBytes(value)
 	cmd.KeyType = engine.TypeInt

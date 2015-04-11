@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"path/filepath"
 
 	"github.com/NeowayLabs/neosearch/utils"
 
@@ -79,18 +80,20 @@ func (lvdb *LVDB) setup() {
 }
 
 // Open the database
-func (lvdb *LVDB) Open(dbname string) error {
+func (lvdb *LVDB) Open(indexName, databaseName string) error {
 	var err error
 
-	if !validateDatabaseName(dbname) {
-		return fmt.Errorf("Invalid database name: %s", dbname)
+	if !validateDatabaseName(databaseName) {
+		return fmt.Errorf("Invalid  name: %s", databaseName)
 	}
 
-	// We avoid some cycles by not checking the last '/'
-	fullPath := lvdb.Config.DataDir + "/" + dbname
+	// index should exists
+	fullPath := (lvdb.Config.DataDir + string(filepath.Separator) +
+		indexName + string(filepath.Separator) + databaseName)
+
 	lvdb._db, err = levigo.Open(fullPath, lvdb._opts)
 
-	if lvdb.Config.Debug {
+	if err == nil && lvdb.Config.Debug {
 		fmt.Printf("Database '%s' open: %s\n", fullPath, err)
 	}
 

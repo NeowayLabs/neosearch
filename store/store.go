@@ -5,7 +5,7 @@ import "errors"
 // KVStore is the key/value store interface for other backend kv stores.
 type KVStore interface {
 	// Open the database
-	Open(string) error
+	Open(string, string) error
 	Get([]byte) ([]byte, error)
 	Set([]byte, []byte) error
 	MergeSet([]byte, uint64) error

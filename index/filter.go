@@ -13,7 +13,8 @@ func (i *Index) filterTerm(field, value []byte) ([]uint64, error) {
 	)
 
 	cmd := engine.Command{}
-	cmd.Index = string(field) + ".idx"
+	cmd.Index = i.Name
+	cmd.Database = string(field) + ".idx"
 	cmd.Command = "get"
 	cmd.Key = value
 	data, err := i.engine.Execute(cmd)
@@ -60,7 +61,7 @@ func (i *Index) matchPrefix(field []byte, value []byte) ([]uint64, error) {
 		docIDs []uint64
 	)
 
-	storekv, err := i.engine.GetStore(string(field) + ".idx")
+	storekv, err := i.engine.GetStore(i.Name, string(field)+".idx")
 
 	if err != nil {
 		return nil, err

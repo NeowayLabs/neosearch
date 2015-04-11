@@ -189,7 +189,14 @@ func FromReader(file io.Reader, listCommands *[]engine.Command) error {
 					// TokenWord is the Index name?
 					// using <TokenWord> ...
 				} else if pState.IsUsing {
-					command.Index = tokenValue
+					indexDbParts := strings.Split(tokenValue, ".")
+
+					if len(indexDbParts) < 2 {
+						return fmt.Errorf("Invalid USING <index>.<database>: %s", tokenValue)
+					}
+
+					command.Index = indexDbParts[0]
+					command.Database = strings.Join(indexDbParts[1:], ".")
 					pState.IsUsing = false
 
 					// TokenWord is the key of command?

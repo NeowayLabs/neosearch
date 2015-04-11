@@ -7,9 +7,19 @@ import (
 	"github.com/NeowayLabs/neosearch/utils"
 )
 
-// Command defines a NeoSearch command
+// Command defines a NeoSearch internal command.
+// This command describes a single operation in the index storage and is
+// decomposed in the following parts:
+//   - Index
+//   - Database
+//   - Key
+//   - KeyType
+//   - Value
+//   - ValueType
+//   - Batch
 type Command struct {
 	Index     string
+	Database  string
 	Command   string
 	Key       []byte
 	KeyType   uint8
@@ -57,11 +67,11 @@ func (c Command) Reverse() string {
 
 	switch c.Command {
 	case "set", "mergeset":
-		line = fmt.Sprintf("USING %s %s %s %s;", c.Index, c.Command, keyStr, valStr)
+		line = fmt.Sprintf("USING %s.%s %s %s %s;", c.Index, c.Database, c.Command, keyStr, valStr)
 	case "batch", "flushbatch":
-		line = fmt.Sprintf("USING %s %s;", c.Index, c.Command)
+		line = fmt.Sprintf("USING %s.%s %s;", c.Index, c.Database, c.Command)
 	case "get", "delete":
-		line = fmt.Sprintf("USING %s %s %s;", c.Index, c.Command, keyStr)
+		line = fmt.Sprintf("USING %s.%s %s %s;", c.Index, c.Database, c.Command, keyStr)
 	default:
 		panic(fmt.Errorf("Invalid command: %s: %v", c.Command, c))
 	}

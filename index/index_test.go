@@ -87,7 +87,8 @@ func TestBuildAddDocument(t *testing.T) {
 
 	expectedCommands = []engine.Command{
 		{
-			Index:     "document.db",
+			Index:     indexName,
+			Database:  "document.db",
 			Key:       utils.Uint64ToBytes(1),
 			KeyType:   engine.TypeUint,
 			Value:     docJSON,
@@ -95,7 +96,8 @@ func TestBuildAddDocument(t *testing.T) {
 			Command:   "set",
 		},
 		{
-			Index:     "id.idx",
+			Index:     indexName,
+			Database:  "id.idx",
 			Key:       utils.Float64ToBytes(1),
 			KeyType:   engine.TypeFloat,
 			Value:     utils.Uint64ToBytes(1),
@@ -115,7 +117,8 @@ func TestBuildAddDocument(t *testing.T) {
 
 	expectedCommands = []engine.Command{
 		{
-			Index:     "document.db",
+			Index:     indexName,
+			Database:  "document.db",
 			Command:   "set",
 			Key:       utils.Uint64ToBytes(2),
 			KeyType:   engine.TypeUint,
@@ -123,7 +126,8 @@ func TestBuildAddDocument(t *testing.T) {
 			ValueType: engine.TypeString,
 		},
 		{
-			Index:     "description.idx",
+			Index:     indexName,
+			Database:  "description.idx",
 			Command:   "mergeset",
 			Key:       []byte("neoway"),
 			KeyType:   engine.TypeString,
@@ -131,7 +135,8 @@ func TestBuildAddDocument(t *testing.T) {
 			ValueType: engine.TypeUint,
 		},
 		{
-			Index:     "description.idx",
+			Index:     indexName,
+			Database:  "description.idx",
 			Command:   "mergeset",
 			Key:       []byte("full"),
 			KeyType:   engine.TypeString,
@@ -139,7 +144,8 @@ func TestBuildAddDocument(t *testing.T) {
 			ValueType: engine.TypeUint,
 		},
 		{
-			Index:     "description.idx",
+			Index:     indexName,
+			Database:  "description.idx",
 			Command:   "mergeset",
 			Key:       []byte("text"),
 			KeyType:   engine.TypeString,
@@ -147,7 +153,8 @@ func TestBuildAddDocument(t *testing.T) {
 			ValueType: engine.TypeUint,
 		},
 		{
-			Index:     "description.idx",
+			Index:     indexName,
+			Database:  "description.idx",
 			Command:   "mergeset",
 			Key:       []byte("search"),
 			KeyType:   engine.TypeString,
@@ -155,7 +162,8 @@ func TestBuildAddDocument(t *testing.T) {
 			ValueType: engine.TypeUint,
 		},
 		{
-			Index:     "description.idx",
+			Index:     indexName,
+			Database:  "description.idx",
 			Command:   "mergeset",
 			Key:       []byte("neoway full text search"),
 			KeyType:   engine.TypeString,
@@ -163,7 +171,8 @@ func TestBuildAddDocument(t *testing.T) {
 			ValueType: engine.TypeUint,
 		},
 		{
-			Index:     "title.idx",
+			Index:     indexName,
+			Database:  "title.idx",
 			Command:   "mergeset",
 			Key:       []byte("neosearch"),
 			KeyType:   engine.TypeString,
@@ -171,7 +180,8 @@ func TestBuildAddDocument(t *testing.T) {
 			ValueType: engine.TypeUint,
 		},
 		{
-			Index:     "title.idx",
+			Index:     indexName,
+			Database:  "title.idx",
 			Command:   "mergeset",
 			Key:       []byte("-"),
 			KeyType:   engine.TypeString,
@@ -179,7 +189,8 @@ func TestBuildAddDocument(t *testing.T) {
 			ValueType: engine.TypeUint,
 		},
 		{
-			Index:     "title.idx",
+			Index:     indexName,
+			Database:  "title.idx",
 			Command:   "mergeset",
 			Key:       []byte("reverse"),
 			KeyType:   engine.TypeString,
@@ -187,7 +198,8 @@ func TestBuildAddDocument(t *testing.T) {
 			ValueType: engine.TypeUint,
 		},
 		{
-			Index:     "title.idx",
+			Index:     indexName,
+			Database:  "title.idx",
 			Command:   "mergeset",
 			Key:       []byte("index"),
 			KeyType:   engine.TypeString,
@@ -195,7 +207,8 @@ func TestBuildAddDocument(t *testing.T) {
 			ValueType: engine.TypeUint,
 		},
 		{
-			Index:     "title.idx",
+			Index:     indexName,
+			Database:  "title.idx",
 			Command:   "mergeset",
 			Key:       []byte("neosearch - reverse index"),
 			KeyType:   engine.TypeString,
@@ -263,11 +276,13 @@ func TestBuildAddDocumentWithBatchMode(t *testing.T) {
 
 	expectedCommands = []engine.Command{
 		{
-			Index:   "document.db",
-			Command: "batch",
+			Index:    indexName,
+			Database: "document.db",
+			Command:  "batch",
 		},
 		{
-			Index:     "document.db",
+			Index:     indexName,
+			Database:  "document.db",
 			Key:       utils.Uint64ToBytes(1),
 			KeyType:   engine.TypeUint,
 			Value:     docJSON,
@@ -275,11 +290,13 @@ func TestBuildAddDocumentWithBatchMode(t *testing.T) {
 			Command:   "set",
 		},
 		{
-			Index:   "id.idx",
-			Command: "batch",
+			Index:    indexName,
+			Database: "id.idx",
+			Command:  "batch",
 		},
 		{
-			Index:     "id.idx",
+			Index:     indexName,
+			Database:  "id.idx",
 			Key:       utils.Float64ToBytes(1),
 			KeyType:   engine.TypeFloat,
 			Value:     utils.Uint64ToBytes(1),
@@ -305,7 +322,8 @@ func TestBuildAddDocumentWithBatchMode(t *testing.T) {
 		//	Command: "batch",
 		//},
 		{
-			Index:     "document.db",
+			Index:     indexName,
+			Database:  "document.db",
 			Command:   "set",
 			Key:       utils.Uint64ToBytes(2),
 			KeyType:   engine.TypeUint,
@@ -313,11 +331,13 @@ func TestBuildAddDocumentWithBatchMode(t *testing.T) {
 			ValueType: engine.TypeString,
 		},
 		{
-			Index:   "description.idx",
-			Command: "batch",
+			Index:    indexName,
+			Database: "description.idx",
+			Command:  "batch",
 		},
 		{
-			Index:     "description.idx",
+			Index:     indexName,
+			Database:  "description.idx",
 			Command:   "mergeset",
 			Key:       []byte("neoway"),
 			KeyType:   engine.TypeString,
@@ -325,7 +345,8 @@ func TestBuildAddDocumentWithBatchMode(t *testing.T) {
 			ValueType: engine.TypeUint,
 		},
 		{
-			Index:     "description.idx",
+			Index:     indexName,
+			Database:  "description.idx",
 			Command:   "mergeset",
 			Key:       []byte("full"),
 			KeyType:   engine.TypeString,
@@ -333,7 +354,8 @@ func TestBuildAddDocumentWithBatchMode(t *testing.T) {
 			ValueType: engine.TypeUint,
 		},
 		{
-			Index:     "description.idx",
+			Index:     indexName,
+			Database:  "description.idx",
 			Command:   "mergeset",
 			Key:       []byte("text"),
 			KeyType:   engine.TypeString,
@@ -341,7 +363,8 @@ func TestBuildAddDocumentWithBatchMode(t *testing.T) {
 			ValueType: engine.TypeUint,
 		},
 		{
-			Index:     "description.idx",
+			Index:     indexName,
+			Database:  "description.idx",
 			Command:   "mergeset",
 			Key:       []byte("search"),
 			KeyType:   engine.TypeString,
@@ -349,7 +372,8 @@ func TestBuildAddDocumentWithBatchMode(t *testing.T) {
 			ValueType: engine.TypeUint,
 		},
 		{
-			Index:     "description.idx",
+			Index:     indexName,
+			Database:  "description.idx",
 			Command:   "mergeset",
 			Key:       []byte("neoway full text search"),
 			KeyType:   engine.TypeString,
@@ -357,11 +381,13 @@ func TestBuildAddDocumentWithBatchMode(t *testing.T) {
 			ValueType: engine.TypeUint,
 		},
 		{
-			Index:   "title.idx",
-			Command: "batch",
+			Index:    indexName,
+			Database: "title.idx",
+			Command:  "batch",
 		},
 		{
-			Index:     "title.idx",
+			Index:     indexName,
+			Database:  "title.idx",
 			Command:   "mergeset",
 			Key:       []byte("neosearch"),
 			KeyType:   engine.TypeString,
@@ -369,7 +395,8 @@ func TestBuildAddDocumentWithBatchMode(t *testing.T) {
 			ValueType: engine.TypeUint,
 		},
 		{
-			Index:     "title.idx",
+			Index:     indexName,
+			Database:  "title.idx",
 			Command:   "mergeset",
 			Key:       []byte("-"),
 			KeyType:   engine.TypeString,
@@ -377,7 +404,8 @@ func TestBuildAddDocumentWithBatchMode(t *testing.T) {
 			ValueType: engine.TypeUint,
 		},
 		{
-			Index:     "title.idx",
+			Index:     indexName,
+			Database:  "title.idx",
 			Command:   "mergeset",
 			Key:       []byte("reverse"),
 			KeyType:   engine.TypeString,
@@ -385,7 +413,8 @@ func TestBuildAddDocumentWithBatchMode(t *testing.T) {
 			ValueType: engine.TypeUint,
 		},
 		{
-			Index:     "title.idx",
+			Index:     indexName,
+			Database:  "title.idx",
 			Command:   "mergeset",
 			Key:       []byte("index"),
 			KeyType:   engine.TypeString,
@@ -393,7 +422,8 @@ func TestBuildAddDocumentWithBatchMode(t *testing.T) {
 			ValueType: engine.TypeUint,
 		},
 		{
-			Index:     "title.idx",
+			Index:     indexName,
+			Database:  "title.idx",
 			Command:   "mergeset",
 			Key:       []byte("neosearch - reverse index"),
 			KeyType:   engine.TypeString,

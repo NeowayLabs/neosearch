@@ -81,7 +81,7 @@ func New(config NGConfig) *Engine {
 }
 
 // Open the index and cache then for future uses
-func (ng *Engine) open(name string) (store.KVStore, error) {
+func (ng *Engine) open(indexName, databaseName string) (store.KVStore, error) {
 	var (
 		err     error
 		storekv store.KVStore
@@ -89,7 +89,7 @@ func (ng *Engine) open(name string) (store.KVStore, error) {
 		value   interface{}
 	)
 
-	value, ok = ng.stores.Get(name)
+	value, ok = ng.stores.Get(indexName + "." + databaseName)
 
 	if ok == false || value == nil {
 		storekv, err = store.New(ng.config.KVCfg)
@@ -98,8 +98,8 @@ func (ng *Engine) open(name string) (store.KVStore, error) {
 			return nil, err
 		}
 
-		ng.stores.Add(name, storekv)
-		err = storekv.Open(name)
+		ng.stores.Add(indexName+"."+databaseName, storekv)
+		err = storekv.Open(indexName, databaseName)
 
 		return storekv, err
 	}
@@ -117,7 +117,7 @@ func (ng *Engine) open(name string) (store.KVStore, error) {
 func (ng *Engine) Execute(cmd Command) ([]byte, error) {
 	var err error
 
-	store, err := ng.GetStore(cmd.Index)
+	store, err := ng.GetStore(cmd.Index, cmd.Database)
 
 	if ng.config.KVCfg.Debug {
 		fmt.Println(cmd)
@@ -153,13 +153,13 @@ func (ng *Engine) Execute(cmd Command) ([]byte, error) {
 // GetStore returns a instance of KVStore for the given index name
 // If the given index name isn't open, then this method will open
 // and cache the index for next use.
-func (ng *Engine) GetStore(name string) (store.KVStore, error) {
+func (ng *Engine) GetStore(indexName string, databaseName string) (store.KVStore, error) {
 	var (
 		err     error
 		storekv store.KVStore
 	)
 
-	storekv, err = ng.open(name)
+	storekv, err = ng.open(indexName, databaseName)
 
 	if err != nil {
 		return nil, err
