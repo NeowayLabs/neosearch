@@ -3,6 +3,7 @@ package store
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 )
@@ -18,7 +19,7 @@ func init() {
 	}
 }
 
-func openDatabase(t *testing.T, name string) KVStore {
+func openDatabase(t *testing.T, indexName, dbName string) KVStore {
 	var (
 		err   error
 		store KVStore
@@ -38,7 +39,7 @@ func openDatabase(t *testing.T, name string) KVStore {
 		return nil
 	}
 
-	err = store.Open(name)
+	err = store.Open(indexName, dbName)
 
 	if err != nil {
 		t.Error(err)
@@ -48,7 +49,7 @@ func openDatabase(t *testing.T, name string) KVStore {
 	return store
 }
 
-func openDatabaseFail(t *testing.T, name string) {
+func openDatabaseFail(t *testing.T, indexName, dbName string) {
 	var (
 		err   error
 		store KVStore
@@ -68,10 +69,10 @@ func openDatabaseFail(t *testing.T, name string) {
 		return
 	}
 
-	err = store.Open(name)
+	err = store.Open(indexName, dbName)
 
 	if err == nil {
-		t.Errorf("Should fail... Invalid database name: %s", name)
+		t.Errorf("Should fail... Invalid database name: %s", dbName)
 		return
 	}
 }
@@ -123,8 +124,11 @@ func TestOpenDatabase(t *testing.T) {
 		"adasdas-.db",
 	}
 
+	os.Mkdir(DataDirTmp+string(filepath.Separator)+"sample-ok", 0755)
+	os.Mkdir(DataDirTmp+string(filepath.Separator)+"sample-fail", 0755)
+
 	for _, dbname := range shouldPass {
-		st := openDatabase(t, dbname)
+		st := openDatabase(t, "sample-ok", dbname)
 		if st != nil {
 			st.Close()
 		}
@@ -133,7 +137,7 @@ func TestOpenDatabase(t *testing.T) {
 	}
 
 	for _, dbname := range shouldFail {
-		openDatabaseFail(t, dbname)
+		openDatabaseFail(t, "sample-fail", dbname)
 		//os.RemoveAll(DataDirTmp + "/" + dbname)
 	}
 }
@@ -146,7 +150,8 @@ func TestStoreSetGet(t *testing.T) {
 		testDb = "test_set.db"
 	)
 
-	store = openDatabase(t, testDb)
+	os.Mkdir(DataDirTmp+string(filepath.Separator)+"sample-store-set-get", 0755)
+	store = openDatabase(t, "sample-store-set-get", testDb)
 
 	type kvTest struct {
 		key   []byte
@@ -206,7 +211,9 @@ func TestStoreSetGet(t *testing.T) {
 
 func TestBatchWrite(t *testing.T) {
 	var testDb = "testbatch.db"
-	store := openDatabase(t, testDb)
+
+	os.Mkdir(DataDirTmp+string(filepath.Separator)+"sample-batch-write", 0755)
+	store := openDatabase(t, "sample-batch-write", testDb)
 
 	store.StartBatch()
 
