@@ -11,7 +11,11 @@ RUN apt-get update && apt-get install -y \
 	curl \
 	git \
 	mercurial \
+	python-pip \
 	--no-install-recommends
+
+# Install Mkdocs
+RUN pip install mkdocs
 
 # Install Go
 ENV GO_VERSION 1.4.2
