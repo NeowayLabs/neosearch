@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
-godoc -html=true . > docs/code.html
-mkdocs serve
+mkdocs build --clean
+mkdir -p site/code
+godoc -html=true . > site/code/index.html
