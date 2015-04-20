@@ -20,4 +20,4 @@ NeoSearch provides a [REST API](./rest/index.html).
 
 # Code documentation
 
-Fancy some coding on NeoSearch ? Take a look on the [code docs](./code/index.html).
+Fancy some coding on NeoSearch ? Take a look on the [code docs](code.html).
