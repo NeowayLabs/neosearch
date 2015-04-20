@@ -30,5 +30,8 @@ check: build
 shell: build
 	docker run --rm -e STORAGE_ENGINE=$(STORAGE_ENGINE) -v `pwd`:/go/src/github.com/NeowayLabs/neosearch --privileged -i -t $(DOCKER_DEVIMAGE) bash
 
+docs: build
+	docker run --rm -v `pwd`:/go/src/github.com/NeowayLabs/neosearch -p 8000:8000 $(DOCKER_DEVIMAGE) mkdocs serve
+
 build:
 	docker build -t $(DOCKER_DEVIMAGE) .
