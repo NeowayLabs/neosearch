@@ -32,7 +32,7 @@ shell: build
 
 docs: build
 	docker run --rm -v `pwd`:/go/src/github.com/NeowayLabs/neosearch -p 8000:8000 $(DOCKER_DEVIMAGE) hack/docs.sh
-	sensible-browser ./site/index.html
+	xdg-open ./site/index.html
 
 build:
 	docker build -t $(DOCKER_DEVIMAGE) .
