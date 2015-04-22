@@ -1,4 +1,4 @@
-.PHONY: all build server cli check shell bundles
+.PHONY: all build server cli check shell 
 
 DOCKER_DEVIMAGE = neosearch-dev
 DOCKER_DOCSIMAGE = neosearch-docs
@@ -32,8 +32,11 @@ shell: build
 	docker run --rm -e STORAGE_ENGINE=$(STORAGE_ENGINE) -v `pwd`:/go/src/github.com/NeowayLabs/neosearch --privileged -i -t $(DOCKER_DEVIMAGE) bash
 
 docs: build-docs
-	docker run --rm -v `pwd`:/go/src/github.com/NeowayLabs/neosearch -p 8000:8000 $(DOCKER_DOCSIMAGE) hack/docs.sh
+	docker run --rm -v `pwd`:/go/src/github.com/NeowayLabs/neosearch -p 8000:8000 --privileged $(DOCKER_DOCSIMAGE) hack/docs.sh
 	xdg-open ./site/index.html
+
+docs-shell: build-docs
+	docker run --rm -v `pwd`:/go/src/github.com/NeowayLabs/neosearch -p 8000:8000 --privileged -t -i $(DOCKER_DOCSIMAGE) bash
 
 build:
 	docker build -t $(DOCKER_DEVIMAGE) .
