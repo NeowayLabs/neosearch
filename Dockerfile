@@ -28,6 +28,7 @@ RUN go get golang.org/x/tools/cmd/cover && \
     go get golang.org/x/tools/cmd/cover && \
     go get -u github.com/golang/lint/golint && \
     go get golang.org/x/tools/cmd/goimports && \
+    go get golang.org/x/tools/cmd/godoc && \
     go get golang.org/x/tools/cmd/vet
 
 WORKDIR /go/src/github.com/NeowayLabs/neosearch
