@@ -7,6 +7,7 @@ RUN cd /tmp && git clone https://github.com/NeowayLabs/neosearch.git && \
 
 WORKDIR /go/src/github.com/NeowayLabs/neosearch
 
+ENV STORAGE_ENGINE leveldb
 RUN hack/make.sh server
 
 VOLUME ["/data"]
