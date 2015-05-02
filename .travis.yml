@@ -8,7 +8,7 @@ install:
   - cd $HOME/gopath/src/github.com/NeowayLabs/neosearch
   - go get -v github.com/jmhodges/levigo
   - go get -d -v ./...
-  - go build -tags leveldb -v
+  - go build -tags leveldb -v ./...
 script:
   - go get golang.org/x/tools/cmd/vet
   - go get github.com/axw/gocov/gocov
