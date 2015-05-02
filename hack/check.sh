@@ -9,7 +9,7 @@
 
 set -e
 
-GO="godep go"
+GO="go"
 TEST_FLAGS="-tags leveldb"
 
 # Automatic checks
@@ -22,6 +22,8 @@ test -z "$(golint .          | tee /dev/stderr)"
 # Run test coverage on each subdirectories and merge the coverage profile.
 
 echo "mode: count" > profile.cov
+
+$GO get -tags "$STORAGE_ENGINE" ./...
 
 # Standard $GO tooling behavior is to ignore dirs with leading underscors
 for dir in $(find . -maxdepth 10 -not -path './.git*' -not -path './Godeps/*' -type d);

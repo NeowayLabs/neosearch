@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/NeowayLabs/neosearch"
+	"github.com/NeowayLabs/neosearch/lib/neosearch"
 )
 
 func OnErrorPanic(err error) {
