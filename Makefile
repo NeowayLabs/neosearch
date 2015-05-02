@@ -25,6 +25,10 @@ cli: build
 	@-docker rm -vf neosearch-ctn
 	docker run --name neosearch-ctn -e STORAGE_ENGINE=$(STORAGE_ENGINE) -v `pwd`:$(DEV_WORKDIR) -i -t $(DOCKER_DEVIMAGE) hack/make.sh cli
 
+library: build
+	@-docker rm -vf neosearch-ctn
+	docker run --name neosearch-ctn -e STORAGE_ENGINE=$(STORAGE_ENGINE) -v `pwd`:$(DEV_WORKDIR) -i -t $(DOCKER_DEVIMAGE) hack/make.sh library
+
 check: build
 	@-docker rm -vf neosearch-ctn
 	docker run --name neosearch-ctn -e STORAGE_ENGINE=$(STORAGE_ENGINE) -v `pwd`:$(DEV_WORKDIR) -i -t $(DOCKER_DEVIMAGE) hack/check.sh

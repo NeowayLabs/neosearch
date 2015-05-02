@@ -6,10 +6,11 @@ DEST=$1
 BINARY_NAME="neosearch-$VERSION"
 
 echo "Building with -tags $STORAGE_ENGINE"
-godep go build \
+go get -tags "$STORAGE_ENGINE" ./service/neosearch/...
+go build \
    -tags "$STORAGE_ENGINE" \
    -o "$DEST/$BINARY_NAME" \
-   ./neosearch
+   ./service/neosearch
 
 echo "Created binary: $DEST/$BINARY_FULLNAME"
 ln -sf "$BINARY_NAME" "$DEST/neosearch"
