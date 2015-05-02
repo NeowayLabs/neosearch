@@ -2,7 +2,8 @@
 
 set -e
 
+DEST=$1
 go get -tags "$STORAGE_ENGINE" ./lib/neosearch/...
-go build -tags "$STORAGE_ENGINE" -v ./lib/neosearch
+go build -tags "$STORAGE_ENGINE" -v -o "$DEST/neosearch.a" ./lib/neosearch/
 
 
