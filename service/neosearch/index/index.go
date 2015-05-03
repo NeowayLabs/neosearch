@@ -34,14 +34,7 @@ func (handler *IndexHandler) ServeHTTP(res http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	index, err := handler.search.OpenIndex(indexName)
-
-	if err != nil {
-		handler.Error(res, err.Error())
-		return
-	}
-
-	body, err := json.Marshal(&index)
+	body, err := handler.serveIndex(indexName)
 
 	if err != nil {
 		handler.Error(res, err.Error())
@@ -49,4 +42,20 @@ func (handler *IndexHandler) ServeHTTP(res http.ResponseWriter, req *http.Reques
 	}
 
 	res.Write(body)
+}
+
+func (handler *IndexHandler) serveIndex(name string) ([]byte, error) {
+	index, err := handler.search.OpenIndex(name)
+
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := json.Marshal(&index)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
 }

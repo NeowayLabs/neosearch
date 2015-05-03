@@ -108,7 +108,11 @@ func deleteIndex(t *testing.T, search *neosearch.NeoSearch, name string) {
 
 func TestRESTCreateIndex(t *testing.T) {
 	ts, search, _ := getServer(t)
-	defer ts.Close()
+	defer func() {
+		deleteIndex(t, search, "company")
+		ts.Close()
+		search.Close()
+	}()
 
 	createURL := ts.URL + "/company"
 
@@ -159,13 +163,14 @@ func TestRESTCreateIndex(t *testing.T) {
 		t.Errorf("Failed to create index: %s", status)
 		return
 	}
-
-	deleteIndex(t, search, "company")
 }
 
 func TestRESTIndexInfo(t *testing.T) {
-	ts, _, _ := getServer(t)
-	defer ts.Close()
+	ts, search, _ := getServer(t)
+	defer func() {
+		ts.Close()
+		search.Close()
+	}()
 
 	infoURL := ts.URL + "/test"
 
@@ -240,5 +245,4 @@ func TestRESTGetDocuments(t *testing.T) {
 	}
 
 	deleteIndex(t, search, "company")
-
 }

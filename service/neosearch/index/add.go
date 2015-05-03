@@ -45,14 +45,7 @@ func (handler *AddHandler) ServeHTTP(res http.ResponseWriter, req *http.Request)
 	}
 
 	docID := handler.GetDocumentID()
-
 	docIntID, err := strconv.Atoi(docID)
-
-	if err != nil {
-		res.WriteHeader(http.StatusBadRequest)
-		handler.Error(res, "Invalid document id")
-		return
-	}
 
 	document, err := ioutil.ReadAll(req.Body)
 
@@ -62,14 +55,7 @@ func (handler *AddHandler) ServeHTTP(res http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	index, err := handler.search.OpenIndex(indexName)
-
-	if err != nil {
-		handler.Error(res, err.Error())
-		return
-	}
-
-	err = index.Add(uint64(docIntID), document)
+	err = handler.addDocument(indexName, uint64(docIntID), document)
 
 	if err != nil {
 		res.WriteHeader(http.StatusBadRequest)
@@ -78,4 +64,14 @@ func (handler *AddHandler) ServeHTTP(res http.ResponseWriter, req *http.Request)
 	}
 
 	handler.WriteJSON(res, []byte(fmt.Sprintf("{\"status\": \"Document %d indexed.\"}", docIntID)))
+}
+
+func (handler *AddHandler) addDocument(indexName string, id uint64, document []byte) error {
+	index, err := handler.search.OpenIndex(indexName)
+
+	if err != nil {
+		return err
+	}
+
+	return index.Add(id, document)
 }

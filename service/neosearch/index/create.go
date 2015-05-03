@@ -35,12 +35,23 @@ func (handler *CreateIndexHandler) ServeHTTP(res http.ResponseWriter, req *http.
 		return
 	}
 
-	_, err := handler.search.CreateIndex(indexName)
+	body, err := handler.createIndex(indexName)
 
 	if err != nil {
-		handler.Error(res, err.Error())
+		handler.Error(res, string(body))
 		return
 	}
 
-	handler.WriteJSON(res, []byte(fmt.Sprintf("{\"status\": \"Index '%s' created.\"}", indexName)))
+	handler.WriteJSON(res, body)
+}
+
+func (handler *CreateIndexHandler) createIndex(name string) ([]byte, error) {
+	_, err := handler.search.CreateIndex(name)
+
+	if err != nil {
+		return nil, err
+	}
+
+	response := []byte(fmt.Sprintf("{\"status\": \"Index '%s' created.\"}", name))
+	return response, nil
 }
