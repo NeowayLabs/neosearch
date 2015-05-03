@@ -9,4 +9,4 @@ godoc -html=true . > site/code/index.html
 
 echo "Generating REST API docs"
 swagger="/swagger-codegen/modules/swagger-codegen-cli/target/swagger-codegen-cli.jar"
-java -jar $swagger generate -i ./docs/rest/api.json -l html  -o site/rest
+java -jar $swagger generate -i ./docs/rest/api.yml -l html  -o site/rest

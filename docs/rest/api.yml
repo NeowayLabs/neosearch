@@ -1,0 +1,153 @@
+---
+  swagger: "2.0"
+  info: 
+    description: "NeoSearch REST API Documentation. More information on <a href=\"http://github.com/NeowayLabs/neosearch\">http://github.com/NeowayLabs/neosearch</a>"
+    version: "1.0.0"
+    title: "NeoSearch"
+    termsOfService: ""
+    contact: 
+      email: "tiago.natel@neoway.com.br"
+    license: 
+      name: "Apache 2.0"
+      url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+  host: "neosearch.github.io"
+  basePath: "/v1"
+  schemes: 
+    - "http"
+  paths: 
+    /{index}: 
+      get: 
+        tags: 
+          - "index"
+          - "info"
+        summary: "Get information about the index"
+        description: ""
+        operationId: "infoIndex"
+        produces: 
+          - "application/json"
+        parameters: 
+          - 
+            in: "path"
+            name: "index"
+            type: "string"
+            description: "Name of the index"
+            required: true
+        responses: 
+          200:
+            description: "Index informations"
+            schema: 
+              type: "object"
+              items: 
+                "$ref": "#/definitions/index"
+          400:
+            description: "There is no index with that name"
+      put:
+        tags:
+          - "index"
+          - "create"
+        summary: "Create new index"
+        description: ""
+        operationId: "createIndex"
+        produces:
+          - "application/json"
+        parameters:
+          -
+            in: "path"
+            name: "index"
+            type: "string"
+            description: "Name of the index"
+            required: true
+        responses:
+          200:
+            description: "Index created successfully"
+            schema:
+              type: "object"
+              items:
+                "$ref": "#/definitions/status"
+          400:
+            description: "Invalid index name"
+            schema:
+              items:
+                "$ref": "#/definitions/status"
+      delete:
+        tags:
+          - "index"
+          - "delete"
+        summary: "Delete index"
+        description: ""
+        operationId: "deleteIndex"
+        produces:
+          - "application/json"
+        parameters:
+          - name: index
+            in: path
+            description: Name of the index
+            type: string
+            required: true
+        responses:
+          200:
+            description: "deleted successfully"
+            schema: 
+              items:
+                $ref: "#/definitions/status"
+    /{index}/{id}:
+      get:
+        tags:
+          - "get"
+          - "document"
+        summary: "Get document"
+        produces:
+          - "application/json"
+        parameters:
+          - name: "index"
+            in: path
+            description: "Name of the index"
+            type: string
+            required: true
+          - name: "id"
+            in: path
+            description: "id of document"
+            type: integer
+            format: uint64
+        responses:
+          200:
+            description: "Success"
+            schema: 
+              items:
+                type: "object"
+      post:
+        tags:
+          - "add"
+          - "document"
+        summary: "Add document to index"
+        operationId: "addDocument"
+        consumes:
+          - "application/json"
+        produces:
+          - "application/json"
+        parameters:
+          - name: "index"
+            in: path
+            description: "Name of the index"
+            type: string
+            required: true
+          - name: id
+            in: path
+            description: ID of document
+            type: string
+        responses:
+          200:
+            description: "Document indexed"
+            schema: 
+              $ref: "#/definitions/status"
+  definitions: 
+    status:
+      properties:
+        error:
+          type: "string"
+    index: 
+      properties: 
+        name: 
+          type: "string"
+      xml: 
+        name: "index"
