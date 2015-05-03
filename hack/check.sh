@@ -23,13 +23,11 @@ test -z "$(golint .          | tee /dev/stderr)"
 
 echo "mode: count" > profile.cov
 
-$GO get -tags "$STORAGE_ENGINE" ./...
-
 # Standard $GO tooling behavior is to ignore dirs with leading underscors
 for dir in $(find . -maxdepth 10 -not -path './.git*' -not -path './Godeps/*' -type d);
 do
     if ls $dir/*.go &> /dev/null; then
-	$GO test $TEST_FLAGS -covermode=count -coverprofile="$dir/profile.tmp" "$dir"
+	$GO test $TEST_FLAGS -v -race -covermode=count -coverprofile="$dir/profile.tmp" "$dir"
 	if [ -f $dir/profile.tmp ]
 	then
             cat $dir/profile.tmp | tail -n +2 >> profile.cov

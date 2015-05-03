@@ -45,7 +45,10 @@ docs-view: docs
 docs-shell: build-docs
 	docker run --rm $(MOUNT_DEV_VOLUME) --privileged -t -i $(DOCKER_DOCSIMAGE) bash
 
-build:
+hack/deps.txt:
+	./hack/gendeps.sh "$(STORAGE_ENGINE)"
+
+build: hack/deps.txt
 	docker build -t $(DOCKER_DEVIMAGE) .
 
 build-docs: build
