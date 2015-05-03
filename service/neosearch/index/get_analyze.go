@@ -52,7 +52,7 @@ func (handler *GetAnalyseHandler) ServeHTTP(res http.ResponseWriter, req *http.R
 
 	if err != nil {
 		res.WriteHeader(http.StatusBadRequest)
-		handler.Error(res, "Invalid document id")
+		handler.Error(res, "Invalid document id: "+docID)
 		return
 	}
 
