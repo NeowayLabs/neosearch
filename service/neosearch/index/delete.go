@@ -35,7 +35,7 @@ func (handler *DeleteIndexHandler) ServeHTTP(res http.ResponseWriter, req *http.
 		return
 	}
 
-	err := handler.search.DeleteIndex(indexName)
+	err := handler.deleteIndex(indexName)
 
 	if err != nil {
 		handler.Error(res, err.Error())
@@ -43,4 +43,8 @@ func (handler *DeleteIndexHandler) ServeHTTP(res http.ResponseWriter, req *http.
 	}
 
 	handler.WriteJSON(res, []byte(fmt.Sprintf("{\"status\": \"Index '%s' deleted.\"}", indexName)))
+}
+
+func (handler *DeleteIndexHandler) deleteIndex(indexName string) error {
+	return handler.search.DeleteIndex(indexName)
 }
