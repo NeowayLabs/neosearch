@@ -2,3 +2,5 @@
 bundles/
 *.test
 profile.cov
+/site
+/hack/deps.txt
