@@ -127,6 +127,8 @@ func (i *Index) updateInfo(indexCounter map[string]uint64) {
 		ok    bool
 	)
 
+	i.infoMutex.Lock()
+
 	for index, counter := range indexCounter {
 		field, ok = i.info.Fields[index]
 
@@ -141,7 +143,6 @@ func (i *Index) updateInfo(indexCounter map[string]uint64) {
 		i.info.Fields[index] = field
 	}
 
-	i.infoMutex.Lock()
 	os.Remove(i.fullDir + "/" + infoFilename)
 	i.createInfoFile()
 	i.infoMutex.Unlock()
@@ -224,6 +225,10 @@ func (i *Index) BuildAdd(id uint64, doc []byte) ([]engine.Command, error) {
 
 	if err != nil {
 		return nil, err
+	}
+
+	if len(structData) == 0 {
+		return nil, errors.New("Empty document")
 	}
 
 	fieldCommands, err := i.buildIndexFields(id, &structData)

@@ -172,14 +172,16 @@ func (neo *NeoSearch) CreateIndex(name string) (*index.Index, error) {
 	}
 
 	neo.indices.Add(name, indx)
-	go cachedIndices.Set(int64(neo.indices.Len()))
+	cachedIndices.Set(int64(neo.indices.Len()))
 	return indx, nil
 }
 
 // DeleteIndex does exactly what the name says.
 func (neo *NeoSearch) DeleteIndex(name string) error {
+	// closes the index on remove
 	neo.indices.Remove(name)
-	go cachedIndices.Set(int64(neo.indices.Len()))
+	idxLen := neo.indices.Len()
+	cachedIndices.Set(int64(idxLen))
 
 	if exists, err := neo.IndexExists(name); exists == true && err == nil {
 		err := os.RemoveAll(neo.config.DataDir + "/" + name)
@@ -234,7 +236,7 @@ func (neo *NeoSearch) OpenIndex(name string) (*index.Index, error) {
 	}
 
 	neo.indices.Add(name, indx)
-	go cachedIndices.Set(int64(neo.indices.Len()))
+	cachedIndices.Set(int64(neo.indices.Len()))
 	return indx, nil
 }
 
@@ -257,5 +259,5 @@ func (neo *NeoSearch) IndexExists(name string) (bool, error) {
 // Close all of the open indices
 func (neo *NeoSearch) Close() {
 	neo.indices.Clean()
-	go cachedIndices.Set(int64(neo.indices.Len()))
+	cachedIndices.Set(int64(neo.indices.Len()))
 }
