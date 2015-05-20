@@ -19,7 +19,7 @@ script:
   - hack/check.sh
   - goveralls -coverprofile=coverage.txt -service=travis-ci
 before_install:
-  pip install codecov
+  sudo pip install codecov
 after_success:
   codecov
 notifications:
