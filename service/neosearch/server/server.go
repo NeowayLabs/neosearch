@@ -42,9 +42,10 @@ func (server *HTTPServer) createRoutes() {
 	indexHandler := index.New(server.search)
 	createIndexHandler := index.NewCreateHandler(server.search)
 	deleteIndexHandler := index.NewDeleteHandler(server.search)
-	indexGetHandler := index.NewGetHandler(server.search)
-	indexGetAnalyzeHandler := index.NewGetAnalyzeHandler(server.search)
-	indexAddHandler := index.NewAddHandler(server.search)
+	getIndexHandler := index.NewGetHandler(server.search)
+	getAnalyzeIndexHandler := index.NewGetAnalyzeHandler(server.search)
+	addIndexHandler := index.NewAddHandler(server.search)
+	searchIndexHandler := index.NewSearchHandler(server.search)
 
 	server.router.Handle("/debug/vars", http.DefaultServeMux)
 
@@ -52,10 +53,10 @@ func (server *HTTPServer) createRoutes() {
 	server.router.Handle("/{index}", indexHandler).Methods("GET")
 	server.router.Handle("/{index}", createIndexHandler).Methods("PUT")
 	server.router.Handle("/{index}", deleteIndexHandler).Methods("DELETE")
-	server.router.Handle("/{index}/{id}", indexGetHandler).Methods("GET")
-	server.router.Handle("/{index}/{id}/analyze", indexGetAnalyzeHandler).Methods("GET")
-	server.router.Handle("/{index}/{id}", indexAddHandler).Methods("POST")
-	//	server.router.Handle("/{index}", indexAddHandler).Methods("POST")
+	server.router.Handle("/{index}/_search", searchIndexHandler).Methods("POST")
+	server.router.Handle("/{index}/{id}", getIndexHandler).Methods("GET")
+	server.router.Handle("/{index}/{id}/_analyze", getAnalyzeIndexHandler).Methods("GET")
+	server.router.Handle("/{index}/{id}", addIndexHandler).Methods("POST")
 }
 
 func (server *HTTPServer) GetRoutes() *mux.Router {

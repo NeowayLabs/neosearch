@@ -238,7 +238,7 @@ func TestAddDocument(t *testing.T) {
 		goto cleanup
 	}
 
-	filterData, err = index.FilterTerm([]byte("name"), []byte("neoway business solution"))
+	filterData, err = index.FilterTerm([]byte("name"), []byte("neoway business solution"), 0)
 
 	if err != nil {
 		t.Error(err)
@@ -251,7 +251,7 @@ func TestAddDocument(t *testing.T) {
 		goto cleanup
 	}
 
-	filterData, err = index.FilterTerm([]byte("name"), []byte("neoway"))
+	filterData, err = index.FilterTerm([]byte("name"), []byte("neoway"), 0)
 
 	if err != nil {
 		t.Error(err)

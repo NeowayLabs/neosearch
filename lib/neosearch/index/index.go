@@ -195,7 +195,7 @@ func (i *Index) Add(id uint64, doc []byte) error {
 		indicesCounter[cmd.Index] = val
 	}
 
-	go i.updateInfo(indicesCounter)
+	//go i.updateInfo(indicesCounter)
 
 	return nil
 }

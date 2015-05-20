@@ -1,10 +1,17 @@
 package index
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
+	"github.com/gorilla/mux"
 )
 
 func getAddDocHandler() *AddHandler {
@@ -42,6 +49,84 @@ func TestAddDocumentsOK(t *testing.T) {
 
 		if err != nil {
 			t.Error(err)
+			return
+		}
+	}
+}
+
+func TestAddDocumentsREST_OK(t *testing.T) {
+	handler := getAddDocHandler()
+	router := mux.NewRouter()
+	router.Handle("/{index}/{id}", handler).Methods("POST")
+	ts := httptest.NewServer(router)
+
+	defer func() {
+		handler.search.DeleteIndex("test-rest-add-ok")
+		ts.Close()
+		handler.search.Close()
+	}()
+
+	_, err := handler.search.CreateIndex("test-rest-add-ok")
+
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	for i, doc := range []string{
+		`{"id": 0, "bleh": "test"}`,
+		`{"id": 1, "title": "ldjfjl"}`,
+		`{"id": 2, "title": "hjdfskhfk"}`,
+	} {
+		addURL := ts.URL + "/test-rest-add-ok/" + strconv.Itoa(i)
+
+		req, err := http.NewRequest("POST", addURL, bytes.NewBufferString(doc))
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		client := &http.Client{}
+		res, err := client.Do(req)
+
+		if err != nil {
+			t.Error(err)
+		}
+
+		content, err := ioutil.ReadAll(res.Body)
+		res.Body.Close()
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		resObj := map[string]interface{}{}
+
+		err = json.Unmarshal(content, &resObj)
+
+		if err != nil {
+			t.Error(err)
+			t.Errorf("Returned value: %s", string(content))
+			return
+		}
+
+		if resObj["error"] != nil {
+			t.Error(resObj["error"])
+			return
+		}
+
+		if resObj["status"] == nil {
+			t.Error("Failed to add document")
+			return
+		}
+
+		status := resObj["status"]
+		expected := "Document " + strconv.Itoa(i) + " indexed."
+
+		if status != expected {
+			t.Errorf("Differs: %s != %s", status, expected)
+			t.Errorf("Failed to add document: %s", status)
 			return
 		}
 	}

@@ -7,11 +7,7 @@ import (
 	"github.com/NeowayLabs/neosearch/lib/neosearch/utils"
 )
 
-func (i *Index) filterTerm(field, value []byte) ([]uint64, error) {
-	var (
-		docIDs []uint64
-	)
-
+func (i *Index) filterTerm(field, value []byte, limit uint64) ([]uint64, error) {
 	cmd := engine.Command{}
 	cmd.Index = i.Name
 	cmd.Database = string(field) + ".idx"
@@ -23,10 +19,18 @@ func (i *Index) filterTerm(field, value []byte) ([]uint64, error) {
 		return nil, err
 	}
 
+	dataLimit := uint64(len(data) / 8)
+
+	if limit > 0 && limit < dataLimit {
+		dataLimit = limit
+	}
+
+	docIDs := make([]uint64, dataLimit)
+
 	if len(data) > 0 {
-		for i := 0; i < len(data); i += 8 {
+		for i, j := uint64(0), uint64(0); i < dataLimit*8; i, j = i+8, j+1 {
 			v := utils.BytesToUint64(data[i : i+8])
-			docIDs = append(docIDs, v)
+			docIDs[j] = v
 		}
 
 	}
@@ -34,20 +38,21 @@ func (i *Index) filterTerm(field, value []byte) ([]uint64, error) {
 	return docIDs, nil
 }
 
-// FilterTerm filters index for all documents that have `value` in the
-// field `field`.
-func (i *Index) FilterTerm(field []byte, value []byte) ([]string, error) {
-	var docs []string
-
-	docIDs, err := i.filterTerm(field, value)
+// FilterTerm filter the index for all documents that have `value` in the
+// field `field` and returns upto `limit` documents. A limit of 0 (zero) is
+// the same as no limit (all of the records will return)..
+func (i *Index) FilterTerm(field []byte, value []byte, limit uint64) ([]string, error) {
+	docIDs, err := i.filterTerm(field, value, limit)
 
 	if err != nil {
 		return nil, err
 	}
 
-	for _, docID := range docIDs {
+	docs := make([]string, len(docIDs))
+
+	for idx, docID := range docIDs {
 		if byteDoc, err := i.Get(docID); err == nil {
-			docs = append(docs, string(byteDoc))
+			docs[idx] = string(byteDoc)
 		} else {
 			return nil, err
 		}
