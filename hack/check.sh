@@ -21,7 +21,7 @@ test -z "$(golint .          | tee /dev/stderr)"
 
 # Run test coverage on each subdirectories and merge the coverage profile.
 
-echo "mode: count" > profile.cov
+echo "mode: count" > coverage.txt
 
 # Standard $GO tooling behavior is to ignore dirs with leading underscors
 for dir in $(find . -maxdepth 10 -not -path './.git*' -not -path './Godeps/*' -type d);
@@ -30,13 +30,13 @@ do
 	$GO test $TEST_FLAGS -v -race -covermode=count -coverprofile="$dir/profile.tmp" "$dir"
 	if [ -f $dir/profile.tmp ]
 	then
-            cat $dir/profile.tmp | tail -n +2 >> profile.cov
+            cat $dir/profile.tmp | tail -n +2 >> coverage.txt
             rm $dir/profile.tmp
 	fi
     fi
 done
 
-$GO tool cover -func profile.cov
+$GO tool cover -func coverage.txt
 
 # To submit the test coverage result to coveralls.io,
 # use goveralls (https://github.com/mattn/goveralls)
