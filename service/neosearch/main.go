@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
 
@@ -121,6 +123,10 @@ func main() {
 
 	search := neosearch.New(cfg)
 
+	defer func() {
+		search.Close()
+	}()
+
 	httpServer, err := server.New(search, cfgServer)
 
 	_ = goProcsOpt
@@ -129,6 +135,18 @@ func main() {
 		log.Fatal(err.Error())
 		return
 	}
+
+	// Wait for a SIGINT (perhaps triggered by user with CTRL-C)
+	// Run cleanup when signal is received
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, os.Interrupt)
+	go func() {
+		for _ = range signalChan {
+			fmt.Println("\nReceived an interrupt, closing indexes...\n")
+			search.Close()
+			os.Exit(0)
+		}
+	}()
 
 	err = httpServer.Start()
 

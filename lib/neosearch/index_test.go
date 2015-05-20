@@ -238,27 +238,29 @@ func TestAddDocument(t *testing.T) {
 		goto cleanup
 	}
 
-	filterData, err = index.FilterTerm([]byte("name"), []byte("neoway business solution"), 0)
+	var total uint64
+
+	filterData, total, err = index.FilterTerm([]byte("name"), []byte("neoway business solution"), 0)
 
 	if err != nil {
 		t.Error(err)
 		goto cleanup
 	}
 
-	if len(filterData) != 1 ||
+	if total != 1 || len(filterData) != 1 ||
 		filterData[0] != `{"id": 1, "name": "Neoway Business Solution"}` {
 		t.Errorf("Failed to filter by field name: %v != %s", filterData, `{"id": 1, "name": "Neoway Business Solution"}`)
 		goto cleanup
 	}
 
-	filterData, err = index.FilterTerm([]byte("name"), []byte("neoway"), 0)
+	filterData, total, err = index.FilterTerm([]byte("name"), []byte("neoway"), 0)
 
 	if err != nil {
 		t.Error(err)
 		goto cleanup
 	}
 
-	if len(filterData) != 2 || !reflect.DeepEqual(filterData, []string{
+	if total != 2 || len(filterData) != 2 || !reflect.DeepEqual(filterData, []string{
 		`{"id": 1, "name": "Neoway Business Solution"}`,
 		`{"id": 4, "name": "Neoway Teste"}`,
 	}) {

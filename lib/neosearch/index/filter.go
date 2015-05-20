@@ -7,7 +7,7 @@ import (
 	"github.com/NeowayLabs/neosearch/lib/neosearch/utils"
 )
 
-func (i *Index) filterTerm(field, value []byte, limit uint64) ([]uint64, error) {
+func (i *Index) filterTerm(field, value []byte, limit uint64) ([]uint64, uint64, error) {
 	cmd := engine.Command{}
 	cmd.Index = i.Name
 	cmd.Database = string(field) + ".idx"
@@ -16,10 +16,11 @@ func (i *Index) filterTerm(field, value []byte, limit uint64) ([]uint64, error) 
 	data, err := i.engine.Execute(cmd)
 
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	dataLimit := uint64(len(data) / 8)
+	total := dataLimit
 
 	if limit > 0 && limit < dataLimit {
 		dataLimit = limit
@@ -35,17 +36,17 @@ func (i *Index) filterTerm(field, value []byte, limit uint64) ([]uint64, error) 
 
 	}
 
-	return docIDs, nil
+	return docIDs, total, nil
 }
 
 // FilterTerm filter the index for all documents that have `value` in the
 // field `field` and returns upto `limit` documents. A limit of 0 (zero) is
 // the same as no limit (all of the records will return)..
-func (i *Index) FilterTerm(field []byte, value []byte, limit uint64) ([]string, error) {
-	docIDs, err := i.filterTerm(field, value, limit)
+func (i *Index) FilterTerm(field []byte, value []byte, limit uint64) ([]string, uint64, error) {
+	docIDs, total, err := i.filterTerm(field, value, limit)
 
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	docs := make([]string, len(docIDs))
@@ -54,11 +55,11 @@ func (i *Index) FilterTerm(field []byte, value []byte, limit uint64) ([]string, 
 		if byteDoc, err := i.Get(docID); err == nil {
 			docs[idx] = string(byteDoc)
 		} else {
-			return nil, err
+			return nil, 0, err
 		}
 	}
 
-	return docs, nil
+	return docs, total, nil
 }
 
 func (i *Index) matchPrefix(field []byte, value []byte) ([]uint64, error) {

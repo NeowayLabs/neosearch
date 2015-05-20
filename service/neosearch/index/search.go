@@ -85,8 +85,11 @@ func (handler *SearchHandler) ServeHTTP(res http.ResponseWriter, req *http.Reque
 	}
 
 	output := make(map[string]interface{})
+	var total uint64
 
 	for field, value := range query {
+		var docs []string
+
 		vStr, ok := value.(string)
 
 		if !ok {
@@ -94,7 +97,7 @@ func (handler *SearchHandler) ServeHTTP(res http.ResponseWriter, req *http.Reque
 			continue
 		}
 
-		docs, err := index.FilterTerm([]byte(field), []byte(vStr), 10)
+		docs, total, err = index.FilterTerm([]byte(field), []byte(vStr), 10)
 
 		if err != nil {
 			goto error
@@ -116,7 +119,7 @@ func (handler *SearchHandler) ServeHTTP(res http.ResponseWriter, req *http.Reque
 		break
 	}
 
-	output["total"] = len(documents)
+	output["total"] = total
 	output["results"] = documents
 
 	outputJSON, err = json.Marshal(output)
