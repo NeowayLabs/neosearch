@@ -172,6 +172,7 @@ func TestAddDocument(t *testing.T) {
 		filterData []string
 		indexName  = "document-sample"
 		indexDir   = DataDirTmp + "/" + indexName
+		total      uint64
 	)
 
 	cfg := NewConfig()
@@ -237,8 +238,6 @@ func TestAddDocument(t *testing.T) {
 		t.Errorf("Failed to retrieve indexed document")
 		goto cleanup
 	}
-
-	var total uint64
 
 	filterData, total, err = index.FilterTerm([]byte("name"), []byte("neoway business solution"), 0)
 
