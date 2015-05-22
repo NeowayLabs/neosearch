@@ -48,8 +48,10 @@ func (c Command) Reverse() string {
 			keyStr = `uint(` + strconv.Itoa(int(utils.BytesToUint64(c.Key))) + `)`
 		} else if c.KeyType == TypeInt {
 			keyStr = `int(` + strconv.Itoa(int(utils.BytesToInt64(c.Key))) + `)`
+		} else if c.KeyType == TypeFloat {
+			keyStr = `float(` + strconv.FormatFloat(utils.BytesToFloat64(c.Key), 'f', -1, 64) + `)`
 		} else {
-			panic(fmt.Errorf("Invalid command value type: %d", c.ValueType))
+			panic(fmt.Errorf("Invalid command key type: %d - %+v", c.KeyType, c))
 		}
 	}
 
@@ -60,8 +62,10 @@ func (c Command) Reverse() string {
 			valStr = `uint(` + strconv.Itoa(int(utils.BytesToUint64(c.Value))) + `)`
 		} else if c.ValueType == TypeInt {
 			valStr = `int(` + strconv.Itoa(int(utils.BytesToInt64(c.Value))) + `)`
+		} else if c.ValueType == TypeFloat {
+			valStr = `float(` + strconv.FormatFloat(utils.BytesToFloat64(c.Value), 'f', -1, 64) + `)`
 		} else {
-			panic(fmt.Errorf("Invalid command key type: %d", c.KeyType))
+			panic(fmt.Errorf("Invalid command key type: %d", c.ValueType))
 		}
 	}
 

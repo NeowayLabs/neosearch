@@ -308,9 +308,13 @@ func (i *Index) buildBatchOn(storage string) (engine.Command, error) {
 	i.flushStorages = append(i.flushStorages, storage)
 
 	command := engine.Command{
-		Index:    i.Name,
-		Database: storage,
-		Command:  "batch",
+		Index:     i.Name,
+		Database:  storage,
+		Command:   "batch",
+		Key:       nil,
+		KeyType:   engine.TypeNil,
+		Value:     nil,
+		ValueType: engine.TypeNil,
 	}
 
 	return command, nil

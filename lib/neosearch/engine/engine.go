@@ -2,7 +2,6 @@ package engine
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch/cache"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
@@ -40,11 +39,13 @@ type Engine struct {
 }
 
 const (
-	TypeUint   = iota + 1
-	TypeInt    = iota
-	TypeFloat  = iota
-	TypeString = iota
-	TypeBinary = iota // TODO: TBD
+	_ = iota
+	TypeNil
+	TypeUint
+	TypeInt
+	TypeFloat
+	TypeString
+	TypeBinary // TODO: TBD
 )
 
 // New creates a new Engine instance
@@ -120,7 +121,7 @@ func (ng *Engine) Execute(cmd Command) ([]byte, error) {
 	store, err := ng.GetStore(cmd.Index, cmd.Database)
 
 	if ng.config.KVCfg.Debug {
-		fmt.Println(cmd)
+		cmd.Println()
 	}
 
 	if err != nil {

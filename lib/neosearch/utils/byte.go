@@ -62,6 +62,18 @@ func Float64ToBytes(f float64) []byte {
 	return buf.Bytes()
 }
 
+func BytesToFloat64(b []byte) float64 {
+	var f float64
+
+	buf := bytes.NewReader(b)
+	err := binary.Read(buf, binary.BigEndian, &f)
+	if err != nil {
+		panic(err)
+	}
+
+	return f
+}
+
 func GetUint64Array(data []byte) []uint64 {
 	var i, v uint64
 
