@@ -276,9 +276,13 @@ func TestBuildAddDocumentWithBatchMode(t *testing.T) {
 
 	expectedCommands = []engine.Command{
 		{
-			Index:    indexName,
-			Database: "document.db",
-			Command:  "batch",
+			Index:     indexName,
+			Database:  "document.db",
+			Command:   "batch",
+			Key:       nil,
+			KeyType:   engine.TypeNil,
+			Value:     nil,
+			ValueType: engine.TypeNil,
 		},
 		{
 			Index:     indexName,
@@ -290,9 +294,13 @@ func TestBuildAddDocumentWithBatchMode(t *testing.T) {
 			Command:   "set",
 		},
 		{
-			Index:    indexName,
-			Database: "id.idx",
-			Command:  "batch",
+			Index:     indexName,
+			Database:  "id.idx",
+			Command:   "batch",
+			Key:       nil,
+			KeyType:   engine.TypeNil,
+			Value:     nil,
+			ValueType: engine.TypeNil,
 		},
 		{
 			Index:     indexName,
@@ -331,9 +339,13 @@ func TestBuildAddDocumentWithBatchMode(t *testing.T) {
 			ValueType: engine.TypeString,
 		},
 		{
-			Index:    indexName,
-			Database: "description.idx",
-			Command:  "batch",
+			Index:     indexName,
+			Database:  "description.idx",
+			Command:   "batch",
+			Key:       nil,
+			KeyType:   engine.TypeNil,
+			Value:     nil,
+			ValueType: engine.TypeNil,
 		},
 		{
 			Index:     indexName,
@@ -381,9 +393,13 @@ func TestBuildAddDocumentWithBatchMode(t *testing.T) {
 			ValueType: engine.TypeUint,
 		},
 		{
-			Index:    indexName,
-			Database: "title.idx",
-			Command:  "batch",
+			Index:     indexName,
+			Database:  "title.idx",
+			Command:   "batch",
+			Key:       nil,
+			KeyType:   engine.TypeNil,
+			Value:     nil,
+			ValueType: engine.TypeNil,
 		},
 		{
 			Index:     indexName,
