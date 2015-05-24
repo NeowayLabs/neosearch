@@ -9,7 +9,7 @@
 
 set -e
 
-GO="go"
+GO="godep go"
 TEST_FLAGS="-tags $STORAGE_ENGINE"
 
 # Automatic checks

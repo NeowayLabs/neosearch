@@ -29,12 +29,13 @@ RUN go get golang.org/x/tools/cmd/cover && \
     go get -u github.com/golang/lint/golint && \
     go get golang.org/x/tools/cmd/goimports && \
     go get golang.org/x/tools/cmd/godoc && \
-    go get golang.org/x/tools/cmd/vet
+    go get golang.org/x/tools/cmd/vet && \
+    go get github.com/jmhodges/levigo
 
 ENV STORAGE_ENGINE leveldb
 
-ADD hack/deps.txt /deps.txt
-ADD hack/deps.sh /deps.sh
-RUN /deps.sh
+#ADD hack/deps.txt /deps.txt
+#ADD hack/deps.sh /deps.sh
+#RUN /deps.sh
 
 WORKDIR /go/src/github.com/NeowayLabs/neosearch
