@@ -9,7 +9,6 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-	"sync"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch/engine"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
@@ -19,8 +18,6 @@ import (
 const (
 	dbName   string = "document.db"
 	indexExt string = "idx"
-
-	infoFilename string = "info.json"
 )
 
 // Config index
@@ -45,9 +42,6 @@ type Index struct {
 
 	flushStorages []string
 
-	info      *IndexInfo
-	infoMutex *sync.Mutex
-
 	fullDir string
 }
 
@@ -68,10 +62,8 @@ func New(name string, cfg Config, create bool) (*Index, error) {
 	}
 
 	index := &Index{
-		Name:      name,
-		config:    cfg,
-		info:      NewIndexInfo(),
-		infoMutex: &sync.Mutex{},
+		Name:   name,
+		config: cfg,
 	}
 
 	if err := index.setup(create); err != nil {
@@ -100,52 +92,7 @@ func (i *Index) setup(create bool) error {
 		},
 	})
 
-	return i.createInfoFile()
-}
-
-func (i *Index) createInfoFile() error {
-	statsFile := i.fullDir + "/" + infoFilename
-	jsonContent, err := json.Marshal(i.info)
-
-	if err != nil {
-		return err
-	}
-
-	file, err := os.Create(statsFile)
-
-	if err != nil {
-		return err
-	}
-
-	_, err = file.Write(jsonContent)
-	return err
-}
-
-func (i *Index) updateInfo(indexCounter map[string]uint64) {
-	var (
-		field FieldInfo
-		ok    bool
-	)
-
-	i.infoMutex.Lock()
-
-	for index, counter := range indexCounter {
-		field, ok = i.info.Fields[index]
-
-		if ok {
-			field.Size += counter
-		} else {
-			field = FieldInfo{
-				Size: counter,
-			}
-		}
-
-		i.info.Fields[index] = field
-	}
-
-	os.Remove(i.fullDir + "/" + infoFilename)
-	i.createInfoFile()
-	i.infoMutex.Unlock()
+	return nil
 }
 
 // Batch enables write cache of command before FlushBatch is executed
@@ -194,8 +141,6 @@ func (i *Index) Add(id uint64, doc []byte) error {
 		val := indicesCounter[cmd.Index] + 1
 		indicesCounter[cmd.Index] = val
 	}
-
-	//go i.updateInfo(indicesCounter)
 
 	return nil
 }
