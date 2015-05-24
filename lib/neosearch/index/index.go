@@ -291,6 +291,32 @@ func (i *Index) GetAnalyze(id uint64) (engine.Command, error) {
 	return i.buildGet(id), nil
 }
 
+func (i *Index) GetDocs(docIDs []uint64, limit uint) ([]string, error) {
+	var (
+		docLen = uint(len(docIDs))
+	)
+
+	if docLen > limit {
+		docLen = limit
+	}
+
+	docs := make([]string, docLen)
+
+	for idx, docID := range docIDs {
+		if uint(idx) == docLen {
+			break
+		}
+
+		if byteDoc, err := i.Get(docID); err == nil {
+			docs[idx] = string(byteDoc)
+		} else {
+			return nil, err
+		}
+	}
+
+	return docs, nil
+}
+
 func (i *Index) buildBatchOn(storage string) (engine.Command, error) {
 	if i.config.Debug {
 		fmt.Printf("Batch mode enabled for storage '%s' of index '%s'.\n",

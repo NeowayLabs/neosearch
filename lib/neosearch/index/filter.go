@@ -7,7 +7,7 @@ import (
 	"github.com/NeowayLabs/neosearch/lib/neosearch/utils"
 )
 
-func (i *Index) filterTerm(field, value []byte, limit uint64) ([]uint64, uint64, error) {
+func (i *Index) FilterTermID(field, value []byte, limit uint64) ([]uint64, uint64, error) {
 	cmd := engine.Command{}
 	cmd.Index = i.Name
 	cmd.Database = string(field) + ".idx"
@@ -43,7 +43,7 @@ func (i *Index) filterTerm(field, value []byte, limit uint64) ([]uint64, uint64,
 // field `field` and returns upto `limit` documents. A limit of 0 (zero) is
 // the same as no limit (all of the records will return)..
 func (i *Index) FilterTerm(field []byte, value []byte, limit uint64) ([]string, uint64, error) {
-	docIDs, total, err := i.filterTerm(field, value, limit)
+	docIDs, total, err := i.FilterTermID(field, value, limit)
 
 	if err != nil {
 		return nil, 0, err
