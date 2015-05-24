@@ -10,7 +10,7 @@
 set -e
 
 GO="go"
-TEST_FLAGS="-tags leveldb"
+TEST_FLAGS="-tags $STORAGE_ENGINE"
 
 # Automatic checks
 test -z "$(gofmt -l -w .     | tee /dev/stderr)"
