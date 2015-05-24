@@ -47,7 +47,7 @@ func TestGetAnalyze(t *testing.T) {
 		id  string
 		out string
 	}{
-		{"1", `USING test-analyze-ok.document.db get uint(1);`},
+		{"1", `USING test-analyze-ok.document.db GET uint(1);`},
 	} {
 		id := testPair.id
 		out := testPair.out

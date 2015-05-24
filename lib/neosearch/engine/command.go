@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch/utils"
 )
@@ -69,15 +70,15 @@ func (c Command) Reverse() string {
 		}
 	}
 
-	switch c.Command {
-	case "set", "mergeset":
-		line = fmt.Sprintf("USING %s.%s %s %s %s;", c.Index, c.Database, c.Command, keyStr, valStr)
-	case "batch", "flushbatch":
-		line = fmt.Sprintf("USING %s.%s %s;", c.Index, c.Database, c.Command)
-	case "get", "delete":
-		line = fmt.Sprintf("USING %s.%s %s %s;", c.Index, c.Database, c.Command, keyStr)
+	switch strings.ToUpper(c.Command) {
+	case "SET", "MERGESET":
+		line = fmt.Sprintf("USING %s.%s %s %s %s;", c.Index, c.Database, strings.ToUpper(c.Command), keyStr, valStr)
+	case "BATCH", "flushbatch":
+		line = fmt.Sprintf("USING %s.%s %s;", c.Index, c.Database, strings.ToUpper(c.Command))
+	case "GET", "DELETE":
+		line = fmt.Sprintf("USING %s.%s %s %s;", c.Index, c.Database, strings.ToUpper(c.Command), keyStr)
 	default:
-		panic(fmt.Errorf("Invalid command: %s: %v", c.Command, c))
+		panic(fmt.Errorf("Invalid command: %s: %v", strings.ToUpper(c.Command), c))
 	}
 
 	return line
