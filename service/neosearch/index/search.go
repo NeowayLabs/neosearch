@@ -2,11 +2,12 @@ package index
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
+	"github.com/NeowayLabs/neosearch/lib/neosearch/search"
 	"github.com/NeowayLabs/neosearch/service/neosearch/handler"
 )
 
@@ -87,36 +88,26 @@ func (handler *SearchHandler) ServeHTTP(res http.ResponseWriter, req *http.Reque
 	output := make(map[string]interface{})
 	var total uint64
 
-	for field, value := range query {
-		var docs []string
+	docs, total, err := search.Search(index, query, 10)
 
-		vStr, ok := value.(string)
+	if err != nil {
+		res.WriteHeader(http.StatusBadRequest)
+		handler.Error(res, err.Error())
+		return
+	}
 
-		if !ok {
-			log.Println("Invalid search value: ", value)
-			continue
-		}
+	documents = make([]map[string]interface{}, len(docs))
 
-		docs, total, err = index.FilterTerm([]byte(field), []byte(vStr), 10)
+	for idx, doc := range docs {
+		obj := make(map[string]interface{})
+		err = json.Unmarshal([]byte(doc), &obj)
 
 		if err != nil {
+			fmt.Println("Failed to unmarshal: ", doc)
 			goto error
 		}
 
-		documents = make([]map[string]interface{}, len(docs))
-
-		for idx, doc := range docs {
-			obj := make(map[string]interface{})
-			err = json.Unmarshal([]byte(doc), &obj)
-
-			if err != nil {
-				goto error
-			}
-
-			documents[idx] = obj
-		}
-
-		break
+		documents[idx] = obj
 	}
 
 	output["total"] = total
