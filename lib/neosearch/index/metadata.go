@@ -8,7 +8,7 @@ type FieldInfo struct {
 }
 
 type IndexInfo struct {
-	Version string
+	Version string               `json:"version"`
 	Fields  map[string]FieldInfo `json:"fields"`
 	Size    uint64               `json:"size"`
 }
