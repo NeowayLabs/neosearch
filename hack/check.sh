@@ -23,8 +23,12 @@ test -z "$(golint .          | tee /dev/stderr)"
 
 echo "mode: count" > coverage.txt
 
+if [ "x${TEST_DIRECTORY:0:1}" != "x." ]; then
+	TEST_DIRECTORY="./$TEST_DIRECTORY"
+fi
+
 # Standard $GO tooling behavior is to ignore dirs with leading underscors
-for dir in $(find . -maxdepth 10 -not -path './.git*' -not -path './Godeps/*' -type d);
+for dir in $(find "$TEST_DIRECTORY" -maxdepth 10 -not -path './.git*' -not -path './Godeps/*' -type d);
 do
     if ls $dir/*.go &> /dev/null; then
 	$GO test $TEST_FLAGS -v -race -covermode=count -coverprofile="$dir/profile.tmp" "$dir"

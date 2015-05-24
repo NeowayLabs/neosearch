@@ -5,12 +5,19 @@ DOCKER_DOCSIMAGE = neosearch-docs
 DEV_WORKDIR = /go/src/github.com/NeowayLabs/neosearch
 CURRENT_PATH = $(shell pwd)
 MOUNT_DEV_VOLUME = -v $(CURRENT_PATH):$(DEV_WORKDIR)
+TEST_DIRECTORY ?= .
 SHELL_EXPORT := $(foreach v,$(MAKE_ENV),$(v)='$($(v))')
 
 ifeq ($(STORAGE_ENGINE),)
 	export STORAGE_ENGINE=leveldb
 else
 	export STORAGE_ENGINE
+endif
+
+ifeq ($(TEST_DIRECTORY),)
+	export TEST_DIRECTORY=.
+else
+	export TEST_DIRECTORY
 endif
 
 all: build
@@ -31,7 +38,7 @@ library: build
 
 check: build
 	@-docker rm -vf neosearch-ctn
-	docker run --name neosearch-ctn -e STORAGE_ENGINE=$(STORAGE_ENGINE) -v `pwd`:$(DEV_WORKDIR) -i -t $(DOCKER_DEVIMAGE) hack/check.sh
+	docker run --name neosearch-ctn -e TEST_DIRECTORY=$(TEST_DIRECTORY) -e STORAGE_ENGINE=$(STORAGE_ENGINE) -v `pwd`:$(DEV_WORKDIR) -i -t $(DOCKER_DEVIMAGE) hack/check.sh
 
 shell: build
 	docker run --rm -e STORAGE_ENGINE=$(STORAGE_ENGINE) -v `pwd`:$(DEV_WORKDIR) --privileged -i -t $(DOCKER_DEVIMAGE) bash
