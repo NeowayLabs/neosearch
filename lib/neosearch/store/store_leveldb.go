@@ -74,6 +74,8 @@ func (lvdb *LVDB) setup() {
 	}
 
 	lvdb._opts.SetCreateIfMissing(true)
+
+	// TODO: export this configuration options
 	lvdb._readOptions = levigo.NewReadOptions()
 	lvdb._writeOptions = levigo.NewWriteOptions()
 }
@@ -83,7 +85,7 @@ func (lvdb *LVDB) Open(indexName, databaseName string) error {
 	var err error
 
 	if !validateDatabaseName(databaseName) {
-		return fmt.Errorf("Invalid  name: %s", databaseName)
+		return fmt.Errorf("Invalid name: %s", databaseName)
 	}
 
 	// index should exists
