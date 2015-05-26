@@ -7,6 +7,7 @@ import (
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/engine"
 	"github.com/NeowayLabs/neosearch/service/neosearch/handler"
+	"github.com/julienschmidt/httprouter"
 )
 
 type GetAnalyseHandler struct {
@@ -23,14 +24,14 @@ func NewGetAnalyzeHandler(search *neosearch.NeoSearch) *GetAnalyseHandler {
 	return &handler
 }
 
-func (handler *GetAnalyseHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+func (handler *GetAnalyseHandler) ServeHTTP(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	var (
 		err    error
 		cmd    engine.Command
 		exists bool
 	)
 
-	handler.ProcessVars(req)
+	handler.ProcessVars(ps)
 	indexName := handler.GetIndexName()
 
 	if exists, err = handler.search.IndexExists(indexName); exists != true && err == nil {

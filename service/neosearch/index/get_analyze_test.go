@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
-	"github.com/gorilla/mux"
+	"github.com/julienschmidt/httprouter"
 )
 
 func getAnalyzeGetHandler() *GetAnalyseHandler {
@@ -26,8 +26,10 @@ func getAnalyzeGetHandler() *GetAnalyseHandler {
 func TestGetAnalyze(t *testing.T) {
 	handler := getAnalyzeGetHandler()
 
-	router := mux.NewRouter()
-	router.Handle("/{index}/{id}/analyze", handler).Methods("GET")
+	router := httprouter.New()
+
+	router.Handle("GET", "/:index/:id/_analyze", handler.ServeHTTP)
+
 	ts := httptest.NewServer(router)
 
 	defer func() {
@@ -52,7 +54,7 @@ func TestGetAnalyze(t *testing.T) {
 		id := testPair.id
 		out := testPair.out
 
-		analyzeURL := ts.URL + "/test-analyze-ok/" + id + "/analyze"
+		analyzeURL := ts.URL + "/test-analyze-ok/" + id + "/_analyze"
 
 		req, err := http.NewRequest("GET", analyzeURL, bytes.NewBufferString(""))
 

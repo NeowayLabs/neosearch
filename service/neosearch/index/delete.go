@@ -6,6 +6,7 @@ import (
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
 	"github.com/NeowayLabs/neosearch/service/neosearch/handler"
+	"github.com/julienschmidt/httprouter"
 )
 
 type DeleteIndexHandler struct {
@@ -19,8 +20,8 @@ func NewDeleteHandler(search *neosearch.NeoSearch) *DeleteIndexHandler {
 	}
 }
 
-func (handler *DeleteIndexHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	handler.ProcessVars(req)
+func (handler *DeleteIndexHandler) ServeHTTP(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	handler.ProcessVars(ps)
 	indexName := handler.GetIndexName()
 
 	if exists, err := handler.search.IndexExists(indexName); exists == false && err == nil {

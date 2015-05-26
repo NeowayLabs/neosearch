@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
-	"github.com/gorilla/mux"
+	"github.com/julienschmidt/httprouter"
 )
 
 func getAddDocHandler() *AddHandler {
@@ -56,8 +56,8 @@ func TestAddDocumentsOK(t *testing.T) {
 
 func TestAddDocumentsREST_OK(t *testing.T) {
 	handler := getAddDocHandler()
-	router := mux.NewRouter()
-	router.Handle("/{index}/{id}", handler).Methods("POST")
+	router := httprouter.New()
+	router.Handle("POST", "/:index/:id", handler.ServeHTTP)
 	ts := httptest.NewServer(router)
 
 	defer func() {

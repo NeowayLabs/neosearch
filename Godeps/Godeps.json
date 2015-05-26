@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/NeowayLabs/neosearch",
-	"GoVersion": "devel +10f6d30 Mon May 4 00:39:45 2015 +0000",
+	"GoVersion": "go1.3.3",
 	"Packages": [
 		"./..."
 	],
@@ -32,6 +32,10 @@
 		{
 			"ImportPath": "github.com/jteeuwen/go-pkg-optarg",
 			"Rev": "13b683f7111154d16daf768dfbe3193ce4470d3c"
+		},
+		{
+			"ImportPath": "github.com/julienschmidt/httprouter",
+			"Rev": "8c199fb6259ffc1af525cc3ad52ee60ba8359669"
 		},
 		{
 			"ImportPath": "github.com/peterh/liner",

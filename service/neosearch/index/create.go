@@ -6,6 +6,7 @@ import (
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
 	"github.com/NeowayLabs/neosearch/service/neosearch/handler"
+	"github.com/julienschmidt/httprouter"
 )
 
 type CreateIndexHandler struct {
@@ -19,8 +20,8 @@ func NewCreateHandler(search *neosearch.NeoSearch) *CreateIndexHandler {
 	}
 }
 
-func (handler *CreateIndexHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	handler.ProcessVars(req)
+func (handler *CreateIndexHandler) ServeHTTP(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	handler.ProcessVars(ps)
 	indexName := handler.GetIndexName()
 
 	if exists, err := handler.search.IndexExists(indexName); exists == true && err == nil {
