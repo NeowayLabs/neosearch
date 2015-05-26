@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/julienschmidt/httprouter"
 )
 
 type DefaultHandler struct {
@@ -45,8 +45,10 @@ func (h *DefaultHandler) WriteJSONObject(res http.ResponseWriter, content interf
 	h.WriteJSON(res, body)
 }
 
-func (h *DefaultHandler) ProcessVars(req *http.Request) map[string]string {
-	h.requestVars = mux.Vars(req)
+func (h *DefaultHandler) ProcessVars(ps httprouter.Params) map[string]string {
+	h.requestVars = make(map[string]string)
+	h.requestVars["index"] = ps.ByName("index")
+	h.requestVars["id"] = ps.ByName("id")
 
 	return h.requestVars
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/version"
 	"github.com/NeowayLabs/neosearch/service/neosearch/handler"
+	"github.com/julienschmidt/httprouter"
 )
 
 type HomeHandler struct {
@@ -19,7 +20,7 @@ func NewHomeHandler(ns *neosearch.NeoSearch) *HomeHandler {
 	}
 }
 
-func (handler *HomeHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+func (handler *HomeHandler) ServeHTTP(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	response := map[string]string{
 		"version": version.Version,
 		"status":  "alive",

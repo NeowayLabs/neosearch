@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
-	"github.com/gorilla/mux"
+	"github.com/julienschmidt/httprouter"
 )
 
 func getGetHandler() *GetHandler {
@@ -38,8 +38,10 @@ func TestGetDocumentsOK(t *testing.T) {
 		return
 	}
 
-	router := mux.NewRouter()
-	router.Handle("/{index}/{id}", handler).Methods("GET")
+	router := httprouter.New()
+
+	router.Handle("GET", "/:index/:id", handler.ServeHTTP)
+
 	ts := httptest.NewServer(router)
 
 	for i, doc := range []string{

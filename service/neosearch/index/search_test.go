@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
-	"github.com/gorilla/mux"
+	"github.com/julienschmidt/httprouter"
 )
 
 func getSearchHandler() *SearchHandler {
@@ -54,8 +54,10 @@ func TestSimpleSearch(t *testing.T) {
 		return
 	}
 
-	router := mux.NewRouter()
-	router.Handle("/{index}/_search", handler).Methods("POST")
+	router := httprouter.New()
+
+	router.Handle("POST", "/:index", handler.ServeHTTP)
+
 	ts := httptest.NewServer(router)
 
 	defer func() {
@@ -64,7 +66,7 @@ func TestSimpleSearch(t *testing.T) {
 		handler.search.Close()
 	}()
 
-	searchURL := ts.URL + "/search-simple/_search"
+	searchURL := ts.URL + "/search-simple"
 
 	dsl := `
         {
@@ -140,8 +142,10 @@ func TestSimpleANDSearch(t *testing.T) {
 		return
 	}
 
-	router := mux.NewRouter()
-	router.Handle("/{index}/_search", handler).Methods("POST")
+	router := httprouter.New()
+
+	router.Handle("POST", "/:index", handler.ServeHTTP)
+
 	ts := httptest.NewServer(router)
 
 	defer func() {
@@ -150,7 +154,7 @@ func TestSimpleANDSearch(t *testing.T) {
 		handler.search.Close()
 	}()
 
-	searchURL := ts.URL + "/simple-and-search/_search"
+	searchURL := ts.URL + "/simple-and-search"
 
 	dsl := `
         {

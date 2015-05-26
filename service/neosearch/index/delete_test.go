@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
-	"github.com/gorilla/mux"
+	"github.com/julienschmidt/httprouter"
 )
 
 func getDeleteHandler() *DeleteIndexHandler {
@@ -27,8 +27,10 @@ func getDeleteHandler() *DeleteIndexHandler {
 func TestDeleteServeHTTP_OK(t *testing.T) {
 	handler := getDeleteHandler()
 
-	router := mux.NewRouter()
-	router.Handle("/{index}", handler).Methods("DELETE")
+	router := httprouter.New()
+
+	router.Handle("DELETE", "/:index", handler.ServeHTTP)
+
 	ts := httptest.NewServer(router)
 
 	defer func() {

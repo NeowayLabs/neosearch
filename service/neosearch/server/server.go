@@ -8,7 +8,7 @@ import (
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
 	"github.com/NeowayLabs/neosearch/service/neosearch/home"
 	"github.com/NeowayLabs/neosearch/service/neosearch/index"
-	"github.com/gorilla/mux"
+	"github.com/julienschmidt/httprouter"
 )
 
 type ServerConfig struct {
@@ -18,7 +18,7 @@ type ServerConfig struct {
 
 type HTTPServer struct {
 	config *ServerConfig
-	router *mux.Router
+	router *httprouter.Router
 	search *neosearch.NeoSearch
 }
 
@@ -31,7 +31,7 @@ func New(search *neosearch.NeoSearch, config *ServerConfig) (*HTTPServer, error)
 	server.config = config
 	server.search = search
 
-	server.router = mux.NewRouter()
+	server.router = httprouter.New()
 
 	server.createRoutes()
 	return &server, nil
@@ -47,19 +47,18 @@ func (server *HTTPServer) createRoutes() {
 	addIndexHandler := index.NewAddHandler(server.search)
 	searchIndexHandler := index.NewSearchHandler(server.search)
 
-	server.router.Handle("/debug/vars", http.DefaultServeMux)
+	server.router.Handle("GET", "/", homeHandler.ServeHTTP)
+	server.router.Handle("GET", "/:index", indexHandler.ServeHTTP)
+	server.router.Handle("PUT", "/:index", createIndexHandler.ServeHTTP)
+	server.router.Handle("DELETE", "/:index", deleteIndexHandler.ServeHTTP)
+	server.router.Handle("POST", "/:index", searchIndexHandler.ServeHTTP)
+	server.router.Handle("GET", "/:index/:id", getIndexHandler.ServeHTTP)
+	server.router.Handle("GET", "/:index/:id/_analyze", getAnalyzeIndexHandler.ServeHTTP)
+	server.router.Handle("POST", "/:index/:id", addIndexHandler.ServeHTTP)
 
-	server.router.Handle("/", &homeHandler).Methods("GET")
-	server.router.Handle("/{index}", indexHandler).Methods("GET")
-	server.router.Handle("/{index}", createIndexHandler).Methods("PUT")
-	server.router.Handle("/{index}", deleteIndexHandler).Methods("DELETE")
-	server.router.Handle("/{index}/_search", searchIndexHandler).Methods("POST")
-	server.router.Handle("/{index}/{id}", getIndexHandler).Methods("GET")
-	server.router.Handle("/{index}/{id}/_analyze", getAnalyzeIndexHandler).Methods("GET")
-	server.router.Handle("/{index}/{id}", addIndexHandler).Methods("POST")
 }
 
-func (server *HTTPServer) GetRoutes() *mux.Router {
+func (server *HTTPServer) GetRoutes() *httprouter.Router {
 	return server.router
 }
 
