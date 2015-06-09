@@ -34,8 +34,4 @@ RUN go get golang.org/x/tools/cmd/cover && \
 
 ENV STORAGE_ENGINE leveldb
 
-#ADD hack/deps.txt /deps.txt
-#ADD hack/deps.sh /deps.sh
-#RUN /deps.sh
-
 WORKDIR /go/src/github.com/NeowayLabs/neosearch
