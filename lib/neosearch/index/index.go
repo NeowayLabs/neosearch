@@ -428,19 +428,23 @@ func (i *Index) buildIndexString(id uint64, key []byte, value string) ([]engine.
 		}
 	}
 
-	// Index each token part
-	// TODO: Optimize array of tokens. Need be *unique* tokens
-	for _, t := range tokens {
+	addIndexStringCommand := func(dbase string, key []byte) {
 		cmd := engine.Command{}
 		cmd.Index = i.Name
-		cmd.Database = storageName
+		cmd.Database = dbase
 		cmd.Command = "mergeset"
-		cmd.Key = []byte(t)
+		cmd.Key = key
 		cmd.KeyType = engine.TypeString
 		cmd.Value = utils.Uint64ToBytes(id)
 		cmd.ValueType = engine.TypeUint
 
 		commands = append(commands, cmd)
+	}
+
+	// Index each token part
+	// TODO: Optimize array of tokens. Need be *unique* tokens
+	for _, t := range tokens {
+		addIndexStringCommand(storageName, []byte(t))
 	}
 
 	if len(tokens) == 1 {
@@ -449,16 +453,7 @@ func (i *Index) buildIndexString(id uint64, key []byte, value string) ([]engine.
 	}
 
 	// Index all string
-	cmd := engine.Command{}
-	cmd.Index = i.Name
-	cmd.Database = string(key) + ".idx"
-	cmd.Command = "mergeset"
-	cmd.Key = []byte(value)
-	cmd.KeyType = engine.TypeString
-	cmd.Value = utils.Uint64ToBytes(id)
-	cmd.ValueType = engine.TypeUint
-
-	commands = append(commands, cmd)
+	addIndexStringCommand(string(key)+".idx", []byte(value))
 	return commands, nil
 }
 
