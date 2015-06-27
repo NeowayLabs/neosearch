@@ -428,19 +428,23 @@ func (i *Index) buildIndexString(id uint64, key []byte, value string) ([]engine.
 		}
 	}
 
-	// Index each token part
-	// TODO: Optimize array of tokens. Need be *unique* tokens
-	for _, t := range tokens {
+	addIndexStringCommand := func(dbase string, key []byte) {
 		cmd := engine.Command{}
 		cmd.Index = i.Name
-		cmd.Database = storageName
+		cmd.Database = dbase
 		cmd.Command = "mergeset"
-		cmd.Key = []byte(t)
+		cmd.Key = key
 		cmd.KeyType = engine.TypeString
 		cmd.Value = utils.Uint64ToBytes(id)
 		cmd.ValueType = engine.TypeUint
 
 		commands = append(commands, cmd)
+	}
+
+	// Index each token part
+	// TODO: Optimize array of tokens. Need be *unique* tokens
+	for _, t := range tokens {
+		addIndexStringCommand(storageName, []byte(t))
 	}
 
 	if len(tokens) == 1 {
@@ -449,13 +453,29 @@ func (i *Index) buildIndexString(id uint64, key []byte, value string) ([]engine.
 	}
 
 	// Index all string
+	addIndexStringCommand(string(key)+".idx", []byte(value))
+	return commands, nil
+}
+
+func (i *Index) buildIndexCommands(key []byte, cmdKey []byte, cmdVal []byte, keyType uint8) ([]engine.Command, error) {
+	var commands []engine.Command
+
+	storageName := string(key) + ".idx"
+
+	if i.enableBatchMode {
+		cmd, err := i.buildBatchOn(storageName)
+		if err == nil {
+			commands = append(commands, cmd)
+		}
+	}
+
 	cmd := engine.Command{}
 	cmd.Index = i.Name
-	cmd.Database = string(key) + ".idx"
+	cmd.Database = storageName
 	cmd.Command = "mergeset"
-	cmd.Key = []byte(value)
-	cmd.KeyType = engine.TypeString
-	cmd.Value = utils.Uint64ToBytes(id)
+	cmd.Key = cmdKey
+	cmd.KeyType = keyType
+	cmd.Value = cmdVal
 	cmd.ValueType = engine.TypeUint
 
 	commands = append(commands, cmd)
@@ -463,55 +483,11 @@ func (i *Index) buildIndexString(id uint64, key []byte, value string) ([]engine.
 }
 
 func (i *Index) buildIndexFloat64(id uint64, key []byte, value float64) ([]engine.Command, error) {
-	var commands []engine.Command
-
-	storageName := string(key) + ".idx"
-
-	if i.enableBatchMode {
-		cmd, err := i.buildBatchOn(storageName)
-
-		if err == nil {
-			commands = append(commands, cmd)
-		}
-	}
-
-	cmd := engine.Command{}
-	cmd.Index = i.Name
-	cmd.Database = storageName
-	cmd.Command = "mergeset"
-	cmd.Key = utils.Float64ToBytes(value)
-	cmd.KeyType = engine.TypeFloat
-	cmd.Value = utils.Uint64ToBytes(id)
-	cmd.ValueType = engine.TypeUint
-
-	commands = append(commands, cmd)
-	return commands, nil
+	return i.buildIndexCommands(key, utils.Float64ToBytes(value), utils.Uint64ToBytes(id), engine.TypeFloat)
 }
 
 func (i *Index) buildIndexInt64(id uint64, key []byte, value int64) ([]engine.Command, error) {
-	var commands []engine.Command
-
-	storageName := string(key) + ".idx"
-
-	if i.enableBatchMode {
-		cmd, err := i.buildBatchOn(storageName)
-		if err == nil {
-			commands = append(commands, cmd)
-		}
-	}
-
-	cmd := engine.Command{}
-	cmd.Index = i.Name
-	cmd.Database = storageName
-	cmd.Command = "mergeset"
-	cmd.Key = utils.Int64ToBytes(value)
-	cmd.KeyType = engine.TypeInt
-	cmd.Value = utils.Uint64ToBytes(id)
-	cmd.ValueType = engine.TypeUint
-
-	commands = append(commands, cmd)
-
-	return commands, nil
+	return i.buildIndexCommands(key, utils.Int64ToBytes(value), utils.Uint64ToBytes(id), engine.TypeInt)
 }
 
 // Close the index
