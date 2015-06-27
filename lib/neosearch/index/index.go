@@ -462,7 +462,7 @@ func (i *Index) buildIndexString(id uint64, key []byte, value string) ([]engine.
 	return commands, nil
 }
 
-func (i *Index) buildIndexCommands(key []byte, cmdKey []byte, cmdVal []byte, keyType uint8, valueType uint8) ([]engine.Command, error) {
+func (i *Index) buildIndexCommands(key []byte, cmdKey []byte, cmdVal []byte, keyType uint8) ([]engine.Command, error) {
 	var commands []engine.Command
 
 	storageName := string(key) + ".idx"
@@ -481,18 +481,18 @@ func (i *Index) buildIndexCommands(key []byte, cmdKey []byte, cmdVal []byte, key
 	cmd.Key = cmdKey
 	cmd.KeyType = keyType
 	cmd.Value = cmdVal
-	cmd.ValueType = valueType
+	cmd.ValueType = engine.TypeUint
 
 	commands = append(commands, cmd)
 	return commands, nil
 }
 
 func (i *Index) buildIndexFloat64(id uint64, key []byte, value float64) ([]engine.Command, error) {
-	return i.buildIndexCommands(key, utils.Float64ToBytes(value), utils.Uint64ToBytes(id), engine.TypeFloat, engine.TypeUint)
+	return i.buildIndexCommands(key, utils.Float64ToBytes(value), utils.Uint64ToBytes(id), engine.TypeFloat)
 }
 
 func (i *Index) buildIndexInt64(id uint64, key []byte, value int64) ([]engine.Command, error) {
-	return i.buildIndexCommands(key, utils.Int64ToBytes(value), utils.Uint64ToBytes(id), engine.TypeInt, engine.TypeUint)
+	return i.buildIndexCommands(key, utils.Int64ToBytes(value), utils.Uint64ToBytes(id), engine.TypeInt)
 }
 
 // Close the index
