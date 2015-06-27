@@ -272,6 +272,172 @@ cleanup:
 	os.RemoveAll(indexDir)
 }
 
+func TestAddDocumentWithObject(t *testing.T) {
+	var (
+		data       []byte
+		filterData []string
+		indexName  = "document-object-sample"
+		indexDir   = DataDirTmp + "/" + indexName
+		total      uint64
+	)
+
+	docNeoway := `{
+    "id": 1,
+    "name": "Neoway Business Solution",
+    "address": {
+        "city": "Florianópolis",
+        "district": "Itacorubi",
+        "street": "Patricio Farias",
+        "latlon": [
+            -27.545198,
+            -48.504827
+        ]
+    }
+}`
+
+	docGoogle := `{
+    "id": 2,
+    "name": "Google Inc.",
+    "address": {
+        "city": "Mountain View",
+        "street": "Amphitheatre Parkway",
+        "latlon": [
+            37.422541,
+            -122.084221
+        ]
+    }
+}`
+
+	docFacebook := `{
+    "id": 3,
+    "name": "Facebook Company",
+    "address": {
+        "city": "Menlo Park",
+        "street": "Hacker Way",
+        "latlon": [
+            37.484770,
+            -122.147914
+        ]
+    }
+}`
+
+	cfg := NewConfig()
+
+	cfg.Option(DataDir(DataDirTmp))
+	cfg.Option(Debug(false))
+
+	neo := New(cfg)
+
+	index, err := neo.CreateIndex(indexName)
+
+	if err != nil {
+		t.Error(err)
+		goto cleanup
+	}
+
+	if _, err := os.Stat(indexDir); os.IsNotExist(err) {
+		t.Errorf("no such file or directory: %s", indexDir)
+		goto cleanup
+	}
+
+	err = index.Add(1, []byte(docNeoway))
+
+	if err != nil {
+		t.Error(err.Error())
+		goto cleanup
+	}
+
+	if _, err := os.Stat(indexDir + "/document.db"); os.IsNotExist(err) {
+		t.Errorf("no such file or directory: %s", indexDir+"/document.db")
+		goto cleanup
+	}
+
+	err = index.Add(2, []byte(docGoogle))
+
+	if err != nil {
+		t.Error(err)
+		goto cleanup
+	}
+
+	err = index.Add(3, []byte(docFacebook))
+
+	if err != nil {
+		t.Error(err)
+		goto cleanup
+	}
+
+	data, err = index.Get(1)
+
+	if err != nil {
+		t.Error(err)
+		goto cleanup
+	}
+
+	if string(data) != docNeoway {
+		t.Errorf("Failed to retrieve indexed document")
+		goto cleanup
+	}
+
+	filterData, total, err = index.FilterTerm([]byte("name"), []byte("neoway business solution"), 0)
+
+	if err != nil {
+		t.Error(err)
+		goto cleanup
+	}
+
+	if total != 1 || len(filterData) != 1 ||
+		filterData[0] != docNeoway {
+		t.Errorf("Failed to filter by field name: %v != %s", filterData, docNeoway)
+		goto cleanup
+	}
+
+	filterData, total, err = index.FilterTerm([]byte("name"), []byte("neoway"), 0)
+
+	if err != nil {
+		t.Error(err)
+		goto cleanup
+	}
+
+	if total != 1 || len(filterData) != 1 || !reflect.DeepEqual(filterData, []string{
+		docNeoway,
+	}) {
+		t.Errorf("Failed to filter by field name: %s != %s", filterData, `[`+docNeoway+`]`)
+		goto cleanup
+	}
+
+	filterData, total, err = index.FilterTerm([]byte("address.city"), []byte("menlo"), 0)
+
+	if err != nil {
+		t.Error(err)
+		goto cleanup
+	}
+
+	if total != 1 || len(filterData) != 1 || !reflect.DeepEqual(filterData, []string{
+		docFacebook,
+	}) {
+		t.Errorf("Failed to filter by field name: %s != %s", filterData, `[`+docFacebook+`]`)
+		goto cleanup
+	}
+
+	filterData, total, err = index.FilterTerm([]byte("address.street"), []byte("hacker"), 0)
+
+	if err != nil {
+		t.Error(err)
+		goto cleanup
+	}
+
+	if total != 1 || len(filterData) != 1 || !reflect.DeepEqual(filterData, []string{
+		docFacebook,
+	}) {
+		t.Errorf("Failed to filter by field name: %s != %s", filterData, `[`+docFacebook+`]`)
+		goto cleanup
+	}
+
+cleanup:
+	neo.Close()
+	os.RemoveAll(indexDir)
+}
+
 func TestPrefixMatch(t *testing.T) {
 	var (
 		data      []byte

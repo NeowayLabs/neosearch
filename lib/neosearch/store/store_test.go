@@ -119,9 +119,6 @@ func TestOpenDatabase(t *testing.T) {
 		"sample.",
 		"sample.a",
 		"sample/test.db",
-		"asas-a.db",
-		"-asasa.db",
-		"adasdas-.db",
 	}
 
 	os.Mkdir(DataDirTmp+string(filepath.Separator)+"sample-ok", 0755)
