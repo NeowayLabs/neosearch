@@ -31,7 +31,7 @@ func TestBuildAddObjectDocument(t *testing.T) {
 	)
 
 	cfg := Config{
-		Debug:   true,
+		Debug:   false,
 		DataDir: DataDirTmp,
 	}
 

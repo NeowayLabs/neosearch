@@ -51,7 +51,7 @@ func ValidateIndexName(name string) bool {
 		return false
 	}
 
-	validName := regexp.MustCompile(`^[a-zA-Z0-9-]+$`)
+	validName := regexp.MustCompile(`^[a-zA-Z]+[a-zA-Z0-9_-]+$`)
 	return validName.MatchString(name)
 }
 
@@ -196,6 +196,8 @@ func (i *Index) BuildAdd(id uint64, doc []byte) ([]engine.Command, error) {
 func (i *Index) buildAddDocument(id uint64, doc []byte) ([]engine.Command, error) {
 	var commands []engine.Command
 
+	commands = make([]engine.Command, 0, 2)
+
 	if i.enableBatchMode {
 		cmd, err := i.buildBatchOn(dbName)
 
@@ -236,6 +238,8 @@ func (i *Index) GetAnalyze(id uint64) (engine.Command, error) {
 	return i.buildGet(id), nil
 }
 
+// GetDocs returns the content of documents specified by docIDs and limited
+// by limit.
 func (i *Index) GetDocs(docIDs []uint64, limit uint) ([]string, error) {
 	var (
 		docLen = uint(len(docIDs))
@@ -354,6 +358,8 @@ func (i *Index) buildIndexField(id uint64, key []byte, value interface{}) ([]eng
 	case reflect.String:
 		commands, err = i.buildIndexString(id, key, value.(string))
 		break
+	case reflect.Uint:
+		commands, err = i.buildIndexUint64(id, key, value.(uint64))
 	case reflect.Int:
 		commands, err = i.buildIndexInt64(id, key, value.(int64))
 		break
@@ -384,6 +390,7 @@ func (i *Index) buildIndexField(id uint64, key []byte, value interface{}) ([]eng
 	return commands, err
 }
 
+// TODO: Index don't take care of item order
 func (i *Index) buildIndexSlice(id uint64, key []byte, values []interface{}) ([]engine.Command, error) {
 	var commands []engine.Command
 
@@ -484,6 +491,10 @@ func (i *Index) buildIndexCommands(key []byte, cmdKey []byte, cmdVal []byte, key
 
 func (i *Index) buildIndexFloat64(id uint64, key []byte, value float64) ([]engine.Command, error) {
 	return i.buildIndexCommands(key, utils.Float64ToBytes(value), utils.Uint64ToBytes(id), engine.TypeFloat)
+}
+
+func (i *Index) buildIndexUint64(id uint64, key []byte, value uint64) ([]engine.Command, error) {
+	return i.buildIndexCommands(key, utils.Uint64ToBytes(value), utils.Uint64ToBytes(id), engine.TypeUint)
 }
 
 func (i *Index) buildIndexInt64(id uint64, key []byte, value int64) ([]engine.Command, error) {
