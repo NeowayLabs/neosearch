@@ -36,7 +36,7 @@ func addDocumentsForSearch(indexName string) (*SearchHandler, error) {
 		`{"id": 2, "name": "Google Inc"}`,
 	} {
 
-		err = ind.Add(uint64(i), []byte(doc))
+		err = ind.Add(uint64(i), []byte(doc), nil)
 
 		if err != nil {
 			return nil, err

@@ -50,7 +50,7 @@ func TestGetDocumentsOK(t *testing.T) {
 		`{"id": 2, "title": "hjdfskhfk"}`,
 	} {
 
-		err = ind.Add(uint64(i), []byte(doc))
+		err = ind.Add(uint64(i), []byte(doc), nil)
 
 		if err != nil {
 			t.Error(err)

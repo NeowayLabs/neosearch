@@ -194,7 +194,7 @@ func TestAddDocument(t *testing.T) {
 		goto cleanup
 	}
 
-	err = index.Add(1, []byte(`{"id": 1, "name": "Neoway Business Solution"}`))
+	err = index.Add(1, []byte(`{"id": 1, "name": "Neoway Business Solution"}`), nil)
 
 	if err != nil {
 		t.Error(err.Error())
@@ -206,21 +206,21 @@ func TestAddDocument(t *testing.T) {
 		goto cleanup
 	}
 
-	err = index.Add(2, []byte(`{"id": 2, "name": "Google Inc."}`))
+	err = index.Add(2, []byte(`{"id": 2, "name": "Google Inc."}`), nil)
 
 	if err != nil {
 		t.Error(err)
 		goto cleanup
 	}
 
-	err = index.Add(3, []byte(`{"id": 3, "name": "Facebook Company"}`))
+	err = index.Add(3, []byte(`{"id": 3, "name": "Facebook Company"}`), nil)
 
 	if err != nil {
 		t.Error(err)
 		goto cleanup
 	}
 
-	err = index.Add(4, []byte(`{"id": 4, "name": "Neoway Teste"}`))
+	err = index.Add(4, []byte(`{"id": 4, "name": "Neoway Teste"}`), nil)
 
 	if err != nil {
 		t.Error(err)
@@ -340,7 +340,7 @@ func TestAddDocumentWithObject(t *testing.T) {
 		goto cleanup
 	}
 
-	err = index.Add(1, []byte(docNeoway))
+	err = index.Add(1, []byte(docNeoway), nil)
 
 	if err != nil {
 		t.Error(err.Error())
@@ -352,14 +352,14 @@ func TestAddDocumentWithObject(t *testing.T) {
 		goto cleanup
 	}
 
-	err = index.Add(2, []byte(docGoogle))
+	err = index.Add(2, []byte(docGoogle), nil)
 
 	if err != nil {
 		t.Error(err)
 		goto cleanup
 	}
 
-	err = index.Add(3, []byte(docFacebook))
+	err = index.Add(3, []byte(docFacebook), nil)
 
 	if err != nil {
 		t.Error(err)
@@ -464,7 +464,7 @@ func TestPrefixMatch(t *testing.T) {
 		goto cleanup
 	}
 
-	err = index.Add(1, []byte(`{"id": 1, "name": "Neoway Business Solution"}`))
+	err = index.Add(1, []byte(`{"id": 1, "name": "Neoway Business Solution"}`), nil)
 
 	if err != nil {
 		t.Error(err.Error())
@@ -476,21 +476,21 @@ func TestPrefixMatch(t *testing.T) {
 		goto cleanup
 	}
 
-	err = index.Add(2, []byte(`{"id": 2, "name": "Google Inc."}`))
+	err = index.Add(2, []byte(`{"id": 2, "name": "Google Inc."}`), nil)
 
 	if err != nil {
 		t.Error(err)
 		goto cleanup
 	}
 
-	err = index.Add(3, []byte(`{"id": 3, "name": "Facebook Company"}`))
+	err = index.Add(3, []byte(`{"id": 3, "name": "Facebook Company"}`), nil)
 
 	if err != nil {
 		t.Error(err)
 		goto cleanup
 	}
 
-	err = index.Add(4, []byte(`{"id": 4, "name": "Neoway Teste"}`))
+	err = index.Add(4, []byte(`{"id": 4, "name": "Neoway Teste"}`), nil)
 
 	if err != nil {
 		t.Error(err)
@@ -558,7 +558,7 @@ func TestBatchAdd(t *testing.T) {
 
 	index.Batch()
 
-	err = index.Add(1, []byte(`{"id": 1, "name": "Neoway Business Solution"}`))
+	err = index.Add(1, []byte(`{"id": 1, "name": "Neoway Business Solution"}`), nil)
 
 	if err != nil {
 		t.Error(err)
@@ -569,19 +569,19 @@ func TestBatchAdd(t *testing.T) {
 		return
 	}
 
-	err = index.Add(2, []byte(`{"id": 2, "name": "Google Inc."}`))
+	err = index.Add(2, []byte(`{"id": 2, "name": "Google Inc."}`), nil)
 
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = index.Add(3, []byte(`{"id": 3, "name": "Facebook Company"}`))
+	err = index.Add(3, []byte(`{"id": 3, "name": "Facebook Company"}`), nil)
 
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = index.Add(4, []byte(`{"id": 4, "name": "Neoway Teste"}`))
+	err = index.Add(4, []byte(`{"id": 4, "name": "Neoway Teste"}`), nil)
 
 	if err != nil {
 		t.Error(err)

@@ -53,7 +53,7 @@ func TestBuildAddObjectDocument(t *testing.T) {
 		goto cleanup
 	}
 
-	commands, err = index.BuildAdd(1, docJSON)
+	commands, err = index.BuildAdd(1, docJSON, nil)
 
 	if err != nil {
 		t.Error(err.Error())

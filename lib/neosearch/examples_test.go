@@ -30,16 +30,16 @@ func Example() {
 	index, err := neo.CreateIndex("test")
 	OnErrorPanic(err)
 
-	err = index.Add(1, []byte(`{"id": 1, "name": "Neoway Business Solution"}`))
+	err = index.Add(1, []byte(`{"id": 1, "name": "Neoway Business Solution"}`), nil)
 	OnErrorPanic(err)
 
-	err = index.Add(2, []byte(`{"id": 2, "name": "Google Inc."}`))
+	err = index.Add(2, []byte(`{"id": 2, "name": "Google Inc."}`), nil)
 	OnErrorPanic(err)
 
-	err = index.Add(3, []byte(`{"id": 3, "name": "Facebook Company"}`))
+	err = index.Add(3, []byte(`{"id": 3, "name": "Facebook Company"}`), nil)
 	OnErrorPanic(err)
 
-	err = index.Add(4, []byte(`{"id": 4, "name": "Neoway Teste"}`))
+	err = index.Add(4, []byte(`{"id": 4, "name": "Neoway Teste"}`), nil)
 	OnErrorPanic(err)
 
 	data, err := index.Get(1)
@@ -66,16 +66,16 @@ func ExampleMatchPrefix() {
 	index, err := neo.CreateIndex("test")
 	OnErrorPanic(err)
 
-	err = index.Add(1, []byte(`{"id": 1, "name": "Neoway Business Solution"}`))
+	err = index.Add(1, []byte(`{"id": 1, "name": "Neoway Business Solution"}`), nil)
 	OnErrorPanic(err)
 
-	err = index.Add(2, []byte(`{"id": 2, "name": "Google Inc."}`))
+	err = index.Add(2, []byte(`{"id": 2, "name": "Google Inc."}`), nil)
 	OnErrorPanic(err)
 
-	err = index.Add(3, []byte(`{"id": 3, "name": "Facebook Company"}`))
+	err = index.Add(3, []byte(`{"id": 3, "name": "Facebook Company"}`), nil)
 	OnErrorPanic(err)
 
-	err = index.Add(4, []byte(`{"id": 4, "name": "Neoway Teste"}`))
+	err = index.Add(4, []byte(`{"id": 4, "name": "Neoway Teste"}`), nil)
 	OnErrorPanic(err)
 
 	values, err := index.MatchPrefix([]byte("name"), []byte("neoway"))

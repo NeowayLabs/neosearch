@@ -78,7 +78,7 @@ func TestBuildAddDocument(t *testing.T) {
 		goto cleanup
 	}
 
-	commands, err = index.BuildAdd(1, docJSON)
+	commands, err = index.BuildAdd(1, docJSON, nil)
 
 	if err != nil {
 		t.Error(err.Error())
@@ -217,7 +217,7 @@ func TestBuildAddDocument(t *testing.T) {
 		},
 	}
 
-	commands, err = index.BuildAdd(2, docJSON)
+	commands, err = index.BuildAdd(2, docJSON, nil)
 
 	if err != nil {
 		t.Error(err)
@@ -267,7 +267,7 @@ func TestBuildAddDocumentWithBatchMode(t *testing.T) {
 	}
 
 	index.Batch()
-	commands, err = index.BuildAdd(1, docJSON)
+	commands, err = index.BuildAdd(1, docJSON, nil)
 
 	if err != nil {
 		t.Error(err.Error())
@@ -449,7 +449,7 @@ func TestBuildAddDocumentWithBatchMode(t *testing.T) {
 	}
 
 	index.Batch()
-	commands, err = index.BuildAdd(2, docJSON)
+	commands, err = index.BuildAdd(2, docJSON, nil)
 
 	if err != nil {
 		t.Error(err)

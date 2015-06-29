@@ -68,8 +68,6 @@ func TestIndexBuildUintCommands(t *testing.T) {
 		goto cleanup
 	}
 
-	cmd.Println()
-
 cleanup:
 	idx.Close()
 	os.RemoveAll(indexDir)

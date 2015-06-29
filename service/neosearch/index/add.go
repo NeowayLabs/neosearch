@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
+	nsindex "github.com/NeowayLabs/neosearch/lib/neosearch/index"
 	"github.com/NeowayLabs/neosearch/service/neosearch/handler"
 	"github.com/julienschmidt/httprouter"
 )
@@ -87,5 +88,5 @@ func (handler *AddHandler) addDocument(indexName string, id uint64, document []b
 		return err
 	}
 
-	return index.Add(id, document)
+	return index.Add(id, document, nsindex.Metadata{})
 }

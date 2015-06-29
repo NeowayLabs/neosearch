@@ -47,7 +47,7 @@ func TestIndexNotExist(t *testing.T) {
 }
 
 func addDocs(t *testing.T, index *index.Index) {
-	err := index.Add(1, []byte(`{"title": "teste"}`))
+	err := index.Add(1, []byte(`{"title": "teste"}`), nil)
 
 	if err != nil {
 		t.Error(err)
