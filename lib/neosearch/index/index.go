@@ -123,8 +123,6 @@ func (i *Index) FlushBatch() {
 
 // Add executes the sequence of commands necessary to index the document `doc`.
 func (i *Index) Add(id uint64, doc []byte) error {
-	indicesCounter := make(map[string]uint64)
-
 	commands, err := i.BuildAdd(id, doc)
 
 	if err != nil {
@@ -137,9 +135,6 @@ func (i *Index) Add(id uint64, doc []byte) error {
 		if err != nil {
 			return err
 		}
-
-		val := indicesCounter[cmd.Index] + 1
-		indicesCounter[cmd.Index] = val
 	}
 
 	return nil
