@@ -55,7 +55,6 @@ func (server *HTTPServer) createRoutes() {
 	server.router.Handle("GET", "/:index/:id", getIndexHandler.ServeHTTP)
 	server.router.Handle("GET", "/:index/:id/_analyze", getAnalyzeIndexHandler.ServeHTTP)
 	server.router.Handle("POST", "/:index/:id", addIndexHandler.ServeHTTP)
-
 }
 
 func (server *HTTPServer) GetRoutes() *httprouter.Router {
