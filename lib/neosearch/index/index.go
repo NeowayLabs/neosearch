@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch/engine"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
@@ -381,6 +382,14 @@ func (i *Index) buildIndexField(id uint64, key []byte, value interface{}, metada
 		}
 
 		commands, err = i.buildIndexString(id, key, vstr)
+	case "date":
+		dateStr, ok := value.(string)
+
+		if !ok {
+			return nil, fmt.Errorf("Error indexing field '%s'. Value '%+v' isn't date", string(key), value)
+		}
+
+		commands, err = i.buildIndexDate(id, key, dateStr, metadata)
 	case "uint", "uint8", "uint16", "uint32", "uint64":
 		var vuint uint64
 
@@ -530,6 +539,26 @@ func (i *Index) buildIndexString(id uint64, key []byte, value string) ([]engine.
 	// Index all string
 	addIndexStringCommand(string(key)+".idx", []byte(value))
 	return commands, nil
+}
+
+func (i *Index) buildIndexDate(id uint64, key []byte, value string, metadata Metadata) ([]engine.Command, error) {
+	var (
+		t time.Time
+	)
+
+	format, hasFmt := metadata["format"].(string)
+
+	if !hasFmt {
+		format = time.ANSIC
+	}
+
+	t, err := time.Parse(format, value)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return i.buildIndexInt64(id, key, t.UnixNano())
 }
 
 func (i *Index) buildIndexCommands(key []byte, cmdKey []byte, cmdVal []byte, keyType uint8) ([]engine.Command, error) {

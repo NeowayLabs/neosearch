@@ -3,6 +3,7 @@ package index
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch/engine"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/utils"
@@ -199,6 +200,97 @@ func TestSimpleIndexWithMetadata(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 		goto cleanup
+	}
+
+	if !compareCommands(t, commands, expectedCommands) {
+		goto cleanup
+	}
+
+cleanup:
+	index.Close()
+	os.RemoveAll(indexDir)
+}
+
+func TestDateIndex(t *testing.T) {
+	var (
+		indexName                  = "document-sample-date"
+		indexDir                   = DataDirTmp + "/" + indexName
+		commands, expectedCommands []engine.Command
+		currentDate                = time.Now()
+		currentDateStr             = currentDate.Format(time.ANSIC)
+		expectedTime, _            = time.Parse(time.ANSIC, currentDateStr)
+		expectedNano               = expectedTime.UnixNano()
+		docJSON                    = []byte(`{"id": 1, "createAt": "` + currentDateStr + `"}`)
+		err                        error
+		index                      *Index
+		metadata                   = Metadata{
+			"id": Metadata{
+				"type": "uint",
+			},
+			"createAt": Metadata{
+				"type": "date",
+			},
+		}
+	)
+
+	cfg := Config{
+		Debug:   true,
+		DataDir: DataDirTmp,
+	}
+
+	err = os.MkdirAll(DataDirTmp, 0755)
+
+	if err != nil {
+		goto cleanup
+	}
+
+	index, err = New(indexName, cfg, true)
+
+	if err != nil {
+		t.Error(err)
+		goto cleanup
+	}
+
+	if _, err := os.Stat(indexDir); os.IsNotExist(err) {
+		t.Errorf("no such file or directory: %s", indexDir)
+		goto cleanup
+	}
+
+	commands, err = index.BuildAdd(1, docJSON, metadata)
+
+	if err != nil {
+		t.Error(err.Error())
+		goto cleanup
+	}
+
+	expectedCommands = []engine.Command{
+		{
+			Index:     indexName,
+			Database:  "document.db",
+			Key:       utils.Uint64ToBytes(1),
+			KeyType:   engine.TypeUint,
+			Value:     docJSON,
+			ValueType: engine.TypeString,
+			Command:   "set",
+		},
+		{
+			Index:     indexName,
+			Database:  "createAt.idx",
+			Key:       utils.Int64ToBytes(expectedNano),
+			KeyType:   engine.TypeInt,
+			Value:     utils.Uint64ToBytes(1),
+			ValueType: engine.TypeUint,
+			Command:   "mergeset",
+		},
+		{
+			Index:     indexName,
+			Database:  "id.idx",
+			Key:       utils.Uint64ToBytes(1),
+			KeyType:   engine.TypeUint,
+			Value:     utils.Uint64ToBytes(1),
+			ValueType: engine.TypeUint,
+			Command:   "mergeset",
+		},
 	}
 
 	if !compareCommands(t, commands, expectedCommands) {
