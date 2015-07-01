@@ -275,7 +275,7 @@ func TestDateIndex(t *testing.T) {
 		},
 		{
 			Index:     indexName,
-			Database:  "createAt.idx",
+			Database:  "createat.idx",
 			Key:       utils.Int64ToBytes(expectedNano),
 			KeyType:   engine.TypeInt,
 			Value:     utils.Uint64ToBytes(1),

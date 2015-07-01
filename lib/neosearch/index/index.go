@@ -14,6 +14,7 @@ import (
 	"github.com/NeowayLabs/neosearch/lib/neosearch/engine"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/utils"
+	"github.com/extemporalgenome/slug"
 )
 
 const (
@@ -334,13 +335,13 @@ func (i *Index) buildIndexFields(id uint64, baseField string, structData map[str
 
 		value := structData[key]
 
-		fieldKey := key
+		fieldKey := slug.SlugAscii(key)
 
 		if baseField != "" {
 			fieldKey = baseField + "." + fieldKey
 		}
 
-		cmds, err := i.buildIndexField(id, []byte(fieldKey), value, metainfo)
+		cmds, err := i.buildIndexField(id, fieldKey, value, metainfo)
 
 		if err != nil {
 			return nil, err
@@ -354,7 +355,7 @@ func (i *Index) buildIndexFields(id uint64, baseField string, structData map[str
 	return commands, nil
 }
 
-func (i *Index) buildIndexField(id uint64, key []byte, value interface{}, metadata Metadata) ([]engine.Command, error) {
+func (i *Index) buildIndexField(id uint64, field string, value interface{}, metadata Metadata) ([]engine.Command, error) {
 	var (
 		commands  []engine.Command
 		err       error
@@ -378,18 +379,18 @@ func (i *Index) buildIndexField(id uint64, key []byte, value interface{}, metada
 		vstr, ok := value.(string)
 
 		if !ok {
-			return nil, fmt.Errorf("Error indexing field '%s'. Value '%+v' isn't string", string(key), value)
+			return nil, fmt.Errorf("Error indexing field '%s'. Value '%+v' isn't string", field, value)
 		}
 
-		commands, err = i.buildIndexString(id, key, vstr)
+		commands, err = i.buildIndexString(id, field, vstr)
 	case "date":
 		dateStr, ok := value.(string)
 
 		if !ok {
-			return nil, fmt.Errorf("Error indexing field '%s'. Value '%+v' isn't date", string(key), value)
+			return nil, fmt.Errorf("Error indexing field '%s'. Value '%+v' isn't date", field, value)
 		}
 
-		commands, err = i.buildIndexDate(id, key, dateStr, metadata)
+		commands, err = i.buildIndexDate(id, field, dateStr, metadata)
 	case "uint", "uint8", "uint16", "uint32", "uint64":
 		var vuint uint64
 
@@ -399,11 +400,11 @@ func (i *Index) buildIndexField(id uint64, key []byte, value interface{}, metada
 			vuint, err = utils.Uint64FromInterface(value, vtype.Kind())
 
 			if err != nil {
-				return nil, fmt.Errorf("Error indexing field '%s'. Value '%+v' isn't uint", string(key), value)
+				return nil, fmt.Errorf("Error indexing field '%s'. Value '%+v' isn't uint", field, value)
 			}
 		}
 
-		commands, err = i.buildIndexUint64(id, key, vuint)
+		commands, err = i.buildIndexUint64(id, field, vuint)
 	case "int", "int8", "int16", "int32", "int64":
 		var vint int64
 
@@ -413,24 +414,24 @@ func (i *Index) buildIndexField(id uint64, key []byte, value interface{}, metada
 			vint, err = utils.Int64FromInterface(value, vtype.Kind())
 
 			if err != nil {
-				return nil, fmt.Errorf("Error indexing field '%s'. Value '%+v' isn't int", string(key), value)
+				return nil, fmt.Errorf("Error indexing field '%s'. Value '%+v' isn't int", field, value)
 			}
 		}
 
-		commands, err = i.buildIndexInt64(id, key, vint)
+		commands, err = i.buildIndexInt64(id, field, vint)
 	case "float", "float32", "float64":
 		vfloat, ok := value.(float64)
 
 		if !ok {
-			return nil, fmt.Errorf("Error indexing field '%s'. Value '%+v' isn't int", string(key), value)
+			return nil, fmt.Errorf("Error indexing field '%s'. Value '%+v' isn't int", field, value)
 		}
 
-		commands, err = i.buildIndexFloat64(id, key, vfloat)
+		commands, err = i.buildIndexFloat64(id, field, vfloat)
 	case "slice", "list", "[]interface {}":
 		vslice, ok := value.([]interface{})
 
 		if !ok {
-			return nil, fmt.Errorf("Error indexing field '%s'. Value '%+v' isn't slice", string(key), value)
+			return nil, fmt.Errorf("Error indexing field '%s'. Value '%+v' isn't slice", field, value)
 		}
 
 		submetadata, ok := metadata["metadata"].(Metadata)
@@ -439,12 +440,12 @@ func (i *Index) buildIndexField(id uint64, key []byte, value interface{}, metada
 			submetadata = nil
 		}
 
-		commands, err = i.buildIndexSlice(id, key, vslice, submetadata)
+		commands, err = i.buildIndexSlice(id, field, vslice, submetadata)
 	case "object", "map", "map[string]interface {}":
 		vobject, ok := value.(map[string]interface{})
 
 		if !ok {
-			return nil, fmt.Errorf("Error indexing field '%s'. Value '%+v' isn't object", string(key), value)
+			return nil, fmt.Errorf("Error indexing field '%s'. Value '%+v' isn't object", field, value)
 		}
 
 		submetadata, ok := metadata["metadata"].(Metadata)
@@ -453,7 +454,7 @@ func (i *Index) buildIndexField(id uint64, key []byte, value interface{}, metada
 			submetadata = nil
 		}
 
-		commands, err = i.buildIndexFields(id, string(key), vobject, submetadata)
+		commands, err = i.buildIndexFields(id, field, vobject, submetadata)
 	default:
 		errMsg := fmt.Sprintf("Unknown type %s: %s\n", fieldType, value)
 
@@ -468,10 +469,10 @@ func (i *Index) buildIndexField(id uint64, key []byte, value interface{}, metada
 }
 
 // TODO: Index don't take care of item order
-func (i *Index) buildIndexSlice(id uint64, key []byte, values []interface{}, metadata Metadata) ([]engine.Command, error) {
+func (i *Index) buildIndexSlice(id uint64, field string, values []interface{}, metadata Metadata) ([]engine.Command, error) {
 	var commands []engine.Command
 
-	storageName := string(key) + ".idx"
+	storageName := field + ".idx"
 
 	if i.enableBatchMode {
 		cmd, err := i.buildBatchOn(storageName)
@@ -481,7 +482,7 @@ func (i *Index) buildIndexSlice(id uint64, key []byte, values []interface{}, met
 	}
 
 	for _, value := range values {
-		cmds, err := i.buildIndexField(id, key, value, metadata)
+		cmds, err := i.buildIndexField(id, field, value, metadata)
 
 		if err != nil {
 			return nil, err
@@ -495,7 +496,7 @@ func (i *Index) buildIndexSlice(id uint64, key []byte, values []interface{}, met
 	return commands, nil
 }
 
-func (i *Index) buildIndexString(id uint64, key []byte, value string) ([]engine.Command, error) {
+func (i *Index) buildIndexString(id uint64, field string, value string) ([]engine.Command, error) {
 	var commands []engine.Command
 
 	// default/hardcoded analyser == tokenizer
@@ -503,7 +504,7 @@ func (i *Index) buildIndexString(id uint64, key []byte, value string) ([]engine.
 	value = strings.ToLower(value)
 	tokens := strings.Split(value, " ")
 
-	storageName := string(key) + ".idx"
+	storageName := field + ".idx"
 
 	if i.enableBatchMode {
 		cmd, err := i.buildBatchOn(storageName)
@@ -537,11 +538,11 @@ func (i *Index) buildIndexString(id uint64, key []byte, value string) ([]engine.
 	}
 
 	// Index all string
-	addIndexStringCommand(string(key)+".idx", []byte(value))
+	addIndexStringCommand(storageName, []byte(value))
 	return commands, nil
 }
 
-func (i *Index) buildIndexDate(id uint64, key []byte, value string, metadata Metadata) ([]engine.Command, error) {
+func (i *Index) buildIndexDate(id uint64, field string, value string, metadata Metadata) ([]engine.Command, error) {
 	var (
 		t time.Time
 	)
@@ -558,13 +559,13 @@ func (i *Index) buildIndexDate(id uint64, key []byte, value string, metadata Met
 		return nil, err
 	}
 
-	return i.buildIndexInt64(id, key, t.UnixNano())
+	return i.buildIndexInt64(id, field, t.UnixNano())
 }
 
-func (i *Index) buildIndexCommands(key []byte, cmdKey []byte, cmdVal []byte, keyType uint8) ([]engine.Command, error) {
+func (i *Index) buildIndexCommands(field string, cmdKey []byte, cmdVal []byte, keyType uint8) ([]engine.Command, error) {
 	var commands []engine.Command
 
-	storageName := string(key) + ".idx"
+	storageName := field + ".idx"
 
 	if i.enableBatchMode {
 		cmd, err := i.buildBatchOn(storageName)
@@ -586,16 +587,16 @@ func (i *Index) buildIndexCommands(key []byte, cmdKey []byte, cmdVal []byte, key
 	return commands, nil
 }
 
-func (i *Index) buildIndexFloat64(id uint64, key []byte, value float64) ([]engine.Command, error) {
-	return i.buildIndexCommands(key, utils.Float64ToBytes(value), utils.Uint64ToBytes(id), engine.TypeFloat)
+func (i *Index) buildIndexFloat64(id uint64, field string, value float64) ([]engine.Command, error) {
+	return i.buildIndexCommands(field, utils.Float64ToBytes(value), utils.Uint64ToBytes(id), engine.TypeFloat)
 }
 
-func (i *Index) buildIndexUint64(id uint64, key []byte, value uint64) ([]engine.Command, error) {
-	return i.buildIndexCommands(key, utils.Uint64ToBytes(value), utils.Uint64ToBytes(id), engine.TypeUint)
+func (i *Index) buildIndexUint64(id uint64, field string, value uint64) ([]engine.Command, error) {
+	return i.buildIndexCommands(field, utils.Uint64ToBytes(value), utils.Uint64ToBytes(id), engine.TypeUint)
 }
 
-func (i *Index) buildIndexInt64(id uint64, key []byte, value int64) ([]engine.Command, error) {
-	return i.buildIndexCommands(key, utils.Int64ToBytes(value), utils.Uint64ToBytes(id), engine.TypeInt)
+func (i *Index) buildIndexInt64(id uint64, field string, value int64) ([]engine.Command, error) {
+	return i.buildIndexCommands(field, utils.Int64ToBytes(value), utils.Uint64ToBytes(id), engine.TypeInt)
 }
 
 // Close the index

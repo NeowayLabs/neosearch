@@ -41,7 +41,7 @@ func TestIndexBuildUintCommands(t *testing.T) {
 		goto cleanup
 	}
 
-	commands, err = idx.buildIndexUint64(uint64(1), []byte("teste"), uint64(1))
+	commands, err = idx.buildIndexUint64(uint64(1), "teste", uint64(1))
 
 	if err != nil {
 		t.Error(err)

@@ -23,14 +23,15 @@ RUN cd /usr/local/go/src && ./make.bash --no-clean 2>&1
 
 # Grab Go test coverage tools
 RUN go get golang.org/x/tools/cmd/cover && \
-    go get github.com/nielsdraaisma/godep && \
+    go get github.com/tools/godep && \
     go get github.com/axw/gocov/gocov && \
     go get golang.org/x/tools/cmd/cover && \
     go get -u github.com/golang/lint/golint && \
     go get golang.org/x/tools/cmd/goimports && \
     go get golang.org/x/tools/cmd/godoc && \
     go get golang.org/x/tools/cmd/vet && \
-    go get github.com/jmhodges/levigo
+    go get github.com/jmhodges/levigo && \
+    go get github.com/extemporalgenome/slug
 
 ENV STORAGE_ENGINE leveldb
 
