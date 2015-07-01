@@ -472,7 +472,7 @@ func (i *Index) buildIndexField(id uint64, field string, value interface{}, meta
 func (i *Index) buildIndexSlice(id uint64, field string, values []interface{}, metadata Metadata) ([]engine.Command, error) {
 	var commands []engine.Command
 
-	storageName := field + ".idx"
+	storageName := field + "_slice.idx"
 
 	if i.enableBatchMode {
 		cmd, err := i.buildBatchOn(storageName)
@@ -504,7 +504,7 @@ func (i *Index) buildIndexString(id uint64, field string, value string) ([]engin
 	value = strings.ToLower(value)
 	tokens := strings.Split(value, " ")
 
-	storageName := field + ".idx"
+	storageName := field + "_string.idx"
 
 	if i.enableBatchMode {
 		cmd, err := i.buildBatchOn(storageName)
@@ -563,9 +563,31 @@ func (i *Index) buildIndexDate(id uint64, field string, value string, metadata M
 }
 
 func (i *Index) buildIndexCommands(field string, cmdKey []byte, cmdVal []byte, keyType uint8) ([]engine.Command, error) {
-	var commands []engine.Command
+	var (
+		commands []engine.Command
+		typeStr  string
+	)
 
-	storageName := field + ".idx"
+	switch keyType {
+	case engine.TypeUint:
+		typeStr = "uint"
+	case engine.TypeInt:
+		typeStr = "int"
+	case engine.TypeFloat:
+		typeStr = "float"
+	case engine.TypeString:
+		typeStr = "string"
+	case engine.TypeDate:
+		typeStr = "date"
+	default:
+		return nil, errors.New(fmt.Sprintf("Invalid engine value type: %s", keyType))
+	}
+
+	if keyType == engine.TypeInt {
+		typeStr = "int"
+	}
+
+	storageName := field + "_" + typeStr + ".idx"
 
 	if i.enableBatchMode {
 		cmd, err := i.buildBatchOn(storageName)

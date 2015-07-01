@@ -56,7 +56,7 @@ func TestIndexBuildUintCommands(t *testing.T) {
 	cmd = commands[0]
 
 	if cmd.Index != "test-uint" ||
-		cmd.Database != "teste.idx" ||
+		cmd.Database != "teste_uint.idx" ||
 		utils.BytesToUint64(cmd.Key) != uint64(1) ||
 		utils.BytesToUint64(cmd.Value) != uint64(1) ||
 		strings.ToLower(cmd.Command) != "mergeset" {

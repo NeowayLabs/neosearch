@@ -10,7 +10,8 @@ import (
 func (i *Index) FilterTermID(field, value []byte, limit uint64) ([]uint64, uint64, error) {
 	cmd := engine.Command{}
 	cmd.Index = i.Name
-	cmd.Database = string(field) + ".idx"
+	// TODO: implement search for every type
+	cmd.Database = string(field) + "_string.idx"
 	cmd.Command = "get"
 	cmd.Key = value
 	data, err := i.engine.Execute(cmd)
@@ -67,7 +68,8 @@ func (i *Index) matchPrefix(field []byte, value []byte) ([]uint64, error) {
 		docIDs []uint64
 	)
 
-	storekv, err := i.engine.GetStore(i.Name, string(field)+".idx")
+	// TODO: Implement search for all of field types
+	storekv, err := i.engine.GetStore(i.Name, string(field)+"_string.idx")
 
 	if err != nil {
 		return nil, err

@@ -72,7 +72,7 @@ func TestBuildAddObjectDocument(t *testing.T) {
 		},
 		{
 			Index:     indexName,
-			Database:  "address.city.idx",
+			Database:  "address.city_string.idx",
 			Key:       []byte("florianópolis"),
 			KeyType:   engine.TypeString,
 			Value:     utils.Uint64ToBytes(1),
@@ -81,7 +81,7 @@ func TestBuildAddObjectDocument(t *testing.T) {
 		},
 		{
 			Index:     indexName,
-			Database:  "address.district.idx",
+			Database:  "address.district_string.idx",
 			Key:       []byte("itacorubi"),
 			KeyType:   engine.TypeString,
 			Value:     utils.Uint64ToBytes(1),
@@ -90,7 +90,7 @@ func TestBuildAddObjectDocument(t *testing.T) {
 		},
 		{
 			Index:     indexName,
-			Database:  "address.latlon.idx",
+			Database:  "address.latlon_float.idx",
 			Key:       utils.Float64ToBytes(-27.545198),
 			KeyType:   engine.TypeFloat,
 			Value:     utils.Uint64ToBytes(1),
@@ -99,7 +99,7 @@ func TestBuildAddObjectDocument(t *testing.T) {
 		},
 		{
 			Index:     indexName,
-			Database:  "address.latlon.idx",
+			Database:  "address.latlon_float.idx",
 			Key:       utils.Float64ToBytes(-48.504827),
 			KeyType:   engine.TypeFloat,
 			Value:     utils.Uint64ToBytes(1),
@@ -108,7 +108,7 @@ func TestBuildAddObjectDocument(t *testing.T) {
 		},
 		{
 			Index:     indexName,
-			Database:  "address.street.idx",
+			Database:  "address.street_string.idx",
 			Key:       []byte("patricio"),
 			KeyType:   engine.TypeString,
 			Value:     utils.Uint64ToBytes(1),
@@ -117,7 +117,7 @@ func TestBuildAddObjectDocument(t *testing.T) {
 		},
 		{
 			Index:     indexName,
-			Database:  "address.street.idx",
+			Database:  "address.street_string.idx",
 			Key:       []byte("farias"),
 			KeyType:   engine.TypeString,
 			Value:     utils.Uint64ToBytes(1),
@@ -126,7 +126,7 @@ func TestBuildAddObjectDocument(t *testing.T) {
 		},
 		{
 			Index:     indexName,
-			Database:  "address.street.idx",
+			Database:  "address.street_string.idx",
 			Key:       []byte("patricio farias"),
 			KeyType:   engine.TypeString,
 			Value:     utils.Uint64ToBytes(1),
@@ -135,7 +135,7 @@ func TestBuildAddObjectDocument(t *testing.T) {
 		},
 		{
 			Index:     indexName,
-			Database:  "id.idx",
+			Database:  "id_float.idx",
 			Key:       utils.Float64ToBytes(1),
 			KeyType:   engine.TypeFloat,
 			Value:     utils.Uint64ToBytes(1),
