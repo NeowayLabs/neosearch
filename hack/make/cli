@@ -5,8 +5,11 @@ set -e
 DEST=$1
 BINARY_NAME="neosearch-cli-$VERSION"
 
-go get -tags "$STORAGE_ENGINE" ./cmd/neosearch-cli/...
+echo "restoring $GOPATH"
+godep restore
+
 go build \
+   -v \
    -tags "$STORAGE_ENGINE" \
    -o "$DEST/$BINARY_NAME" \
    ./cmd/neosearch-cli

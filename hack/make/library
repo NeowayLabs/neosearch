@@ -3,7 +3,9 @@
 set -e
 
 DEST=$1
-go get -tags "$STORAGE_ENGINE" ./lib/neosearch/...
+echo "restoring $GOPATH"
+godep restore
+
 go build -tags "$STORAGE_ENGINE" -v -o "$DEST/neosearch.a" ./lib/neosearch/
 
 
