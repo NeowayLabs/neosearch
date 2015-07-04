@@ -6,8 +6,8 @@
 package slug
 
 import (
-	"golang.org/x/text/unicode/norm"
 	"encoding/hex"
+	"golang.org/x/text/unicode/norm"
 	"unicode"
 	"unicode/utf8"
 )

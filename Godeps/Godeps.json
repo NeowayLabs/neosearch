@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/NeowayLabs/neosearch",
-	"GoVersion": "devel +71859ef Mon Jun 22 06:57:19 2015 +0000",
+	"GoVersion": "devel",
 	"Packages": [
 		"./..."
 	],
