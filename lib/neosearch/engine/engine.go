@@ -46,6 +46,7 @@ const (
 	TypeFloat
 	TypeString
 	TypeDate
+	TypeBool
 	TypeBinary // TODO: TBD
 )
 

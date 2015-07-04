@@ -6,6 +6,47 @@ import (
 	"strconv"
 )
 
+func BoolFromInterface(value interface{}, kind reflect.Kind) (bool, error) {
+	switch kind {
+	case reflect.String:
+		sval := value.(string)
+
+		if sval == "true" {
+			return true, nil
+		} else if sval == "false" {
+			return false, nil
+		} else {
+			return false, fmt.Errorf("Invalid boolean: %s", value)
+		}
+	case reflect.Int:
+		ival := value.(int64)
+
+		if ival == 0 {
+			return false, nil
+		}
+
+		return true, nil
+	case reflect.Uint:
+		uval := value.(uint64)
+
+		if uval == 0 {
+			return false, nil
+		}
+
+		return true, nil
+	case reflect.Float32, reflect.Float64:
+		fval := value.(float64)
+
+		if fval == 0.0 {
+			return false, nil
+		}
+
+		return true, nil
+	default:
+		return false, fmt.Errorf("Impossible to convert '%s' to boolean", value)
+	}
+}
+
 func Uint64FromInterface(value interface{}, kind reflect.Kind) (uint64, error) {
 	var (
 		uret uint64

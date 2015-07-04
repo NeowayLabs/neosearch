@@ -419,6 +419,20 @@ func (i *Index) buildIndexField(id uint64, field string, value interface{}, meta
 		}
 
 		commands, err = i.buildIndexInt64(id, field, vint)
+	case "bool", "boolean":
+		var val bool
+
+		val, ok := value.(bool)
+
+		if !ok {
+			val, err = utils.BoolFromInterface(value, vtype.Kind())
+
+			if err != nil {
+				return nil, fmt.Errorf("Error indexing field '%s'. Value '%+v' isn't int", field, value)
+			}
+		}
+
+		commands, err = i.buildIndexBool(id, field, val)
 	case "float", "float32", "float64":
 		vfloat, ok := value.(float64)
 
@@ -579,12 +593,10 @@ func (i *Index) buildIndexCommands(field string, cmdKey []byte, cmdVal []byte, k
 		typeStr = "string"
 	case engine.TypeDate:
 		typeStr = "date"
+	case engine.TypeBool:
+		typeStr = "bool"
 	default:
 		return nil, errors.New(fmt.Sprintf("Invalid engine value type: %s", keyType))
-	}
-
-	if keyType == engine.TypeInt {
-		typeStr = "int"
 	}
 
 	storageName := field + "_" + typeStr + ".idx"
@@ -615,6 +627,10 @@ func (i *Index) buildIndexFloat64(id uint64, field string, value float64) ([]eng
 
 func (i *Index) buildIndexUint64(id uint64, field string, value uint64) ([]engine.Command, error) {
 	return i.buildIndexCommands(field, utils.Uint64ToBytes(value), utils.Uint64ToBytes(id), engine.TypeUint)
+}
+
+func (i *Index) buildIndexBool(id uint64, field string, value bool) ([]engine.Command, error) {
+	return i.buildIndexCommands(field, utils.BoolToBytes(value), utils.Uint64ToBytes(id), engine.TypeBool)
 }
 
 func (i *Index) buildIndexInt64(id uint64, field string, value int64) ([]engine.Command, error) {

@@ -5,6 +5,34 @@ import (
 	"encoding/binary"
 )
 
+func BoolToBytes(b bool) []byte {
+	var (
+		bs []byte = make([]byte, 1)
+	)
+
+	if b {
+		bs[0] = byte(1)
+	} else {
+		bs[0] = byte(0)
+	}
+
+	return bs
+}
+
+func BytesToBool(b []byte) bool {
+	if len(b) == 0 {
+		panic("invalid boolean byte-array")
+	}
+
+	bv := b[0]
+
+	if bv == 0 {
+		return false
+	}
+
+	return true
+}
+
 func Uint64ToBytes(i uint64) []byte {
 	buf := new(bytes.Buffer)
 	err := binary.Write(buf, binary.BigEndian, i)
