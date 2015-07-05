@@ -1,6 +1,7 @@
 package index
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -69,6 +70,10 @@ func (handler *AddHandler) ServeHTTP(res http.ResponseWriter, req *http.Request,
 
 	err = handler.addDocument(indexName, uint64(docIntID), document)
 
+	if err != nil {
+		goto error_fatal
+	}
+
 	handler.WriteJSON(res, []byte(fmt.Sprintf("{\"status\": \"Document %d indexed.\"}", docIntID)))
 
 	return
@@ -82,11 +87,41 @@ error_fatal:
 }
 
 func (handler *AddHandler) addDocument(indexName string, id uint64, document []byte) error {
+	docmeta := make(map[string]interface{})
+
+	err := json.Unmarshal(document, &docmeta)
+
+	if err != nil {
+		return err
+	}
+
+	metadata, ok := docmeta["metadata"].(map[string]interface{})
+
+	if !ok {
+		if docmeta["metadata"] == nil {
+			metadata = nsindex.Metadata{}
+		} else {
+			return fmt.Errorf("Invalid document metadata: %s", string(document))
+		}
+	}
+
+	doc, ok := docmeta["doc"].(map[string]interface{})
+
+	if !ok {
+		return fmt.Errorf("Invalid document: %s", string(document))
+	}
+
 	index, err := handler.search.OpenIndex(indexName)
 
 	if err != nil {
 		return err
 	}
 
-	return index.Add(id, document, nsindex.Metadata{})
+	docJSON, err := json.Marshal(doc)
+
+	if err != nil {
+		return err
+	}
+
+	return index.Add(id, docJSON, nsindex.Metadata(metadata))
 }

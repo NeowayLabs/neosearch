@@ -40,6 +40,9 @@ do
             cat $dir/profile.tmp | tail -n +2 >> coverage.txt
             rm $dir/profile.tmp
 	fi
+
+	# Stress
+	# hack/stress-test.sh
     fi
 done
 

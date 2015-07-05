@@ -40,9 +40,9 @@ func TestAddDocumentsOK(t *testing.T) {
 	}
 
 	for i, doc := range []string{
-		`{"id": 0, "bleh": "test"}`,
-		`{"id": 1, "title": "ldjfjl"}`,
-		`{"id": 2, "title": "hjdfskhfk"}`,
+		`{"doc": {"id": 0, "bleh": "test"}}`,
+		`{"doc": {"id": 1, "title": "ldjfjl"}}`,
+		`{"doc": {"id": 2, "title": "hjdfskhfk"}}`,
 	} {
 
 		err = handler.addDocument("test-ok", uint64(i), []byte(doc))
@@ -74,9 +74,9 @@ func TestAddDocumentsREST_OK(t *testing.T) {
 	}
 
 	for i, doc := range []string{
-		`{"id": 0, "bleh": "test"}`,
-		`{"id": 1, "title": "ldjfjl"}`,
-		`{"id": 2, "title": "hjdfskhfk"}`,
+		`{"doc": {"id": 0, "bleh": "test"}}`,
+		`{"doc": {"id": 1, "title": "ldjfjl"}}`,
+		`{"doc": {"id": 2, "title": "hjdfskhfk"}}`,
 	} {
 		addURL := ts.URL + "/test-rest-add-ok/" + strconv.Itoa(i)
 
@@ -149,6 +149,8 @@ func TestAddDocumentsFail(t *testing.T) {
 
 	for i, doc := range []string{
 		`{}`,
+		`{"metadata": {}}`,
+		`{"t": "sçdçs"}`,
 		``,
 		`test`,
 		`   `,

@@ -51,7 +51,7 @@ func addDocs(t *testing.T, ts *httptest.Server) {
 		return
 	}
 
-	req, err = http.NewRequest("POST", indexURL+"/1", bytes.NewBufferString(`{"id": 1, "name": "neoway"}`))
+	req, err = http.NewRequest("POST", indexURL+"/1", bytes.NewBufferString(`{"doc": {"id": 1, "name": "neoway"}}`))
 
 	if err != nil {
 		t.Error(err.Error())
@@ -66,7 +66,7 @@ func addDocs(t *testing.T, ts *httptest.Server) {
 		return
 	}
 
-	req, err = http.NewRequest("POST", indexURL+"/2", bytes.NewBufferString(`{"id": 2, "name": "facebook"}`))
+	req, err = http.NewRequest("POST", indexURL+"/2", bytes.NewBufferString(`{"doc": {"id": 2, "name": "facebook"}}`))
 
 	if err != nil {
 		t.Error(err.Error())
@@ -81,7 +81,7 @@ func addDocs(t *testing.T, ts *httptest.Server) {
 		return
 	}
 
-	req, err = http.NewRequest("POST", indexURL+"/3", bytes.NewBufferString(`{"id": 3, "name": "google"}`))
+	req, err = http.NewRequest("POST", indexURL+"/3", bytes.NewBufferString(`{"doc": {"id": 3, "name": "google"}}`))
 
 	if err != nil {
 		t.Error(err.Error())

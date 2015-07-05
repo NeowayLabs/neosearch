@@ -1,6 +1,7 @@
 package neosearch
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -265,6 +266,48 @@ func TestAddDocument(t *testing.T) {
 	}) {
 		t.Errorf("Failed to filter by field name: %s != %s", filterData, `[{"id": 1, "name": "Neoway Business Solution"} {"id": 4, "name": "Neoway Teste"}]`)
 		goto cleanup
+	}
+
+cleanup:
+	neo.Close()
+	os.RemoveAll(indexDir)
+}
+
+func BenchmarkAddDocuments(b *testing.B) {
+	var (
+		indexName = "document-sample"
+		indexDir  = DataDirTmp + "/" + indexName
+	)
+
+	cfg := NewConfig()
+
+	cfg.Option(DataDir(DataDirTmp))
+	cfg.Option(Debug(false))
+
+	neo := New(cfg)
+
+	index, err := neo.CreateIndex(indexName)
+
+	if err != nil {
+		b.Fatal(err)
+		goto cleanup
+	}
+
+	if _, err := os.Stat(indexDir); os.IsNotExist(err) {
+		b.Fatal(fmt.Sprintf("no such file or directory: %s", indexDir))
+		goto cleanup
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		err = index.Add(1, []byte(`{"id": 1, "name": "Neoway Business Solution"}`), nil)
+
+		if err != nil {
+			b.Fatal(err)
+			goto cleanup
+		}
 	}
 
 cleanup:
