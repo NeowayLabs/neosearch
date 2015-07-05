@@ -21,6 +21,37 @@ func init() {
 	}
 }
 
+func createIndex(indexName string, t *testing.T) (*Index, error) {
+	var (
+		err      error
+		index    *Index
+		indexDir = DataDirTmp + "/" + indexName
+	)
+
+	cfg := Config{
+		Debug:   false,
+		DataDir: DataDirTmp,
+	}
+
+	err = os.MkdirAll(DataDirTmp, 0755)
+
+	if err != nil {
+		return nil, err
+	}
+
+	index, err = New(indexName, cfg, true)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := os.Stat(indexDir); os.IsNotExist(err) {
+		return nil, err
+	}
+
+	return index, nil
+}
+
 func compareCommands(t *testing.T, commands, expectedCommands []engine.Command) bool {
 	if len(commands) != len(expectedCommands) {
 		t.Errorf("Length differs: len(cmd) == %d != len(expected) == %d\n", len(commands), len(expectedCommands))
@@ -48,34 +79,18 @@ func compareCommands(t *testing.T, commands, expectedCommands []engine.Command) 
 func TestBuildAddDocument(t *testing.T) {
 	var (
 		indexName                  = "document-sample"
-		indexDir                   = DataDirTmp + "/" + indexName
 		commands, expectedCommands []engine.Command
 		docJSON                    = []byte(`{"id": 1}`)
 		err                        error
 		index                      *Index
+		indexDir                   = DataDirTmp + "/" + indexName
 	)
 
-	cfg := Config{
-		Debug:   false,
-		DataDir: DataDirTmp,
-	}
-
-	err = os.MkdirAll(DataDirTmp, 0755)
-
-	if err != nil {
-		goto cleanup
-	}
-
-	index, err = New(indexName, cfg, true)
+	index, err = createIndex(indexName, t)
 
 	if err != nil {
 		t.Error(err)
-		goto cleanup
-	}
-
-	if _, err := os.Stat(indexDir); os.IsNotExist(err) {
-		t.Errorf("no such file or directory: %s", indexDir)
-		goto cleanup
+		return
 	}
 
 	commands, err = index.BuildAdd(1, docJSON, nil)
@@ -243,27 +258,11 @@ func TestBuildAddDocumentWithBatchMode(t *testing.T) {
 		index                      *Index
 	)
 
-	cfg := Config{
-		Debug:   false,
-		DataDir: DataDirTmp,
-	}
-
-	err = os.MkdirAll(DataDirTmp, 0755)
-
-	if err != nil {
-		goto cleanup
-	}
-
-	index, err = New(indexName, cfg, true)
+	index, err = createIndex(indexName, t)
 
 	if err != nil {
 		t.Error(err)
-		goto cleanup
-	}
-
-	if _, err := os.Stat(indexDir); os.IsNotExist(err) {
-		t.Errorf("no such file or directory: %s", indexDir)
-		goto cleanup
+		return
 	}
 
 	index.Batch()
