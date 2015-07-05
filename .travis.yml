@@ -17,7 +17,7 @@ script:
   - go get github.com/nielsdraaisma/godep
   - if ! go get code.google.com/p/go.tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
   - hack/check.sh
-  - goveralls -coverprofile=coverage.txt -service=travis-ci
+#  - goveralls -coverprofile=coverage.txt -service=travis-ci
 before_install:
   sudo pip install codecov
 after_success:
