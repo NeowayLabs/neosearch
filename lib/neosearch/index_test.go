@@ -438,6 +438,168 @@ cleanup:
 	os.RemoveAll(indexDir)
 }
 
+func TestComplexDocument(t *testing.T) {
+	var (
+		data       []byte
+		filterData []string
+		indexName  = "document-complex-object"
+		indexDir   = DataDirTmp + "/" + indexName
+		total      uint64
+	)
+
+	metadata := index.Metadata{
+		"creationDate": index.Metadata{
+			"type":   "date",
+			"format": "Jan 2, 2006 at 3:04pm (MST)",
+		},
+	}
+
+	document1 := `{
+    "cnpj": "01458782000170",
+    "companyName": "Some company name",
+    "creationDate": "Nov 10, 2009 at 3:00pm (UTC)",
+    "status": {
+        "date": "Jan 01, 2015 at 9:00pm (UTC)",
+        "description": "ACTIVE",
+        "especial": {}
+    },
+    "address": {
+        "district": "some place",
+        "city": "some city",
+        "state": "AA",
+        "zipcode": "52211",
+        "street": "some street",
+        "number": 23132
+    },
+    "info": {
+        "hasEmail": false,
+        "hasTel": false,
+        "hasDomain": false
+    },
+    "employee": [
+        {
+            "name": "John doe",
+            "age": 25
+        },
+        {
+            "name": "Mary Doe",
+            "age": 22
+        }
+    ]
+}`
+
+	document2 := `{
+    "cnpj": "01458782000170",
+    "companyName": "Another company",
+    "creationDate": "Nov 10, 2011 at 3:00pm (UTC)",
+    "status": {
+        "date": "Jan 10, 2015 at 9:00pm (UTC)",
+        "description": "ACTIVE",
+        "especial": {}
+    },
+    "address": {
+        "district": "",
+        "city": "other city",
+        "state": "BB",
+        "zipcode": "999",
+        "street": "other street",
+        "number": 111
+    },
+    "info": {
+        "hasEmail": true,
+        "hasTel": true,
+        "hasDomain": false
+    },
+    "employee": [
+        {
+            "name": "John Snow",
+            "age": 33
+        }
+    ]
+}`
+
+	cfg := NewConfig()
+
+	cfg.Option(DataDir(DataDirTmp))
+	cfg.Option(Debug(false))
+
+	neo := New(cfg)
+
+	index, err := neo.CreateIndex(indexName)
+
+	if err != nil {
+		t.Error(err)
+		goto cleanup
+	}
+
+	if _, err := os.Stat(indexDir); os.IsNotExist(err) {
+		t.Errorf("no such file or directory: %s", indexDir)
+		goto cleanup
+	}
+
+	err = index.Add(1, []byte(document1), metadata)
+
+	if err != nil {
+		t.Error(err.Error())
+		goto cleanup
+	}
+
+	if _, err := os.Stat(indexDir + "/document.db"); os.IsNotExist(err) {
+		t.Errorf("no such file or directory: %s", indexDir+"/document.db")
+		goto cleanup
+	}
+
+	err = index.Add(2, []byte(document2), metadata)
+
+	if err != nil {
+		t.Error(err)
+		goto cleanup
+	}
+
+	data, err = index.Get(1)
+
+	if err != nil {
+		t.Error(err)
+		goto cleanup
+	}
+
+	if string(data) != document1 {
+		t.Errorf("Failed to retrieve indexed document")
+		goto cleanup
+	}
+
+	filterData, total, err = index.FilterTerm([]byte("companyName"), []byte("another"), 0)
+
+	if err != nil {
+		t.Error(err)
+		goto cleanup
+	}
+
+	if total != 1 || len(filterData) != 1 ||
+		filterData[0] != document2 {
+		t.Errorf("Failed to filter by field name: %v != %s", filterData, document2)
+		goto cleanup
+	}
+
+	filterData, total, err = index.FilterTerm([]byte("companyName"), []byte("some"), 0)
+
+	if err != nil {
+		t.Error(err)
+		goto cleanup
+	}
+
+	if total != 1 || len(filterData) != 1 || !reflect.DeepEqual(filterData, []string{
+		document1,
+	}) {
+		t.Errorf("Failed to filter by field name: %s != %s", filterData, `[`+document1+`]`)
+		goto cleanup
+	}
+
+cleanup:
+	neo.Close()
+	os.RemoveAll(indexDir)
+}
+
 func TestPrefixMatch(t *testing.T) {
 	var (
 		data      []byte

@@ -11,9 +11,10 @@ func (i *Index) FilterTermID(field, value []byte, limit uint64) ([]uint64, uint6
 	cmd := engine.Command{}
 	cmd.Index = i.Name
 	// TODO: implement search for every type
-	cmd.Database = string(field) + "_string.idx"
+	cmd.Database = utils.FieldNorm(string(field)) + "_string.idx"
 	cmd.Command = "get"
 	cmd.Key = value
+	cmd.KeyType = engine.TypeString
 	data, err := i.engine.Execute(cmd)
 
 	if err != nil {
@@ -69,7 +70,7 @@ func (i *Index) matchPrefix(field []byte, value []byte) ([]uint64, error) {
 	)
 
 	// TODO: Implement search for all of field types
-	storekv, err := i.engine.GetStore(i.Name, string(field)+"_string.idx")
+	storekv, err := i.engine.GetStore(i.Name, utils.FieldNorm(string(field))+"_string.idx")
 
 	if err != nil {
 		return nil, err
