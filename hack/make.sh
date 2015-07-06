@@ -6,6 +6,7 @@ DEFAULT_BUNDLES=(
     library
     server
     cli
+    import
 )
 
 bundle() {

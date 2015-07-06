@@ -1,2 +1,0 @@
-using title.idx set "hello" 1;
-using id.idx set 1 "{test: \"1\"}";

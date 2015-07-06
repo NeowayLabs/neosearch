@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -e
+
+DEST=$1
+BINARY_NAME="nsimport-$VERSION"
+
+echo "restoring $GOPATH"
+godep restore
+
+go build \
+   -v \
+   -tags "$STORAGE_ENGINE" \
+   -o "$DEST/$BINARY_NAME" \
+   ./cmd/import
+
+echo "Created binary: $DEST/$BINARY_FULLNAME"
+ln -sf "$BINARY_NAME" "$DEST/nsimport"
+

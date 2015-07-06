@@ -3,7 +3,7 @@
 set -e
 
 DEST=$1
-BINARY_NAME="neosearch-cli-$VERSION"
+BINARY_NAME="nscli-$VERSION"
 
 echo "restoring $GOPATH"
 godep restore
@@ -12,8 +12,8 @@ go build \
    -v \
    -tags "$STORAGE_ENGINE" \
    -o "$DEST/$BINARY_NAME" \
-   ./cmd/neosearch-cli
+   ./cmd/cli
 
 echo "Created binary: $DEST/$BINARY_FULLNAME"
-ln -sf "$BINARY_NAME" "$DEST/neosearch-cli"
+ln -sf "$BINARY_NAME" "$DEST/nscli"
 

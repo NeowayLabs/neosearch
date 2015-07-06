@@ -1,0 +1,67 @@
+[
+    {
+	"id": 1,
+	"name": "Unix",
+	"family": "unix",
+	"year": 1971,
+	"kernel": "unix",
+	"kernelType": "monolithic",
+	"authors": [
+            "Ken Thompson", 
+            "Dennis Ritchie",
+            "Brian Kernighan",
+            "Douglas McIlroy",
+            "Joe Ossanna"     
+	]
+    },
+    {
+	"id": 2,
+	"name": "Plan9 From Outer Space",
+	"family": "unix",
+	"kernel": "plan9",
+	"kernelType": "Hybrid",
+	"year": 1992,
+	"authors": [
+            "Ken Thompson",
+            "Dennis Ritchie",
+            "Rob Pike",
+            "Russ Cox",
+            "Dave Presotto", 
+            "Phil Winterbottom"
+	]
+    },
+    {
+	"id": 3,
+	"name": "ArchLinux",
+	"family": "unix",
+	"year": 2002,
+	"kernel": "Linux",
+	"kernelType": "monolithic",
+	"authors": [
+            "Judd Vinet"
+	]
+    },
+    {
+	"id": 4,
+	"name": "Slackware",
+	"family": "unix",
+	"kernel": "Linux",
+	"kernelType": "monolithic",
+	"year": 1993,
+	"authors": [
+            "Patrick Volkerding"
+	]
+    },
+    {
+	"id": 5,
+	"name": "Windows NT",
+	"family": "windows",
+	"kernel": "Windows NT",
+	"kernelType": "hybrid",
+	"year": 1993,
+	"authors": [
+            "Dave Cutler",
+            "Others"
+	]
+    }
+]

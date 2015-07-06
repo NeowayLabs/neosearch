@@ -275,13 +275,16 @@ cleanup:
 
 func BenchmarkAddDocuments(b *testing.B) {
 	var (
-		indexName = "document-sample"
-		indexDir  = DataDirTmp + "/" + indexName
+		indexName = "document-bench-sample"
 	)
+
+	dataDirTmp, _ := ioutil.TempDir("/tmp", "neosearch-index-bench-")
+
+	indexDir := dataDirTmp + "/" + indexName
 
 	cfg := NewConfig()
 
-	cfg.Option(DataDir(DataDirTmp))
+	cfg.Option(DataDir(dataDirTmp))
 	cfg.Option(Debug(false))
 
 	neo := New(cfg)

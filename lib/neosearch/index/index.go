@@ -53,6 +53,10 @@ func ValidateIndexName(name string) bool {
 		return false
 	}
 
+	// TODO: regexp do allocations. No need for regexp here.
+	// GODEBUG=allocfreetrace=1
+	// tracealloc(0xc820092120, 0x20, *syntax.Regexp)
+	// tracealloc(0xc8200b2000, 0xc0, regexp.onePassInst)
 	validName := regexp.MustCompile(`^[a-zA-Z]+[a-zA-Z0-9_-]+$`)
 	return validName.MatchString(name)
 }
