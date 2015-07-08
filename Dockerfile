@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
 	build-essential \
 	curl \
 	git \
+	bzr \
 	mercurial \
 	--no-install-recommends
 
@@ -30,7 +31,9 @@ RUN go get golang.org/x/tools/cmd/cover && \
     go get golang.org/x/tools/cmd/goimports && \
     go get golang.org/x/tools/cmd/godoc && \
     go get golang.org/x/tools/cmd/vet && \
-    go get github.com/jmhodges/levigo
+    go get github.com/jmhodges/levigo && \
+    go get github.com/extemporalgenome/slug && \
+    go get launchpad.net/gommap
 
 ENV STORAGE_ENGINE leveldb
 

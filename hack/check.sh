@@ -9,9 +9,6 @@
 
 set -e
 
-echo "restoring $GOPATH"
-godep restore
-
 GO="godep go"
 TEST_FLAGS="-tags $STORAGE_ENGINE"
 

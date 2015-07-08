@@ -38,7 +38,7 @@ library: build
 
 check: build
 	@-docker rm -vf neosearch-ctn
-	docker run --name neosearch-ctn -e TEST_DIRECTORY=$(TEST_DIRECTORY) -e STORAGE_ENGINE=$(STORAGE_ENGINE) -v `pwd`:$(DEV_WORKDIR) -i -t $(DOCKER_DEVIMAGE) hack/check.sh
+	docker run --name neosearch-ctn -e TEST_DIRECTORY=$(TEST_DIRECTORY) -e STORAGE_ENGINE=$(STORAGE_ENGINE) -v `pwd`:$(DEV_WORKDIR) -i  $(DOCKER_DEVIMAGE) hack/check.sh
 
 shell: build
 	docker run --rm -e STORAGE_ENGINE=$(STORAGE_ENGINE) -v `pwd`:$(DEV_WORKDIR) --privileged -i -t $(DOCKER_DEVIMAGE) bash

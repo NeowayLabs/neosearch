@@ -6,8 +6,6 @@ DEST=$1
 BINARY_NAME="neosearch-$VERSION"
 
 echo "Building with -tags $STORAGE_ENGINE"
-echo "restoring $GOPATH"
-godep restore
 
 go build \
    -v \

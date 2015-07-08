@@ -5,9 +5,6 @@ set -e
 DEST=$1
 BINARY_NAME="nscli-$VERSION"
 
-echo "restoring $GOPATH"
-godep restore
-
 go build \
    -v \
    -tags "$STORAGE_ENGINE" \
