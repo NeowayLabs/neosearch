@@ -13,6 +13,14 @@ NeoSearch is like a Lucene library but without all of the complexities of a comp
 
 It's not complete yet, still in active development, so stay tuned for updates.
 
+
+# Why another text search engine ? are you guys crazy ?
+
+We are definetly a bunch of crazy people :-). But we believe to have good reasons on building a new text search engine.
+
+Take a look at [ours motives here](./docs/motivation.md)
+
+
 # Install
 
 Install dependencies:

@@ -10,15 +10,19 @@ Lucene and SOLR were used internally at [Neoway](http://www.neoway.com.br)
 for over five years, and during this time, it was the only mature tech for
 full-text search that we could find. When we had only one main index,
 which stored all the search information, the SOLR solved our problem very well.
+
 But as the company grew, and the information captured by our robots became
 more structured, the flat characteristic of Lucene / SOLR began to show it's
 cracks. In short, Lucene was not designed to JOIN between different indices.
 All current solutions to this problem, both in SOLR and ElasticSearch, are
 workarounds to solve a problem in an architecture that is not designed to
-solve that problem. At first we tried to arrange the information in separate
+solve that problem. 
+
+At first we tried to arrange the information in separate
 indices and use the "Join" syntax available in SOLR-4 to search relations
 between them. But in this way we completely
 [lost the ability to scale horizontally](https://wiki.apache.org/solr/DistributedSearch#line-38).
+
 The actual solution presented for this by SOLR and ElasticSearch is the
 parent-child relationship between documents. This technique is a better
 approach, but, in the same way, the index doesn't scale correctly across
@@ -47,9 +51,11 @@ the employees. For each partner, we will index in the `people_partner` index
 specifying the correct company parent. And, for each employee people we will
 index in the "people_employee" index specifying the parent company document.
 
-* So, the first problem that arise is that we will end with irregular shards.
-ElasticSearch put the parent and children documents in the same shard, then the
-size (MEM, CPU, Disk, etc.) needed by the shard machines isn't predictable
+Some problems that arises:
+
+* We will end with irregular shards.  ElasticSearch put the parent and children 
+documents in the same shard, then the size (MEM, CPU, Disk, etc.) 
+needed by the shard machines isn't predictable
 because each company have a different number of employees and partners.
 
 * Another problem is that for each relationship with people index, you will
@@ -68,12 +74,24 @@ if we consider an average of 3 partners and three employees per company.
 
 The item above is only one example that shows that relationships are a big
 problem in the current search solutions. In the business intelligence field,
-we need to cross a lot of information to find patterns, trends, frauds, etc.,
+we need to cross a lot of information to find patterns, trends, frauds, etc,
 and duplicate all of that information on the indices isn't an option. We know
 that search engines aren't relational databases, but to manage relationships
 in a reverse index is crucial today, and for this reason ElasticSearch and
 SOLR support workarounds for this.
 
-Neoway is a Big Data company that scrapes the internet 
-NeoSearch was born in this context. We seek for a reverse index solution that
-manages relationships and index updates efficiently.
+We seek for a reverse index solution that manages relationships and index updates efficiently.
+
+
+## To be or not to be schemaless
+
+Another problem is the fact that Lucene has the need of a fixed schema for documents.
+Why is that a problem ? Well currently if you use elastic search, [it will say that it is
+schemaless](https://www.elastic.co/guide/en/elasticsearch/reference/1.6/mapping-object-type.html), 
+but it is not, at least not in the sense of a normal document based database.
+
+If you want to add a few documents with a field *id* mapping to a string, and then have a few more with
+this same name but mapping to a integer ... you are going to have a bad time.
+
+By bad time, we mean fully re-indexing your whole database. Since our business depends on being agile and adapting
+fast to changes Neosearch strives to be truly schemaless and avoid re-indexing at all costs.

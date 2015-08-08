@@ -2,5 +2,6 @@
 bundles/
 *.test
 profile.cov
+coverage.txt
 /site
 /hack/deps.txt
