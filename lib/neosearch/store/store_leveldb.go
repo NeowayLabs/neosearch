@@ -140,7 +140,7 @@ func (lvdb *LVDB) MergeSet(key []byte, value uint64) error {
 	}
 
 	if lvdb.Config.Debug {
-		fmt.Printf("[INFO] %d ids == %d GB of ids\n", len(data)/8, len(data)/(1000*1000*1000))
+		fmt.Printf("[INFO] %d ids == %d GB of ids\n", len(data)/8, len(data)/(1024*1024*1024))
 	}
 
 	buf = new(bytes.Buffer)
