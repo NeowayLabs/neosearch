@@ -207,10 +207,17 @@ func TestStoreSetGet(t *testing.T) {
 }
 
 func TestBatchWrite(t *testing.T) {
-	var testDb = "testbatch.db"
+	var (
+		err    error
+		store  KVStore
+		key = []byte{'a'}
+		value = []byte{'b'}
+		data []byte
+		testDb = "testbatch.db"
+	)
 
 	os.Mkdir(DataDirTmp+string(filepath.Separator)+"sample-batch-write", 0755)
-	store := openDatabase(t, "sample-batch-write", testDb)
+	store = openDatabase(t, "sample-batch-write", testDb)
 
 	store.StartBatch()
 
@@ -219,23 +226,102 @@ func TestBatchWrite(t *testing.T) {
 		return
 	}
 
-	if err := store.Set([]byte{'a'}, []byte{'b'}); err != nil {
+	if err = store.Set(key, value); err != nil {
 		t.Error(err)
 		return
 	}
 
 	// should returns nil, nil because the key is in the batch cache
-	if data, err := store.Get([]byte{'a'}); err != nil || data != nil {
+	if data, err = store.Get(key); err != nil || data != nil {
 		t.Error("Key set before wasn't in the write batch cache." +
 			" Batch mode isnt working")
+	}
+
+	if err = store.FlushBatch(); err != nil {
+		t.Error(err)
+	}
+
+	if store.IsBatch() == true {
+		t.Error("FlushBatch doesnt reset the isBatch")
+	}
+
+	if data, err = store.Get(key); err != nil {
+		t.Error(err)
+	} else if data == nil || len(data) != len(value) {
+		t.Errorf("Failed to retrieve key '%s'. Retuns: %s", string(key), string(data))
+	}
+
+	if !reflect.DeepEqual(data, value) {
+		t.Errorf("Data retrieved '%s' != '%s'", string(data), string(value))
+	}
+
+	store.Close()
+
+	os.RemoveAll(DataDirTmp + "/" + testDb)
+}
+
+func TestBatchMultiWrite(t *testing.T) {
+	var (
+		err    error
+		store  KVStore
+		data   []byte
+		testDb = "test_set.db"
+	)
+
+	os.Mkdir(DataDirTmp+string(filepath.Separator)+"sample-batch-multi-write", 0755)
+	store = openDatabase(t, "sample-batch-multi-write", testDb)
+
+	store.StartBatch()
+
+	type kvTest struct {
+		key   []byte
+		value []byte
+	}
+
+	shouldPass := []kvTest{
+		{
+			key:   []byte{'t', 'e', 's', 't', 'e'},
+			value: []byte{'i', '4', 'k'},
+		},
+		{
+			key: []byte{'p', 'l', 'a', 'n', '9'},
+			value: []byte{'f', 'r', 'o', 'm',
+				'o', 'u', 't', 'e', 'r', 's',
+				's', 'p', 'a', 'c', 'e', '!'},
+		},
+		{
+			key:   []byte{'t', 'h', 'e', 'm', 'a', 't', 'r', 'i', 'x'},
+			value: []byte{'h', 'a', 's', 'y', 'o', 'u'},
+		},
+	}
+
+	for _, kv := range shouldPass {
+		if err = store.Set(kv.key, kv.value); err != nil {
+			t.Error(err)
+		}
+
+		if data, err := store.Get(kv.key); err != nil || data != nil {
+			t.Error("Key set before wasn't in the write batch cache." +
+				" Batch mode isnt working")
+		}
 	}
 
 	if err := store.FlushBatch(); err != nil {
 		t.Error(err)
 	}
 
-	if store.IsBatch() == true {
-		t.Error("FlushBatch doesnt reset the isBatch")
+	for _, kv := range shouldPass {
+		if data, err = store.Get(kv.key); err != nil {
+			t.Error(err)
+			continue
+		} else if data == nil || len(data) != len(kv.value) {
+			t.Errorf("Failed to retrieve key '%s'. Retuns: %s", string(kv.key), string(data))
+			continue
+		}
+
+		if !reflect.DeepEqual(data, kv.value) {
+			t.Errorf("Data retrieved '%s' != '%s'", string(data), string(kv.value))
+		}
 	}
 
 	store.Close()
