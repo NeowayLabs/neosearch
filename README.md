@@ -27,17 +27,18 @@ Install dependencies:
 
 * leveldb >= 1.15
 * snappy (optional, only required for compressed data)
-* Go > 1.3
+* Go 1.4
 
 and get the code:
 
 ```bash
 export CGO_CFLAGS='-I <path/to/leveldb/include>'
-export CGO_LDFLAGS='-L /home/secplus/projects/3rdparty/leveldb/'
-go get -u -v github.com/NeowayLabs/neosearch
+export CGO_LDFLAGS='-L <path/to/leveldb/lib>'
 
-cd $GOPATH/src/github/NeowayLabs/neosearch
-go test -tags leveldb -v .
+go get -tags leveldb -v -u -t github.com/NeowayLabs/neosearch/...
+
+cd $GOPATH/src/github.com/NeowayLabs/neosearch
+go test -tags leveldb -v ./...
 ```
 
 # Contributing
