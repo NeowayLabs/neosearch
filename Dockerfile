@@ -30,10 +30,20 @@ RUN go get golang.org/x/tools/cmd/cover && \
     go get github.com/golang/lint/golint && \
     go get golang.org/x/tools/cmd/goimports && \
     go get golang.org/x/tools/cmd/godoc && \
-    go get golang.org/x/tools/cmd/vet && \
-    go get github.com/jmhodges/levigo && \
-    go get github.com/extemporalgenome/slug && \
-    go get launchpad.net/gommap
+    go get golang.org/x/tools/cmd/vet
+
+# Install package dependencies
+RUN go get -d github.com/extemporalgenome/slug && \
+    go get -d golang.org/x/text && \
+    go get -d github.com/jmhodges/levigo && \
+    go get -d github.com/iNamik/go_lexer && \
+    go get -d github.com/iNamik/go_container && \
+    go get -d github.com/iNamik/go_pkg && \
+    go get -d github.com/jteeuwen/go-pkg-optarg && \
+    go get -d github.com/peterh/liner && \
+    go get -d gopkg.in/yaml.v2 && \
+    go get -d launchpad.net/gommap && \
+    go get -d github.com/julienschmidt/httprouter
 
 ENV STORAGE_ENGINE leveldb
 
