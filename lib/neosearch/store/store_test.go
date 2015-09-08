@@ -210,9 +210,9 @@ func TestBatchWrite(t *testing.T) {
 	var (
 		err    error
 		store  KVStore
-		key = []byte{'a'}
-		value = []byte{'b'}
-		data []byte
+		key    = []byte{'a'}
+		value  = []byte{'b'}
+		data   []byte
 		testDb = "testbatch.db"
 	)
 
@@ -265,7 +265,7 @@ func TestBatchMultiWrite(t *testing.T) {
 		err    error
 		store  KVStore
 		data   []byte
-		testDb = "test_set.db"
+		testDb = "test_set-multi.db"
 	)
 
 	os.Mkdir(DataDirTmp+string(filepath.Separator)+"sample-batch-multi-write", 0755)
