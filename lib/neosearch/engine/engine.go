@@ -132,21 +132,21 @@ func (ng *Engine) Execute(cmd Command) ([]byte, error) {
 
 	switch cmd.Command {
 	case "batch":
-		store.StartBatch()
+		store.Writer().StartBatch()
 		return nil, nil
 	case "flushbatch":
-		err = store.FlushBatch()
+		err = store.Writer().FlushBatch()
 		return nil, err
 	case "set":
-		err = store.Set(cmd.Key, cmd.Value)
+		err = store.Writer().Set(cmd.Key, cmd.Value)
 		return nil, err
 	case "get":
-		return store.Get(cmd.Key)
+		return store.Reader().Get(cmd.Key)
 	case "mergeset":
 		v := utils.BytesToUint64(cmd.Value)
-		return nil, store.MergeSet(cmd.Key, v)
+		return nil, store.Writer().MergeSet(cmd.Key, v)
 	case "delete":
-		err = store.Delete(cmd.Key)
+		err = store.Writer().Delete(cmd.Key)
 		return nil, err
 	}
 

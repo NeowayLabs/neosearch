@@ -2,22 +2,35 @@ package store
 
 import "errors"
 
-// KVStore is the key/value store interface for other backend kv stores.
-type KVStore interface {
-	// Open the database
-	Open(string, string) error
+// KVReader is a reader safe for concurrent reads.
+type KVReader interface {
 	Get([]byte) ([]byte, error)
+	GetIterator() KVIterator
+}
+
+// KVWriter is a writer safe for concurrent writes.
+type KVWriter interface {
 	Set([]byte, []byte) error
 	MergeSet([]byte, uint64) error
 	Delete([]byte) error
-	Close()
 
-	GetIterator() KVIterator
 	StartBatch()
 	FlushBatch() error
-
 	IsBatch() bool
+}
+
+// KVStore is the key/value store interface for backend kv stores.
+type KVStore interface {
+	// Open the database
+	Open(string, string) error
+
+	// Close the database
+	Close() error
 	IsOpen() bool
+
+	Reader() KVReader
+	NewReader() KVReader
+	Writer() KVWriter
 }
 
 // KVIterator expose the interface for database iterators.
@@ -32,7 +45,7 @@ type KVIterator interface {
 	SeekToLast()
 	Seek([]byte)
 	GetError() error
-	Close()
+	Close() error
 }
 
 // KVConfig stores the kv configurations
@@ -43,6 +56,7 @@ type KVConfig struct {
 	CacheSize   int
 }
 
+// KVFuncConstructor is the register function that every store backend need to implement.
 type KVFuncConstructor func(*KVConfig) (KVStore, error)
 
 // KVStoreConstructor is a pointer to constructor of default KVStore

@@ -172,12 +172,15 @@ func TestStoreSetGet(t *testing.T) {
 		},
 	}
 
+	writer := store.Writer()
+	reader := store.Reader()
+
 	for _, kv := range shouldPass {
-		if err = store.Set(kv.key, kv.value); err != nil {
+		if err = writer.Set(kv.key, kv.value); err != nil {
 			t.Error(err)
 		}
 
-		if data, err = store.Get(kv.key); err != nil {
+		if data, err = reader.Get(kv.key); err != nil {
 			t.Error(err)
 			continue
 		} else if data == nil || len(data) != len(kv.value) {
@@ -190,7 +193,7 @@ func TestStoreSetGet(t *testing.T) {
 		}
 	}
 
-	data, err = store.Get([]byte("do not exists"))
+	data, err = reader.Get([]byte("do not exists"))
 
 	if err != nil {
 		t.Error(err)
@@ -219,33 +222,36 @@ func TestBatchWrite(t *testing.T) {
 	os.Mkdir(DataDirTmp+string(filepath.Separator)+"sample-batch-write", 0755)
 	store = openDatabase(t, "sample-batch-write", testDb)
 
-	store.StartBatch()
+	reader := store.Reader()
+	writer := store.Writer()
 
-	if store.IsBatch() == false {
+	writer.StartBatch()
+
+	if writer.IsBatch() == false {
 		t.Error("StartBatch not setting isBatch = true")
 		return
 	}
 
-	if err = store.Set(key, value); err != nil {
+	if err = writer.Set(key, value); err != nil {
 		t.Error(err)
 		return
 	}
 
 	// should returns nil, nil because the key is in the batch cache
-	if data, err = store.Get(key); err != nil || data != nil {
+	if data, err = reader.Get(key); err != nil || data != nil {
 		t.Error("Key set before wasn't in the write batch cache." +
 			" Batch mode isnt working")
 	}
 
-	if err = store.FlushBatch(); err != nil {
+	if err = writer.FlushBatch(); err != nil {
 		t.Error(err)
 	}
 
-	if store.IsBatch() == true {
+	if writer.IsBatch() == true {
 		t.Error("FlushBatch doesnt reset the isBatch")
 	}
 
-	if data, err = store.Get(key); err != nil {
+	if data, err = reader.Get(key); err != nil {
 		t.Error(err)
 	} else if data == nil || len(data) != len(value) {
 		t.Errorf("Failed to retrieve key '%s'. Retuns: %s", string(key), string(data))
@@ -271,7 +277,10 @@ func TestBatchMultiWrite(t *testing.T) {
 	os.Mkdir(DataDirTmp+string(filepath.Separator)+"sample-batch-multi-write", 0755)
 	store = openDatabase(t, "sample-batch-multi-write", testDb)
 
-	store.StartBatch()
+	reader := store.Reader()
+	writer := store.Writer()
+
+	writer.StartBatch()
 
 	type kvTest struct {
 		key   []byte
@@ -296,22 +305,22 @@ func TestBatchMultiWrite(t *testing.T) {
 	}
 
 	for _, kv := range shouldPass {
-		if err = store.Set(kv.key, kv.value); err != nil {
+		if err = writer.Set(kv.key, kv.value); err != nil {
 			t.Error(err)
 		}
 
-		if data, err := store.Get(kv.key); err != nil || data != nil {
+		if data, err := reader.Get(kv.key); err != nil || data != nil {
 			t.Error("Key set before wasn't in the write batch cache." +
 				" Batch mode isnt working")
 		}
 	}
 
-	if err := store.FlushBatch(); err != nil {
+	if err := writer.FlushBatch(); err != nil {
 		t.Error(err)
 	}
 
 	for _, kv := range shouldPass {
-		if data, err = store.Get(kv.key); err != nil {
+		if data, err = reader.Get(kv.key); err != nil {
 			t.Error(err)
 			continue
 		} else if data == nil || len(data) != len(kv.value) {
