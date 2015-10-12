@@ -1,13 +1,13 @@
 // +build leveldb
 
-// Package store defines the interface for the KV store technology
-package store
+package leveldb
 
 import (
 	"fmt"
 	"path/filepath"
 	"sync"
 
+	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
 	"github.com/jmhodges/levigo"
 )
 
@@ -15,7 +15,7 @@ import (
 const KVName = "leveldb"
 
 // LVDBConstructor build the constructor
-func LVDBConstructor(config *KVConfig) (KVStore, error) {
+func LVDBConstructor(config *store.KVConfig) (store.KVStore, error) {
 	store, err := NewLVDB(config)
 	return store, err
 }
@@ -27,7 +27,7 @@ var (
 
 // Registry the leveldb module
 func init() {
-	initFn := func(config *KVConfig) (KVStore, error) {
+	initFn := func(config *store.KVConfig) (store.KVStore, error) {
 		if config.Debug {
 			fmt.Println("Initializing leveldb backend store")
 		}
@@ -35,7 +35,7 @@ func init() {
 		return NewLVDB(config)
 	}
 
-	err := SetDefault(KVName, initFn)
+	err := store.SetDefault(KVName, initFn)
 
 	if err != nil {
 		fmt.Println("Failed to initialize leveldb backend")
@@ -47,7 +47,7 @@ func init() {
 
 // LVDB is the leveldb interface exposed by NeoSearch
 type LVDB struct {
-	Config       *KVConfig
+	Config       *store.KVConfig
 	isBatch      bool
 	opts         *levigo.Options
 	db           *levigo.DB
@@ -55,12 +55,12 @@ type LVDB struct {
 	writeOptions *levigo.WriteOptions
 	writeBatch   *levigo.WriteBatch
 
-	defReader KVReader
-	defWriter KVWriter
+	defReader store.KVReader
+	defWriter store.KVWriter
 }
 
 // NewLVDB creates a new leveldb instance
-func NewLVDB(config *KVConfig) (*LVDB, error) {
+func NewLVDB(config *store.KVConfig) (*LVDB, error) {
 	lvdb := LVDB{
 		Config: config,
 	}
@@ -93,7 +93,7 @@ func (lvdb *LVDB) setup() {
 func (lvdb *LVDB) Open(indexName, databaseName string) error {
 	var err error
 
-	if !validateDatabaseName(databaseName) {
+	if !store.ValidateDatabaseName(databaseName) {
 		return fmt.Errorf("Invalid name: %s", databaseName)
 	}
 
@@ -133,7 +133,7 @@ func (lvdb *LVDB) Close() error {
 }
 
 // Reader returns a LVDBReader singleton instance
-func (lvdb *LVDB) Reader() KVReader {
+func (lvdb *LVDB) Reader() store.KVReader {
 	muGetReader.Lock()
 	defer muGetReader.Unlock()
 
@@ -145,14 +145,14 @@ func (lvdb *LVDB) Reader() KVReader {
 }
 
 // NewReader returns a new reader
-func (lvdb *LVDB) NewReader() KVReader {
+func (lvdb *LVDB) NewReader() store.KVReader {
 	return &LVDBReader{
 		store: lvdb,
 	}
 }
 
 // Writer returns the singleton writer
-func (lvdb *LVDB) Writer() KVWriter {
+func (lvdb *LVDB) Writer() store.KVWriter {
 	muGetWriter.Lock()
 	defer muGetWriter.Unlock()
 

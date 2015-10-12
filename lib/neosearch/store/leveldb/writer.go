@@ -1,4 +1,6 @@
-package store
+// +build leveldb
+
+package leveldb
 
 import (
 	"bytes"

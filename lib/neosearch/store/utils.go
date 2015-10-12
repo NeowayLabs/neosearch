@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func validateDatabaseName(name string) bool {
+func ValidateDatabaseName(name string) bool {
 	if len(name) < 3 {
 		return false
 	}

@@ -1,8 +1,11 @@
 // +build leveldb
 
-package store
+package leveldb
 
-import "github.com/jmhodges/levigo"
+import (
+	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
+	"github.com/jmhodges/levigo"
+)
 
 // LVDBReader is the readonly view of database. It implements the KVReader interface
 type LVDBReader struct {
@@ -20,7 +23,7 @@ func (reader *LVDBReader) GetCustom(opt *levigo.ReadOptions, key []byte) ([]byte
 }
 
 // GetIterator returns a new KVIterator
-func (reader *LVDBReader) GetIterator() KVIterator {
+func (reader *LVDBReader) GetIterator() store.KVIterator {
 	var ro = reader.store.readOptions
 
 	ro.SetFillCache(false)
