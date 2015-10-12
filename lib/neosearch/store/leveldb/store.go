@@ -21,8 +21,8 @@ func LVDBConstructor(config *store.KVConfig) (store.KVStore, error) {
 }
 
 var (
-	muGetWriter *sync.Mutex
-	muGetReader *sync.Mutex
+	onceWriter sync.Once
+	onceReader sync.Once
 )
 
 // Registry the leveldb module
@@ -41,8 +41,8 @@ func init() {
 		fmt.Println("Failed to initialize leveldb backend")
 	}
 
-	muGetWriter = &sync.Mutex{}
-	muGetReader = &sync.Mutex{}
+	//onceWriter = &sync.Mutex{}
+	//onceReader = &sync.Mutex{}
 }
 
 // LVDB is the leveldb interface exposed by NeoSearch
@@ -134,12 +134,9 @@ func (lvdb *LVDB) Close() error {
 
 // Reader returns a LVDBReader singleton instance
 func (lvdb *LVDB) Reader() store.KVReader {
-	muGetReader.Lock()
-	defer muGetReader.Unlock()
-
-	if lvdb.defReader == nil {
+	onceReader.Do(func() {
 		lvdb.defReader = lvdb.NewReader()
-	}
+	})
 
 	return lvdb.defReader
 }
@@ -153,14 +150,11 @@ func (lvdb *LVDB) NewReader() store.KVReader {
 
 // Writer returns the singleton writer
 func (lvdb *LVDB) Writer() store.KVWriter {
-	muGetWriter.Lock()
-	defer muGetWriter.Unlock()
-
-	if lvdb.defWriter == nil {
+	onceReader.Do(func() {
 		lvdb.defWriter = &LVDBWriter{
 			store: lvdb,
 		}
-	}
+	})
 
 	return lvdb.defWriter
 }
