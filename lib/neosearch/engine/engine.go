@@ -95,8 +95,12 @@ func (ng *Engine) open(indexName, databaseName string) (store.KVStore, error) {
 	value, ok = ng.stores.Get(indexName + "." + databaseName)
 
 	if ok == false || value == nil {
-		storekv, err = store.New(ng.config.KVCfg)
+		storeConstructor := store.KVStoreConstructorByName("leveldb")
+		if storeConstructor == nil {
+			return nil, errors.New("Unknown storage type")
+		}
 
+		storekv, err = storeConstructor(ng.config.KVCfg)
 		if err != nil {
 			return nil, err
 		}

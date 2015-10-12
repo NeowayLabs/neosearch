@@ -27,22 +27,7 @@ var (
 
 // Registry the leveldb module
 func init() {
-	initFn := func(config *store.KVConfig) (store.KVStore, error) {
-		if config.Debug {
-			fmt.Println("Initializing leveldb backend store")
-		}
-
-		return NewLVDB(config)
-	}
-
-	err := store.SetDefault(KVName, initFn)
-
-	if err != nil {
-		fmt.Println("Failed to initialize leveldb backend")
-	}
-
-	//onceWriter = &sync.Mutex{}
-	//onceReader = &sync.Mutex{}
+	store.RegisterKVStore(KVName, LVDBConstructor)
 }
 
 // LVDB is the leveldb interface exposed by NeoSearch
