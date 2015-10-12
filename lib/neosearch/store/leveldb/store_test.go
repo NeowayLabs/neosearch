@@ -1,4 +1,4 @@
-package store
+package leveldb
 
 import (
 	"io/ioutil"
@@ -6,70 +6,70 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
 )
 
 var DataDirTmp string
 
 func init() {
 	var err error
-	DataDirTmp, err = ioutil.TempDir("/tmp", "neosearch-")
+	DataDirTmp, err = ioutil.TempDir("/tmp", "neosearch-leveldb-")
 
 	if err != nil {
 		panic(err)
 	}
 }
 
-func openDatabase(t *testing.T, indexName, dbName string) KVStore {
+func openDatabase(t *testing.T, indexName, dbName string) store.KVStore {
 	var (
-		err   error
-		store KVStore
+		err     error
+		kvstore store.KVStore
 	)
 
-	cfg := KVConfig{
+	cfg := store.KVConfig{
 		DataDir: DataDirTmp,
 	}
 
-	store, err = New(&cfg)
-
+	kvstore, err = NewLVDB(&cfg)
 	if err != nil {
 		t.Error(err)
 		return nil
-	} else if store == nil {
+	} else if kvstore == nil {
 		t.Error("Failed to allocate store")
 		return nil
 	}
 
-	err = store.Open(indexName, dbName)
+	err = kvstore.Open(indexName, dbName)
 
 	if err != nil {
 		t.Error(err)
 		return nil
 	}
 
-	return store
+	return kvstore
 }
 
 func openDatabaseFail(t *testing.T, indexName, dbName string) {
 	var (
-		err   error
-		store KVStore
+		err     error
+		kvstore store.KVStore
 	)
 
-	cfg := KVConfig{
+	cfg := store.KVConfig{
 		DataDir: DataDirTmp,
 	}
 
-	store, err = New(&cfg)
-
+	kvstore, err = NewLVDB(&cfg)
 	if err != nil {
 		t.Error(err)
 		return
-	} else if store == nil {
+	} else if kvstore == nil {
 		t.Error("Failed to allocate store")
 		return
 	}
 
-	err = store.Open(indexName, dbName)
+	err = kvstore.Open(indexName, dbName)
 
 	if err == nil {
 		t.Errorf("Should fail... Invalid database name: %s", dbName)
@@ -78,18 +78,17 @@ func openDatabaseFail(t *testing.T, indexName, dbName string) {
 }
 
 func TestStoreHasBackend(t *testing.T) {
-	cfg := KVConfig{
+	cfg := store.KVConfig{
 		DataDir: DataDirTmp,
 	}
 
-	store, err := New(&cfg)
-
+	kvstore, err := NewLVDB(&cfg)
 	if err != nil {
 		t.Errorf("You need compile this package with -tags <storage-backend>: %s", err)
 		return
 	}
 
-	if store == nil {
+	if kvstore == nil {
 		t.Error("Failed to allocate KVStore")
 	}
 }
@@ -142,7 +141,7 @@ func TestOpenDatabase(t *testing.T) {
 func TestStoreSetGet(t *testing.T) {
 	var (
 		err    error
-		store  KVStore
+		store  store.KVStore
 		data   []byte
 		testDb = "test_set.db"
 	)
@@ -212,7 +211,7 @@ func TestStoreSetGet(t *testing.T) {
 func TestBatchWrite(t *testing.T) {
 	var (
 		err    error
-		store  KVStore
+		store  store.KVStore
 		key    = []byte{'a'}
 		value  = []byte{'b'}
 		data   []byte
@@ -269,7 +268,7 @@ func TestBatchWrite(t *testing.T) {
 func TestBatchMultiWrite(t *testing.T) {
 	var (
 		err    error
-		store  KVStore
+		store  store.KVStore
 		data   []byte
 		testDb = "test_set-multi.db"
 	)
