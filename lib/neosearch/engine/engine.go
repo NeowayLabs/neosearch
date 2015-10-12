@@ -5,10 +5,13 @@ import (
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch/cache"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
+	"github.com/NeowayLabs/neosearch/lib/neosearch/store/leveldb"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/utils"
 )
 
 const (
+	DefaultKVStore = leveldb.KVName
+
 	// OpenCacheSize is the default value for the maximum number of
 	// open database files. This value can be override by
 	// NGConfig.OpenCacheSize.
@@ -95,7 +98,7 @@ func (ng *Engine) open(indexName, databaseName string) (store.KVStore, error) {
 	value, ok = ng.stores.Get(indexName + "." + databaseName)
 
 	if ok == false || value == nil {
-		storeConstructor := store.KVStoreConstructorByName("leveldb")
+		storeConstructor := store.KVStoreConstructorByName(DefaultKVStore)
 		if storeConstructor == nil {
 			return nil, errors.New("Unknown storage type")
 		}
