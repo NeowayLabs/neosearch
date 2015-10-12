@@ -1,6 +1,9 @@
+// +build leveldb
+
 package leveldb
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -23,53 +26,52 @@ func init() {
 
 func openDatabase(t *testing.T, indexName, dbName string) store.KVStore {
 	var (
-		err     error
-		kvstore store.KVStore
+		err error
+		kv  store.KVStore
 	)
 
 	cfg := store.KVConfig{
 		DataDir: DataDirTmp,
 	}
 
-	kvstore, err = NewLVDB(&cfg)
+	kv, err = NewLVDB(&cfg)
 	if err != nil {
 		t.Error(err)
 		return nil
-	} else if kvstore == nil {
+	} else if kv == nil {
 		t.Error("Failed to allocate store")
 		return nil
 	}
 
-	err = kvstore.Open(indexName, dbName)
-
+	err = kv.Open(indexName, dbName)
 	if err != nil {
 		t.Error(err)
 		return nil
 	}
 
-	return kvstore
+	return kv
 }
 
 func openDatabaseFail(t *testing.T, indexName, dbName string) {
 	var (
-		err     error
-		kvstore store.KVStore
+		err error
+		kv  store.KVStore
 	)
 
 	cfg := store.KVConfig{
 		DataDir: DataDirTmp,
 	}
 
-	kvstore, err = NewLVDB(&cfg)
+	kv, err = NewLVDB(&cfg)
 	if err != nil {
 		t.Error(err)
 		return
-	} else if kvstore == nil {
+	} else if kv == nil {
 		t.Error("Failed to allocate store")
 		return
 	}
 
-	err = kvstore.Open(indexName, dbName)
+	err = kv.Open(indexName, dbName)
 
 	if err == nil {
 		t.Errorf("Should fail... Invalid database name: %s", dbName)
@@ -82,13 +84,13 @@ func TestStoreHasBackend(t *testing.T) {
 		DataDir: DataDirTmp,
 	}
 
-	kvstore, err := NewLVDB(&cfg)
+	kv, err := NewLVDB(&cfg)
 	if err != nil {
 		t.Errorf("You need compile this package with -tags <storage-backend>: %s", err)
 		return
 	}
 
-	if kvstore == nil {
+	if kv == nil {
 		t.Error("Failed to allocate KVStore")
 	}
 }
@@ -141,13 +143,15 @@ func TestOpenDatabase(t *testing.T) {
 func TestStoreSetGet(t *testing.T) {
 	var (
 		err    error
-		store  store.KVStore
+		kv     store.KVStore
 		data   []byte
 		testDb = "test_set.db"
 	)
 
 	os.Mkdir(DataDirTmp+string(filepath.Separator)+"sample-store-set-get", 0755)
-	store = openDatabase(t, "sample-store-set-get", testDb)
+	if kv = openDatabase(t, "sample-store-set-get", testDb); kv == nil {
+		return
+	}
 
 	type kvTest struct {
 		key   []byte
@@ -171,8 +175,17 @@ func TestStoreSetGet(t *testing.T) {
 		},
 	}
 
-	writer := store.Writer()
-	reader := store.Reader()
+	writer := kv.Writer()
+	if writer == nil {
+		t.Error("Writer not created!")
+		return
+	}
+
+	reader := kv.Reader()
+	if reader == nil {
+		t.Error("Reader not created!")
+		return
+	}
 
 	for _, kv := range shouldPass {
 		if err = writer.Set(kv.key, kv.value); err != nil {
@@ -193,7 +206,6 @@ func TestStoreSetGet(t *testing.T) {
 	}
 
 	data, err = reader.Get([]byte("do not exists"))
-
 	if err != nil {
 		t.Error(err)
 	}
@@ -203,7 +215,7 @@ func TestStoreSetGet(t *testing.T) {
 		t.Error("key 'does not exists' returning wrong value")
 	}
 
-	store.Close()
+	kv.Close()
 
 	os.RemoveAll(DataDirTmp + "/" + testDb)
 }
@@ -211,7 +223,7 @@ func TestStoreSetGet(t *testing.T) {
 func TestBatchWrite(t *testing.T) {
 	var (
 		err    error
-		store  store.KVStore
+		kv     store.KVStore
 		key    = []byte{'a'}
 		value  = []byte{'b'}
 		data   []byte
@@ -219,10 +231,22 @@ func TestBatchWrite(t *testing.T) {
 	)
 
 	os.Mkdir(DataDirTmp+string(filepath.Separator)+"sample-batch-write", 0755)
-	store = openDatabase(t, "sample-batch-write", testDb)
+	if kv = openDatabase(t, "sample-batch-write", testDb); kv == nil {
+		return
+	}
 
-	reader := store.Reader()
-	writer := store.Writer()
+	fmt.Println("Getting Reader")
+	reader := kv.Reader()
+	if reader == nil {
+		t.Error("Reader not created!")
+		return
+	}
+
+	writer := kv.Writer()
+	if writer == nil {
+		t.Error("Writer not created!")
+		return
+	}
 
 	writer.StartBatch()
 
@@ -260,7 +284,7 @@ func TestBatchWrite(t *testing.T) {
 		t.Errorf("Data retrieved '%s' != '%s'", string(data), string(value))
 	}
 
-	store.Close()
+	kv.Close()
 
 	os.RemoveAll(DataDirTmp + "/" + testDb)
 }
@@ -268,16 +292,27 @@ func TestBatchWrite(t *testing.T) {
 func TestBatchMultiWrite(t *testing.T) {
 	var (
 		err    error
-		store  store.KVStore
+		kv     store.KVStore
 		data   []byte
 		testDb = "test_set-multi.db"
 	)
 
 	os.Mkdir(DataDirTmp+string(filepath.Separator)+"sample-batch-multi-write", 0755)
-	store = openDatabase(t, "sample-batch-multi-write", testDb)
+	if kv = openDatabase(t, "sample-batch-multi-write", testDb); kv == nil {
+		return
+	}
 
-	reader := store.Reader()
-	writer := store.Writer()
+	reader := kv.Reader()
+	if reader == nil {
+		t.Error("Reader not created!")
+		return
+	}
+
+	writer := kv.Writer()
+	if writer == nil {
+		t.Error("Writer not created!")
+		return
+	}
 
 	writer.StartBatch()
 
@@ -332,7 +367,7 @@ func TestBatchMultiWrite(t *testing.T) {
 		}
 	}
 
-	store.Close()
+	kv.Close()
 
 	os.RemoveAll(DataDirTmp + "/" + testDb)
 }

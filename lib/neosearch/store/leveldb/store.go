@@ -20,11 +20,6 @@ func LVDBConstructor(config *store.KVConfig) (store.KVStore, error) {
 	return store, err
 }
 
-var (
-	onceWriter sync.Once
-	onceReader sync.Once
-)
-
 // Registry the leveldb module
 func init() {
 	store.RegisterKVStore(KVName, LVDBConstructor)
@@ -40,8 +35,10 @@ type LVDB struct {
 	writeOptions *levigo.WriteOptions
 	writeBatch   *levigo.WriteBatch
 
-	defReader store.KVReader
-	defWriter store.KVWriter
+	onceWriter sync.Once
+	onceReader sync.Once
+	defReader  store.KVReader
+	defWriter  store.KVWriter
 }
 
 // NewLVDB creates a new leveldb instance
@@ -119,10 +116,9 @@ func (lvdb *LVDB) Close() error {
 
 // Reader returns a LVDBReader singleton instance
 func (lvdb *LVDB) Reader() store.KVReader {
-	onceReader.Do(func() {
+	lvdb.onceReader.Do(func() {
 		lvdb.defReader = lvdb.NewReader()
 	})
-
 	return lvdb.defReader
 }
 
@@ -135,11 +131,10 @@ func (lvdb *LVDB) NewReader() store.KVReader {
 
 // Writer returns the singleton writer
 func (lvdb *LVDB) Writer() store.KVWriter {
-	onceReader.Do(func() {
+	lvdb.onceWriter.Do(func() {
 		lvdb.defWriter = &LVDBWriter{
 			store: lvdb,
 		}
 	})
-
 	return lvdb.defWriter
 }
