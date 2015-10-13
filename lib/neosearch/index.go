@@ -125,10 +125,6 @@ func New(cfg *Config) *NeoSearch {
 		cfg.DataDir = cfg.DataDir[0 : len(cfg.DataDir)-1]
 	}
 
-	if cfg.KVCacheSize == 0 && cfg.EnableCache {
-		cfg.KVCacheSize = 3 << 30
-	}
-
 	if cfg.MaxIndicesOpen == 0 {
 		cfg.MaxIndicesOpen = maxIndicesOpen
 	}
@@ -159,10 +155,9 @@ func (neo *NeoSearch) CreateIndex(name string) (*index.Index, error) {
 	indx, err := index.New(
 		name,
 		index.Config{
-			DataDir:     neo.config.DataDir,
-			Debug:       neo.config.Debug,
-			CacheSize:   neo.config.KVCacheSize,
-			EnableCache: neo.config.EnableCache,
+			DataDir:  neo.config.DataDir,
+			Debug:    neo.config.Debug,
+			KVConfig: neo.config.KVConfig,
 		},
 		true,
 	)
@@ -223,10 +218,9 @@ func (neo *NeoSearch) OpenIndex(name string) (*index.Index, error) {
 	indx, err = index.New(
 		name,
 		index.Config{
-			DataDir:     neo.config.DataDir,
-			Debug:       neo.config.Debug,
-			CacheSize:   neo.config.KVCacheSize,
-			EnableCache: neo.config.EnableCache,
+			DataDir:  neo.config.DataDir,
+			Debug:    neo.config.Debug,
+			KVConfig: neo.config.KVConfig,
 		},
 		false,
 	)

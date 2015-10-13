@@ -1,6 +1,6 @@
 // +build leveldb
 
-package store
+package leveldb
 
 import "github.com/jmhodges/levigo"
 

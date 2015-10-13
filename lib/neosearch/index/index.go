@@ -26,10 +26,9 @@ const (
 type Config struct {
 	// Per-Index configurations
 
-	DataDir     string
-	Debug       bool
-	CacheSize   int
-	EnableCache bool
+	DataDir  string
+	Debug    bool
+	KVConfig store.KVConfig
 }
 
 // Index represents an entire index
@@ -89,13 +88,15 @@ func (i *Index) setup(create bool) error {
 
 	i.fullDir = dataDir
 
+	kvcfg := i.config.KVConfig
+	if kvcfg == nil {
+		kvcfg = store.KVConfig{}
+	}
+	kvcfg["dataDir"] = i.config.DataDir
+	kvcfg["debug"] = i.config.Debug
+
 	i.engine = engine.New(engine.NGConfig{
-		KVCfg: &store.KVConfig{
-			DataDir:     i.config.DataDir,
-			Debug:       i.config.Debug,
-			CacheSize:   i.config.CacheSize,
-			EnableCache: i.config.EnableCache,
-		},
+		KVCfg: kvcfg,
 	})
 
 	return nil

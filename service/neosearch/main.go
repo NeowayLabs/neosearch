@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
+	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
 	"github.com/NeowayLabs/neosearch/service/neosearch/server"
 	"github.com/jteeuwen/go-pkg-optarg"
 )
@@ -96,7 +97,7 @@ func main() {
 		log.Println("No configuration file supplied. Using defaults...")
 		cfg.Debug = false
 		cfg.DataDir = "/data"
-		cfg.EnableCache = true
+		cfg.KVConfig = store.KVConfig{"enableCache": true}
 	} else {
 		cfg, err = neosearch.ConfigFromFile(configOpt)
 

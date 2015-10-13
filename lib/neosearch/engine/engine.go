@@ -5,10 +5,13 @@ import (
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch/cache"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
+	"github.com/NeowayLabs/neosearch/lib/neosearch/store/leveldb"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/utils"
 )
 
 const (
+	DefaultKVStore = leveldb.KVName
+
 	// OpenCacheSize is the default value for the maximum number of
 	// open database files. This value can be override by
 	// NGConfig.OpenCacheSize.
@@ -22,7 +25,7 @@ const (
 
 // NGConfig configure the Engine
 type NGConfig struct {
-	KVCfg *store.KVConfig
+	KVCfg store.KVConfig
 	// OpenCacheSize adjust the length of maximum number of
 	// open indices. This is a LRU cache, the least used
 	// database open will be closed when needed.
@@ -36,6 +39,7 @@ type NGConfig struct {
 type Engine struct {
 	stores cache.Cache
 	config NGConfig
+	debug  bool
 }
 
 const (
@@ -63,9 +67,17 @@ func New(config NGConfig) *Engine {
 		config.BatchSize = BatchSize
 	}
 
+	if config.KVCfg == nil {
+		config.KVCfg = store.KVConfig{}
+	}
+
 	ng := &Engine{
 		config: config,
 		stores: cache.NewLRUCache(config.OpenCacheSize),
+	}
+
+	if debug, ok := config.KVCfg["debug"].(bool); ok {
+		ng.debug = debug
 	}
 
 	ng.stores.OnRemove(func(key string, value interface{}) {
@@ -95,8 +107,12 @@ func (ng *Engine) open(indexName, databaseName string) (store.KVStore, error) {
 	value, ok = ng.stores.Get(indexName + "." + databaseName)
 
 	if ok == false || value == nil {
-		storekv, err = store.New(ng.config.KVCfg)
+		storeConstructor := store.KVStoreConstructorByName(DefaultKVStore)
+		if storeConstructor == nil {
+			return nil, errors.New("Unknown storage type")
+		}
 
+		storekv, err = storeConstructor(ng.config.KVCfg)
 		if err != nil {
 			return nil, err
 		}
@@ -122,7 +138,7 @@ func (ng *Engine) Execute(cmd Command) ([]byte, error) {
 
 	store, err := ng.GetStore(cmd.Index, cmd.Database)
 
-	if ng.config.KVCfg.Debug {
+	if ng.debug {
 		cmd.Println()
 	}
 

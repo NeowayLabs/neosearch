@@ -1,13 +1,13 @@
 // +build leveldb
 
-// Package store defines the interface for the KV store technology
-package store
+package leveldb
 
 import (
 	"fmt"
 	"path/filepath"
 	"sync"
 
+	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
 	"github.com/jmhodges/levigo"
 )
 
@@ -15,71 +15,73 @@ import (
 const KVName = "leveldb"
 
 // LVDBConstructor build the constructor
-func LVDBConstructor(config *KVConfig) (KVStore, error) {
+func LVDBConstructor(config store.KVConfig) (store.KVStore, error) {
 	store, err := NewLVDB(config)
 	return store, err
 }
 
-var (
-	muGetWriter *sync.Mutex
-	muGetReader *sync.Mutex
-)
-
 // Registry the leveldb module
 func init() {
-	initFn := func(config *KVConfig) (KVStore, error) {
-		if config.Debug {
-			fmt.Println("Initializing leveldb backend store")
-		}
-
-		return NewLVDB(config)
-	}
-
-	err := SetDefault(KVName, initFn)
-
-	if err != nil {
-		fmt.Println("Failed to initialize leveldb backend")
-	}
-
-	muGetWriter = &sync.Mutex{}
-	muGetReader = &sync.Mutex{}
+	store.RegisterKVStore(KVName, LVDBConstructor)
 }
 
 // LVDB is the leveldb interface exposed by NeoSearch
 type LVDB struct {
-	Config       *KVConfig
-	isBatch      bool
+	debug   bool
+	isBatch bool
+	dataDir string
+
 	opts         *levigo.Options
 	db           *levigo.DB
 	readOptions  *levigo.ReadOptions
 	writeOptions *levigo.WriteOptions
 	writeBatch   *levigo.WriteBatch
 
-	defReader KVReader
-	defWriter KVWriter
+	onceWriter sync.Once
+	onceReader sync.Once
+	defReader  store.KVReader
+	defWriter  store.KVWriter
 }
 
 // NewLVDB creates a new leveldb instance
-func NewLVDB(config *KVConfig) (*LVDB, error) {
+func NewLVDB(config store.KVConfig) (*LVDB, error) {
 	lvdb := LVDB{
-		Config: config,
+		debug:   false,
+		isBatch: false,
 	}
 
-	lvdb.setup()
+	lvdb.setup(config)
 
 	return &lvdb, nil
 }
 
 // Setup the leveldb instance
-func (lvdb *LVDB) setup() {
-	if lvdb.Config.Debug {
+func (lvdb *LVDB) setup(config store.KVConfig) {
+	debug, ok := config["debug"].(bool)
+	if ok {
+		lvdb.debug = debug
+	}
+
+	if debug {
 		fmt.Println("Setup leveldb")
+	}
+
+	dataDir, ok := config["dataDir"].(string)
+	if ok {
+		lvdb.dataDir = dataDir
+	} else {
+		lvdb.dataDir = "/tmp"
 	}
 
 	lvdb.opts = levigo.NewOptions()
 
-	if lvdb.Config.EnableCache {
-		lvdb.opts.SetCache(levigo.NewLRUCache(lvdb.Config.CacheSize))
+	enableCache, ok := config["enableCache"].(bool)
+	if ok && enableCache {
+		cacheSize, _ := config["cacheSize"].(int)
+		if cacheSize == 0 && enableCache {
+			cacheSize = 3 << 30
+		}
+		lvdb.opts.SetCache(levigo.NewLRUCache(cacheSize))
 	}
 
 	lvdb.opts.SetCreateIfMissing(true)
@@ -93,17 +95,17 @@ func (lvdb *LVDB) setup() {
 func (lvdb *LVDB) Open(indexName, databaseName string) error {
 	var err error
 
-	if !validateDatabaseName(databaseName) {
+	if !store.ValidateDatabaseName(databaseName) {
 		return fmt.Errorf("Invalid name: %s", databaseName)
 	}
 
 	// index should exists
-	fullPath := (lvdb.Config.DataDir + string(filepath.Separator) +
+	fullPath := (lvdb.dataDir + string(filepath.Separator) +
 		indexName + string(filepath.Separator) + databaseName)
 
 	lvdb.db, err = levigo.Open(fullPath, lvdb.opts)
 
-	if err == nil && lvdb.Config.Debug {
+	if err == nil && lvdb.debug {
 		fmt.Printf("Database '%s' open: %s\n", fullPath, err)
 	}
 
@@ -133,34 +135,26 @@ func (lvdb *LVDB) Close() error {
 }
 
 // Reader returns a LVDBReader singleton instance
-func (lvdb *LVDB) Reader() KVReader {
-	muGetReader.Lock()
-	defer muGetReader.Unlock()
-
-	if lvdb.defReader == nil {
+func (lvdb *LVDB) Reader() store.KVReader {
+	lvdb.onceReader.Do(func() {
 		lvdb.defReader = lvdb.NewReader()
-	}
-
+	})
 	return lvdb.defReader
 }
 
 // NewReader returns a new reader
-func (lvdb *LVDB) NewReader() KVReader {
+func (lvdb *LVDB) NewReader() store.KVReader {
 	return &LVDBReader{
 		store: lvdb,
 	}
 }
 
 // Writer returns the singleton writer
-func (lvdb *LVDB) Writer() KVWriter {
-	muGetWriter.Lock()
-	defer muGetWriter.Unlock()
-
-	if lvdb.defWriter == nil {
+func (lvdb *LVDB) Writer() store.KVWriter {
+	lvdb.onceWriter.Do(func() {
 		lvdb.defWriter = &LVDBWriter{
 			store: lvdb,
 		}
-	}
-
+	})
 	return lvdb.defWriter
 }

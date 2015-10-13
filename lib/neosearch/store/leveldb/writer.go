@@ -1,4 +1,6 @@
-package store
+// +build leveldb
+
+package leveldb
 
 import (
 	"bytes"
@@ -64,7 +66,7 @@ func (w *LVDBWriter) MergeSet(key []byte, value uint64) error {
 		return err
 	}
 
-	if w.store.Config.Debug {
+	if w.store.debug {
 		fmt.Printf("[INFO] %d ids == %d GB of ids\n", len(data)/8, len(data)/(1024*1024*1024))
 	}
 

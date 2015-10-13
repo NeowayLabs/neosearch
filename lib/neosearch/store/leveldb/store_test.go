@@ -1,75 +1,78 @@
-package store
+// +build leveldb
+
+package leveldb
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
+	"github.com/NeowayLabs/neosearch/lib/neosearch/utils"
 )
 
 var DataDirTmp string
 
 func init() {
 	var err error
-	DataDirTmp, err = ioutil.TempDir("/tmp", "neosearch-")
+	DataDirTmp, err = ioutil.TempDir("/tmp", "neosearch-leveldb-")
 
 	if err != nil {
 		panic(err)
 	}
 }
 
-func openDatabase(t *testing.T, indexName, dbName string) KVStore {
+func openDatabase(t *testing.T, indexName, dbName string) store.KVStore {
 	var (
-		err   error
-		store KVStore
+		err error
+		kv  store.KVStore
 	)
 
-	cfg := KVConfig{
-		DataDir: DataDirTmp,
+	cfg := store.KVConfig{
+		"dataDir": DataDirTmp,
 	}
 
-	store, err = New(&cfg)
-
+	kv, err = NewLVDB(cfg)
 	if err != nil {
 		t.Error(err)
 		return nil
-	} else if store == nil {
+	} else if kv == nil {
 		t.Error("Failed to allocate store")
 		return nil
 	}
 
-	err = store.Open(indexName, dbName)
-
+	err = kv.Open(indexName, dbName)
 	if err != nil {
 		t.Error(err)
 		return nil
 	}
 
-	return store
+	return kv
 }
 
 func openDatabaseFail(t *testing.T, indexName, dbName string) {
 	var (
-		err   error
-		store KVStore
+		err error
+		kv  store.KVStore
 	)
 
-	cfg := KVConfig{
-		DataDir: DataDirTmp,
+	cfg := store.KVConfig{
+		"dataDir": DataDirTmp,
 	}
 
-	store, err = New(&cfg)
-
+	kv, err = NewLVDB(cfg)
 	if err != nil {
 		t.Error(err)
 		return
-	} else if store == nil {
+	} else if kv == nil {
 		t.Error("Failed to allocate store")
 		return
 	}
 
-	err = store.Open(indexName, dbName)
+	err = kv.Open(indexName, dbName)
 
 	if err == nil {
 		t.Errorf("Should fail... Invalid database name: %s", dbName)
@@ -78,18 +81,17 @@ func openDatabaseFail(t *testing.T, indexName, dbName string) {
 }
 
 func TestStoreHasBackend(t *testing.T) {
-	cfg := KVConfig{
-		DataDir: DataDirTmp,
+	cfg := store.KVConfig{
+		"dataDir": DataDirTmp,
 	}
 
-	store, err := New(&cfg)
-
+	kv, err := NewLVDB(cfg)
 	if err != nil {
 		t.Errorf("You need compile this package with -tags <storage-backend>: %s", err)
 		return
 	}
 
-	if store == nil {
+	if kv == nil {
 		t.Error("Failed to allocate KVStore")
 	}
 }
@@ -142,13 +144,15 @@ func TestOpenDatabase(t *testing.T) {
 func TestStoreSetGet(t *testing.T) {
 	var (
 		err    error
-		store  KVStore
+		kv     store.KVStore
 		data   []byte
 		testDb = "test_set.db"
 	)
 
 	os.Mkdir(DataDirTmp+string(filepath.Separator)+"sample-store-set-get", 0755)
-	store = openDatabase(t, "sample-store-set-get", testDb)
+	if kv = openDatabase(t, "sample-store-set-get", testDb); kv == nil {
+		return
+	}
 
 	type kvTest struct {
 		key   []byte
@@ -172,8 +176,17 @@ func TestStoreSetGet(t *testing.T) {
 		},
 	}
 
-	writer := store.Writer()
-	reader := store.Reader()
+	writer := kv.Writer()
+	if writer == nil {
+		t.Error("Writer not created!")
+		return
+	}
+
+	reader := kv.Reader()
+	if reader == nil {
+		t.Error("Reader not created!")
+		return
+	}
 
 	for _, kv := range shouldPass {
 		if err = writer.Set(kv.key, kv.value); err != nil {
@@ -194,7 +207,6 @@ func TestStoreSetGet(t *testing.T) {
 	}
 
 	data, err = reader.Get([]byte("do not exists"))
-
 	if err != nil {
 		t.Error(err)
 	}
@@ -204,7 +216,7 @@ func TestStoreSetGet(t *testing.T) {
 		t.Error("key 'does not exists' returning wrong value")
 	}
 
-	store.Close()
+	kv.Close()
 
 	os.RemoveAll(DataDirTmp + "/" + testDb)
 }
@@ -212,7 +224,7 @@ func TestStoreSetGet(t *testing.T) {
 func TestBatchWrite(t *testing.T) {
 	var (
 		err    error
-		store  KVStore
+		kv     store.KVStore
 		key    = []byte{'a'}
 		value  = []byte{'b'}
 		data   []byte
@@ -220,10 +232,22 @@ func TestBatchWrite(t *testing.T) {
 	)
 
 	os.Mkdir(DataDirTmp+string(filepath.Separator)+"sample-batch-write", 0755)
-	store = openDatabase(t, "sample-batch-write", testDb)
+	if kv = openDatabase(t, "sample-batch-write", testDb); kv == nil {
+		return
+	}
 
-	reader := store.Reader()
-	writer := store.Writer()
+	fmt.Println("Getting Reader")
+	reader := kv.Reader()
+	if reader == nil {
+		t.Error("Reader not created!")
+		return
+	}
+
+	writer := kv.Writer()
+	if writer == nil {
+		t.Error("Writer not created!")
+		return
+	}
 
 	writer.StartBatch()
 
@@ -261,7 +285,7 @@ func TestBatchWrite(t *testing.T) {
 		t.Errorf("Data retrieved '%s' != '%s'", string(data), string(value))
 	}
 
-	store.Close()
+	kv.Close()
 
 	os.RemoveAll(DataDirTmp + "/" + testDb)
 }
@@ -269,16 +293,27 @@ func TestBatchWrite(t *testing.T) {
 func TestBatchMultiWrite(t *testing.T) {
 	var (
 		err    error
-		store  KVStore
+		kv     store.KVStore
 		data   []byte
 		testDb = "test_set-multi.db"
 	)
 
 	os.Mkdir(DataDirTmp+string(filepath.Separator)+"sample-batch-multi-write", 0755)
-	store = openDatabase(t, "sample-batch-multi-write", testDb)
+	if kv = openDatabase(t, "sample-batch-multi-write", testDb); kv == nil {
+		return
+	}
 
-	reader := store.Reader()
-	writer := store.Writer()
+	reader := kv.Reader()
+	if reader == nil {
+		t.Error("Reader not created!")
+		return
+	}
+
+	writer := kv.Writer()
+	if writer == nil {
+		t.Error("Writer not created!")
+		return
+	}
 
 	writer.StartBatch()
 
@@ -333,7 +368,59 @@ func TestBatchMultiWrite(t *testing.T) {
 		}
 	}
 
-	store.Close()
+	kv.Close()
 
+	os.RemoveAll(DataDirTmp + "/" + testDb)
+}
+
+func TestStoreMergeSet(t *testing.T) {
+	var (
+		err    error
+		kv     store.KVStore
+		data   []byte
+		testDb = "test_mergeset.db"
+	)
+
+	os.Mkdir(DataDirTmp+string(filepath.Separator)+"sample-store-merge-set", 0755)
+	if kv = openDatabase(t, "sample-store-merge-set", testDb); kv == nil {
+		return
+	}
+
+	writer := kv.Writer()
+	if writer == nil {
+		t.Error("Writer not created!")
+		return
+	}
+
+	reader := kv.Reader()
+	if reader == nil {
+		t.Error("Reader not created!")
+		return
+	}
+
+	key := []byte{'t', 'e', 's', 't', 'e'}
+	values := []uint64{0, 2, 1}
+
+	result := append(utils.Uint64ToBytes(values[0]), utils.Uint64ToBytes(values[2])...)
+	result = append(result, utils.Uint64ToBytes(values[1])...)
+
+	for _, value := range values {
+		if err = writer.MergeSet(key, value); err != nil {
+			t.Error(err)
+			return
+		}
+	}
+
+	if data, err = reader.Get(key); err != nil {
+		t.Error(err)
+	} else if data == nil || len(data) != len(result) {
+		t.Errorf("Failed to retrieve key '%s'. Retuns: %+v", string(key), data)
+	}
+
+	if !reflect.DeepEqual(data, result) {
+		t.Errorf("Data retrieved '%+v' != '%+v'", data, result)
+	}
+
+	kv.Close()
 	os.RemoveAll(DataDirTmp + "/" + testDb)
 }

@@ -54,9 +54,9 @@ func main() {
 	}
 
 	ng := engine.New(engine.NGConfig{
-		KVCfg: &store.KVConfig{
-			DataDir: dataDirOpt,
-			Debug:   debugOpt,
+		KVCfg: store.KVConfig{
+			"dataDir": dataDirOpt,
+			"debug":   debugOpt,
 		},
 	})
 
