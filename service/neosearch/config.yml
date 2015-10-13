@@ -6,13 +6,14 @@ dataDir: /data
 # Enables debug in every neosearch module
 debug: false
 
-# enable/disable cache support
-enableCache: true
-
-# CacheSize is the length of LRU cache used by the storage engine
-# Default is 1GB (1 << 30)
-cacheSize: 1073741824
-
 # maxIndicesOpen is the max number of indices maintained open by neosearch
 # for cached searchs
 maxIndicesOpen: 10
+
+store:
+    # enable/disable cache support
+    enableCache: true
+    # CacheSize is the length of LRU cache used by the storage engine
+    # Default is 1GB (1 << 30)
+    cacheSize: 1073741824
+

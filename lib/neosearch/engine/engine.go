@@ -25,7 +25,7 @@ const (
 
 // NGConfig configure the Engine
 type NGConfig struct {
-	KVCfg *store.KVConfig
+	KVCfg store.KVConfig
 	// OpenCacheSize adjust the length of maximum number of
 	// open indices. This is a LRU cache, the least used
 	// database open will be closed when needed.
@@ -39,6 +39,7 @@ type NGConfig struct {
 type Engine struct {
 	stores cache.Cache
 	config NGConfig
+	debug  bool
 }
 
 const (
@@ -66,9 +67,17 @@ func New(config NGConfig) *Engine {
 		config.BatchSize = BatchSize
 	}
 
+	if config.KVCfg == nil {
+		config.KVCfg = store.KVConfig{}
+	}
+
 	ng := &Engine{
 		config: config,
 		stores: cache.NewLRUCache(config.OpenCacheSize),
+	}
+
+	if debug, ok := config.KVCfg["debug"].(bool); ok {
+		ng.debug = debug
 	}
 
 	ng.stores.OnRemove(func(key string, value interface{}) {
@@ -129,7 +138,7 @@ func (ng *Engine) Execute(cmd Command) ([]byte, error) {
 
 	store, err := ng.GetStore(cmd.Index, cmd.Database)
 
-	if ng.config.KVCfg.Debug {
+	if ng.debug {
 		cmd.Println()
 	}
 

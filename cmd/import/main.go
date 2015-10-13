@@ -14,6 +14,7 @@ import (
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/index"
+	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
 	"github.com/jteeuwen/go-pkg-optarg"
 )
 
@@ -102,7 +103,10 @@ func main() {
 
 	cfg.Option(neosearch.DataDir(dataDirOpt))
 	cfg.Option(neosearch.Debug(debugOpt))
-	cfg.Option(neosearch.KVCacheSize(1 << 15))
+	cfg.Option(neosearch.KVConfig(store.KVConfig{
+		"enableCache": true,
+		"cacheSize":   (1 << 15),
+	}))
 
 	neo := neosearch.New(cfg)
 

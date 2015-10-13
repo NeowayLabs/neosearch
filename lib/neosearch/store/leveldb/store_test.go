@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
+	"github.com/NeowayLabs/neosearch/lib/neosearch/utils"
 )
 
 var DataDirTmp string
@@ -31,10 +32,10 @@ func openDatabase(t *testing.T, indexName, dbName string) store.KVStore {
 	)
 
 	cfg := store.KVConfig{
-		DataDir: DataDirTmp,
+		"dataDir": DataDirTmp,
 	}
 
-	kv, err = NewLVDB(&cfg)
+	kv, err = NewLVDB(cfg)
 	if err != nil {
 		t.Error(err)
 		return nil
@@ -59,10 +60,10 @@ func openDatabaseFail(t *testing.T, indexName, dbName string) {
 	)
 
 	cfg := store.KVConfig{
-		DataDir: DataDirTmp,
+		"dataDir": DataDirTmp,
 	}
 
-	kv, err = NewLVDB(&cfg)
+	kv, err = NewLVDB(cfg)
 	if err != nil {
 		t.Error(err)
 		return
@@ -81,10 +82,10 @@ func openDatabaseFail(t *testing.T, indexName, dbName string) {
 
 func TestStoreHasBackend(t *testing.T) {
 	cfg := store.KVConfig{
-		DataDir: DataDirTmp,
+		"dataDir": DataDirTmp,
 	}
 
-	kv, err := NewLVDB(&cfg)
+	kv, err := NewLVDB(cfg)
 	if err != nil {
 		t.Errorf("You need compile this package with -tags <storage-backend>: %s", err)
 		return
@@ -369,5 +370,57 @@ func TestBatchMultiWrite(t *testing.T) {
 
 	kv.Close()
 
+	os.RemoveAll(DataDirTmp + "/" + testDb)
+}
+
+func TestStoreMergeSet(t *testing.T) {
+	var (
+		err    error
+		kv     store.KVStore
+		data   []byte
+		testDb = "test_mergeset.db"
+	)
+
+	os.Mkdir(DataDirTmp+string(filepath.Separator)+"sample-store-merge-set", 0755)
+	if kv = openDatabase(t, "sample-store-merge-set", testDb); kv == nil {
+		return
+	}
+
+	writer := kv.Writer()
+	if writer == nil {
+		t.Error("Writer not created!")
+		return
+	}
+
+	reader := kv.Reader()
+	if reader == nil {
+		t.Error("Reader not created!")
+		return
+	}
+
+	key := []byte{'t', 'e', 's', 't', 'e'}
+	values := []uint64{0, 2, 1}
+
+	result := append(utils.Uint64ToBytes(values[0]), utils.Uint64ToBytes(values[2])...)
+	result = append(result, utils.Uint64ToBytes(values[1])...)
+
+	for _, value := range values {
+		if err = writer.MergeSet(key, value); err != nil {
+			t.Error(err)
+			return
+		}
+	}
+
+	if data, err = reader.Get(key); err != nil {
+		t.Error(err)
+	} else if data == nil || len(data) != len(result) {
+		t.Errorf("Failed to retrieve key '%s'. Retuns: %+v", string(key), data)
+	}
+
+	if !reflect.DeepEqual(data, result) {
+		t.Errorf("Data retrieved '%+v' != '%+v'", data, result)
+	}
+
+	kv.Close()
 	os.RemoveAll(DataDirTmp + "/" + testDb)
 }

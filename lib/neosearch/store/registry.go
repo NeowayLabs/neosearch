@@ -3,7 +3,7 @@ package store
 import "fmt"
 
 // KVStoreConstructor is the register function that every store backend need to implement.
-type KVStoreConstructor func(*KVConfig) (KVStore, error)
+type KVStoreConstructor func(KVConfig) (KVStore, error)
 
 type KVStoreRegistry map[string]KVStoreConstructor
 

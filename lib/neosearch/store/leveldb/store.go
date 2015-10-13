@@ -15,7 +15,7 @@ import (
 const KVName = "leveldb"
 
 // LVDBConstructor build the constructor
-func LVDBConstructor(config *store.KVConfig) (store.KVStore, error) {
+func LVDBConstructor(config store.KVConfig) (store.KVStore, error) {
 	store, err := NewLVDB(config)
 	return store, err
 }
@@ -27,8 +27,10 @@ func init() {
 
 // LVDB is the leveldb interface exposed by NeoSearch
 type LVDB struct {
-	Config       *store.KVConfig
-	isBatch      bool
+	debug   bool
+	isBatch bool
+	dataDir string
+
 	opts         *levigo.Options
 	db           *levigo.DB
 	readOptions  *levigo.ReadOptions
@@ -42,26 +44,44 @@ type LVDB struct {
 }
 
 // NewLVDB creates a new leveldb instance
-func NewLVDB(config *store.KVConfig) (*LVDB, error) {
+func NewLVDB(config store.KVConfig) (*LVDB, error) {
 	lvdb := LVDB{
-		Config: config,
+		debug:   false,
+		isBatch: false,
 	}
 
-	lvdb.setup()
+	lvdb.setup(config)
 
 	return &lvdb, nil
 }
 
 // Setup the leveldb instance
-func (lvdb *LVDB) setup() {
-	if lvdb.Config.Debug {
+func (lvdb *LVDB) setup(config store.KVConfig) {
+	debug, ok := config["debug"].(bool)
+	if ok {
+		lvdb.debug = debug
+	}
+
+	if debug {
 		fmt.Println("Setup leveldb")
+	}
+
+	dataDir, ok := config["dataDir"].(string)
+	if ok {
+		lvdb.dataDir = dataDir
+	} else {
+		lvdb.dataDir = "/tmp"
 	}
 
 	lvdb.opts = levigo.NewOptions()
 
-	if lvdb.Config.EnableCache {
-		lvdb.opts.SetCache(levigo.NewLRUCache(lvdb.Config.CacheSize))
+	enableCache, ok := config["enableCache"].(bool)
+	if ok && enableCache {
+		cacheSize, _ := config["cacheSize"].(int)
+		if cacheSize == 0 && enableCache {
+			cacheSize = 3 << 30
+		}
+		lvdb.opts.SetCache(levigo.NewLRUCache(cacheSize))
 	}
 
 	lvdb.opts.SetCreateIfMissing(true)
@@ -80,12 +100,12 @@ func (lvdb *LVDB) Open(indexName, databaseName string) error {
 	}
 
 	// index should exists
-	fullPath := (lvdb.Config.DataDir + string(filepath.Separator) +
+	fullPath := (lvdb.dataDir + string(filepath.Separator) +
 		indexName + string(filepath.Separator) + databaseName)
 
 	lvdb.db, err = levigo.Open(fullPath, lvdb.opts)
 
-	if err == nil && lvdb.Config.Debug {
+	if err == nil && lvdb.debug {
 		fmt.Printf("Database '%s' open: %s\n", fullPath, err)
 	}
 

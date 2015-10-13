@@ -47,9 +47,4 @@ type KVIterator interface {
 }
 
 // KVConfig stores the kv configurations
-type KVConfig struct {
-	Debug       bool
-	DataDir     string
-	EnableCache bool
-	CacheSize   int
-}
+type KVConfig map[string]interface{}
