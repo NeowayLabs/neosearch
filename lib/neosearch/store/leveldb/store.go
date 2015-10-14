@@ -14,17 +14,6 @@ import (
 // KVName is the name of leveldb data store
 const KVName = "leveldb"
 
-// LVDBConstructor build the constructor
-func LVDBConstructor(config store.KVConfig) (store.KVStore, error) {
-	store, err := NewLVDB(config)
-	return store, err
-}
-
-// Registry the leveldb module
-func init() {
-	store.RegisterKVStore(KVName, LVDBConstructor)
-}
-
 // LVDB is the leveldb interface exposed by NeoSearch
 type LVDB struct {
 	debug   bool
@@ -38,9 +27,17 @@ type LVDB struct {
 	writeBatch   *levigo.WriteBatch
 
 	onceWriter sync.Once
-	onceReader sync.Once
-	defReader  store.KVReader
 	defWriter  store.KVWriter
+}
+
+// LVDBConstructor build the constructor
+func LVDBConstructor(config store.KVConfig) (store.KVStore, error) {
+	return NewLVDB(config)
+}
+
+// Registry the leveldb module
+func init() {
+	store.RegisterKVStore(KVName, LVDBConstructor)
 }
 
 // NewLVDB creates a new leveldb instance
@@ -104,12 +101,14 @@ func (lvdb *LVDB) Open(indexName, databaseName string) error {
 		indexName + string(filepath.Separator) + databaseName)
 
 	lvdb.db, err = levigo.Open(fullPath, lvdb.opts)
-
-	if err == nil && lvdb.debug {
-		fmt.Printf("Database '%s' open: %s\n", fullPath, err)
+	if err != nil {
+		return err
 	}
 
-	return err
+	if lvdb.debug {
+		fmt.Printf("Database '%s' open: %s\n", fullPath, err)
+	}
+	return nil
 }
 
 // IsOpen returns true if database is open
@@ -130,31 +129,18 @@ func (lvdb *LVDB) Close() error {
 		lvdb.writeBatch = nil
 		lvdb.isBatch = false
 	}
-
 	return nil
 }
 
 // Reader returns a LVDBReader singleton instance
 func (lvdb *LVDB) Reader() store.KVReader {
-	lvdb.onceReader.Do(func() {
-		lvdb.defReader = lvdb.NewReader()
-	})
-	return lvdb.defReader
-}
-
-// NewReader returns a new reader
-func (lvdb *LVDB) NewReader() store.KVReader {
-	return &LVDBReader{
-		store: lvdb,
-	}
+	return newReader(lvdb)
 }
 
 // Writer returns the singleton writer
 func (lvdb *LVDB) Writer() store.KVWriter {
 	lvdb.onceWriter.Do(func() {
-		lvdb.defWriter = &LVDBWriter{
-			store: lvdb,
-		}
+		lvdb.defWriter = newWriter(lvdb)
 	})
 	return lvdb.defWriter
 }

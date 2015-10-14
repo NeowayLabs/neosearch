@@ -12,24 +12,23 @@ import (
 	"github.com/jmhodges/levigo"
 )
 
-var (
-	muw *sync.Mutex
-)
-
-func init() {
-	muw = &sync.Mutex{}
+type LVDBWriter struct {
+	store   *LVDB
+	mutex   sync.Mutex
+	isBatch bool
 }
 
-type LVDBWriter struct {
-	store *LVDB
-
-	isBatch bool
+// newWriter returns a new writer
+func newWriter(lvdb *LVDB) *LVDBWriter {
+	return &LVDBWriter{
+		store: lvdb,
+	}
 }
 
 // Set put or update the key with the given value
 func (w *LVDBWriter) Set(key []byte, value []byte) error {
-	muw.Lock()
-	defer muw.Unlock()
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
 
 	if w.isBatch {
 		// isBatch == true, we can safely access _writeBatch pointer
@@ -42,8 +41,8 @@ func (w *LVDBWriter) Set(key []byte, value []byte) error {
 
 // SetCustom is the same as Set but enables override default write options
 func (w *LVDBWriter) SetCustom(opt *levigo.WriteOptions, key []byte, value []byte) error {
-	muw.Lock()
-	defer muw.Unlock()
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
 
 	return w.store.db.Put(opt, key, value)
 }
@@ -109,8 +108,8 @@ func (w *LVDBWriter) MergeSet(key []byte, value uint64) error {
 
 // Delete remove the given key
 func (w *LVDBWriter) Delete(key []byte) error {
-	muw.Lock()
-	defer muw.Unlock()
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
 
 	if w.isBatch {
 		w.store.writeBatch.Delete(key)
@@ -122,16 +121,16 @@ func (w *LVDBWriter) Delete(key []byte) error {
 
 // DeleteCustom is the same as Delete but enables override default write options
 func (w *LVDBWriter) DeleteCustom(opt *levigo.WriteOptions, key []byte) error {
-	muw.Lock()
-	defer muw.Unlock()
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
 
 	return w.store.db.Delete(opt, key)
 }
 
 // StartBatch start a new batch write processing
 func (w *LVDBWriter) StartBatch() {
-	muw.Lock()
-	defer muw.Unlock()
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
 
 	if w.store.writeBatch == nil {
 		w.store.writeBatch = levigo.NewWriteBatch()
@@ -151,8 +150,8 @@ func (w *LVDBWriter) IsBatch() bool {
 func (w *LVDBWriter) FlushBatch() error {
 	var err error
 
-	muw.Lock()
-	defer muw.Unlock()
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
 
 	if w.store.writeBatch != nil {
 		err = w.store.db.Write(w.store.writeOptions, w.store.writeBatch)

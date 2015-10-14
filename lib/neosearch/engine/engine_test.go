@@ -40,7 +40,12 @@ func cmpIterator(t *testing.T, itReturns []map[int64]string, ng *Engine, seek []
 		t.Error(err)
 	}
 
-	it := storekv.Reader().GetIterator()
+	reader := storekv.Reader()
+	it := reader.GetIterator()
+	defer func() {
+		it.Close()
+		reader.Close()
+	}()
 
 	it.Seek(seek)
 

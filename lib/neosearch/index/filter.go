@@ -76,7 +76,12 @@ func (i *Index) matchPrefix(field []byte, value []byte) ([]uint64, error) {
 		return nil, err
 	}
 
-	it := storekv.Reader().GetIterator()
+	reader := storekv.Reader()
+	it := reader.GetIterator()
+	defer func() {
+		it.Close()
+		reader.Close()
+	}()
 
 	defer it.Close()
 

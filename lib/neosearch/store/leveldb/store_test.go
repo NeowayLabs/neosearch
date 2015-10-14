@@ -3,7 +3,6 @@
 package leveldb
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -187,6 +186,12 @@ func TestStoreSetGet(t *testing.T) {
 		t.Error("Reader not created!")
 		return
 	}
+	defer func() {
+		err := reader.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
 
 	for _, kv := range shouldPass {
 		if err = writer.Set(kv.key, kv.value); err != nil {
@@ -236,12 +241,17 @@ func TestBatchWrite(t *testing.T) {
 		return
 	}
 
-	fmt.Println("Getting Reader")
 	reader := kv.Reader()
 	if reader == nil {
 		t.Error("Reader not created!")
 		return
 	}
+	defer func() {
+		err := reader.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
 
 	writer := kv.Writer()
 	if writer == nil {
@@ -308,6 +318,12 @@ func TestBatchMultiWrite(t *testing.T) {
 		t.Error("Reader not created!")
 		return
 	}
+	defer func() {
+		err := reader.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
 
 	writer := kv.Writer()
 	if writer == nil {
@@ -397,6 +413,12 @@ func TestStoreMergeSet(t *testing.T) {
 		t.Error("Reader not created!")
 		return
 	}
+	defer func() {
+		err := reader.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
 
 	key := []byte{'t', 'e', 's', 't', 'e'}
 	values := []uint64{0, 2, 1}
