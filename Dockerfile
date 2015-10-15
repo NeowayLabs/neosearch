@@ -6,7 +6,6 @@ MAINTAINER Tiago Katcipis <tiagokatcipis@gmail.com> (@tiagokatcipis)
 # Packaged dependencies
 RUN apt-get update && apt-get install -y \
         ca-certificates \
-	libleveldb-dev \
 	build-essential \
 	curl \
 	git \
@@ -35,16 +34,17 @@ RUN go get golang.org/x/tools/cmd/cover && \
 # Install package dependencies
 RUN go get -d github.com/extemporalgenome/slug && \
     go get -d golang.org/x/text && \
-    go get -d github.com/jmhodges/levigo && \
+    go get -d github.com/syndtr/goleveldb/leveldb && \
+    go get -d github.com/golang/snappy && \
     go get -d github.com/iNamik/go_lexer && \
     go get -d github.com/iNamik/go_container && \
     go get -d github.com/iNamik/go_pkg && \
-    go get -d github.com/jteeuwen/go-pkg-optarg && \
-    go get -d github.com/peterh/liner && \
     go get -d gopkg.in/yaml.v2 && \
+    go get -d github.com/jteeuwen/go-pkg-optarg && \
     go get -d launchpad.net/gommap && \
-    go get -d github.com/julienschmidt/httprouter
+    go get -d github.com/julienschmidt/httprouter && \
+    go get -d github.com/peterh/liner
 
-ENV STORAGE_ENGINE leveldb
+ENV STORAGE_ENGINE goleveldb
 
 WORKDIR /go/src/github.com/NeowayLabs/neosearch

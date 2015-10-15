@@ -24,11 +24,23 @@ Take a look at [ours motives here](./docs/motivation.md)
 
 Install dependencies:
 
-* leveldb >= 1.15
 * snappy (optional, only required for compressed data)
 * Go 1.4
 
 and get the code:
+
+```bash
+go get -v -u -t github.com/NeowayLabs/neosearch/...
+
+cd $GOPATH/src/github.com/NeowayLabs/neosearch
+go test -v ./...
+```
+
+### Storage LevelDB - Optional
+
+Install dependencies:
+
+* leveldb >= 1.15 (optional)
 
 ```bash
 export CGO_CFLAGS='-I <path/to/leveldb/include>'
