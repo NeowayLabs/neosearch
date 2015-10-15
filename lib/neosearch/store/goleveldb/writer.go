@@ -1,6 +1,4 @@
-// +build leveldb
-
-package leveldb
+package goleveldb
 
 import (
 	"bytes"
@@ -9,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch/utils"
-	"github.com/jmhodges/levigo"
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
 type LVDBWriter struct {
@@ -26,7 +24,7 @@ func newWriter(lvdb *LVDB) *LVDBWriter {
 }
 
 // Set put or update the key with the given value
-func (w *LVDBWriter) Set(key []byte, value []byte) error {
+func (w *LVDBWriter) Set(key, value []byte) error {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
 
@@ -36,15 +34,8 @@ func (w *LVDBWriter) Set(key []byte, value []byte) error {
 		return nil
 	}
 
-	return w.store.db.Put(w.store.writeOptions, key, value)
-}
-
-// SetCustom is the same as Set but enables override default write options
-func (w *LVDBWriter) SetCustom(opt *levigo.WriteOptions, key []byte, value []byte) error {
-	w.mutex.Lock()
-	defer w.mutex.Unlock()
-
-	return w.store.db.Put(opt, key, value)
+	options := defaultWriteOptions()
+	return w.store.db.Put(key, value, options)
 }
 
 // MergeSet add value to a ordered set of integers stored in key. If value
@@ -60,7 +51,6 @@ func (w *LVDBWriter) MergeSet(key []byte, value uint64) error {
 	)
 
 	data, err := reader.Get(key)
-
 	if err != nil {
 		return err
 	}
@@ -106,7 +96,6 @@ func (w *LVDBWriter) MergeSet(key []byte, value uint64) error {
 	return w.Set(key, buf.Bytes())
 }
 
-// Delete remove the given key
 func (w *LVDBWriter) Delete(key []byte) error {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
@@ -116,15 +105,8 @@ func (w *LVDBWriter) Delete(key []byte) error {
 		return nil
 	}
 
-	return w.store.db.Delete(w.store.writeOptions, key)
-}
-
-// DeleteCustom is the same as Delete but enables override default write options
-func (w *LVDBWriter) DeleteCustom(opt *levigo.WriteOptions, key []byte) error {
-	w.mutex.Lock()
-	defer w.mutex.Unlock()
-
-	return w.store.db.Delete(opt, key)
+	options := defaultWriteOptions()
+	return w.store.db.Delete(key, options)
 }
 
 // StartBatch start a new batch write processing
@@ -133,9 +115,9 @@ func (w *LVDBWriter) StartBatch() {
 	defer w.mutex.Unlock()
 
 	if w.store.writeBatch == nil {
-		w.store.writeBatch = levigo.NewWriteBatch()
+		w.store.writeBatch = new(leveldb.Batch)
 	} else {
-		w.store.writeBatch.Clear()
+		w.store.writeBatch.Reset()
 	}
 
 	w.isBatch = true
@@ -154,9 +136,10 @@ func (w *LVDBWriter) FlushBatch() error {
 	defer w.mutex.Unlock()
 
 	if w.store.writeBatch != nil {
-		err = w.store.db.Write(w.store.writeOptions, w.store.writeBatch)
+		options := defaultWriteOptions()
+		err = w.store.db.Write(w.store.writeBatch, options)
 		// After flush, release the writeBatch for future uses
-		w.store.writeBatch.Clear()
+		w.store.writeBatch.Reset()
 		w.isBatch = false
 	}
 

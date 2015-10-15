@@ -12,6 +12,13 @@ type LVDBReader struct {
 	store *LVDB
 }
 
+// newReader returns a new reader
+func newReader(lvdb *LVDB) *LVDBReader {
+	return &LVDBReader{
+		store: lvdb,
+	}
+}
+
 // Get returns the value of the given key
 func (reader *LVDBReader) Get(key []byte) ([]byte, error) {
 	return reader.store.db.Get(reader.store.readOptions, key)
@@ -28,6 +35,9 @@ func (reader *LVDBReader) GetIterator() store.KVIterator {
 
 	ro.SetFillCache(false)
 	it := reader.store.db.NewIterator(ro)
-	wrapper := LVDBIterator{it}
-	return wrapper
+	return LVDBIterator{it}
+}
+
+func (reader *LVDBReader) Close() error {
+	return nil
 }

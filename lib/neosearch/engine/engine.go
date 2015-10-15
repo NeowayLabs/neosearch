@@ -5,12 +5,12 @@ import (
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch/cache"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
-	"github.com/NeowayLabs/neosearch/lib/neosearch/store/leveldb"
+	"github.com/NeowayLabs/neosearch/lib/neosearch/store/goleveldb"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/utils"
 )
 
 const (
-	DefaultKVStore = leveldb.KVName
+	DefaultKVStore = goleveldb.KVName
 
 	// OpenCacheSize is the default value for the maximum number of
 	// open database files. This value can be override by
@@ -146,23 +146,30 @@ func (ng *Engine) Execute(cmd Command) ([]byte, error) {
 		return nil, err
 	}
 
+	writer := store.Writer()
+
+	reader := store.Reader()
+	defer func() {
+		reader.Close()
+	}()
+
 	switch cmd.Command {
 	case "batch":
-		store.Writer().StartBatch()
+		writer.StartBatch()
 		return nil, nil
 	case "flushbatch":
-		err = store.Writer().FlushBatch()
+		err = writer.FlushBatch()
 		return nil, err
 	case "set":
-		err = store.Writer().Set(cmd.Key, cmd.Value)
+		err = writer.Set(cmd.Key, cmd.Value)
 		return nil, err
 	case "get":
-		return store.Reader().Get(cmd.Key)
+		return reader.Get(cmd.Key)
 	case "mergeset":
 		v := utils.BytesToUint64(cmd.Value)
-		return nil, store.Writer().MergeSet(cmd.Key, v)
+		return nil, writer.MergeSet(cmd.Key, v)
 	case "delete":
-		err = store.Writer().Delete(cmd.Key)
+		err = writer.Delete(cmd.Key)
 		return nil, err
 	}
 

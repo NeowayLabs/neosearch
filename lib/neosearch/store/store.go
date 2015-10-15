@@ -4,6 +4,7 @@ package store
 type KVReader interface {
 	Get([]byte) ([]byte, error)
 	GetIterator() KVIterator
+	Close() error
 }
 
 // KVWriter is a writer safe for concurrent writes.
@@ -21,14 +22,13 @@ type KVWriter interface {
 type KVStore interface {
 	// Open the database
 	Open(string, string) error
-
-	// Close the database
-	Close() error
 	IsOpen() bool
 
 	Reader() KVReader
-	NewReader() KVReader
 	Writer() KVWriter
+
+	// Close the database
+	Close() error
 }
 
 // KVIterator expose the interface for database iterators.

@@ -17,7 +17,7 @@ test -z "$(gofmt -l -w .     | tee /dev/stderr)"
 #test -z "$(goimports -l -w . | tee /dev/stderr)"
 test -z "$(golint .          | tee /dev/stderr)"
 #$GO vet ./...
-#$GO test -tags leveldb -race ./...
+#$GO test -tags goleveldb -race ./...
 
 # Run test coverage on each subdirectories and merge the coverage profile.
 
@@ -27,8 +27,8 @@ if [ "x${TEST_DIRECTORY:0:1}" != "x." ]; then
 	TEST_DIRECTORY="./$TEST_DIRECTORY"
 fi
 
-# Standard $GO tooling behavior is to ignore dirs with leading underscors
-for dir in $(find "$TEST_DIRECTORY" -maxdepth 10 -not -path './.git*' -not -path './Godeps/*' -type d);
+# Standard $GO tooling behavior is to ignore dirs with leading underscore
+for dir in $(find "$TEST_DIRECTORY" -maxdepth 10 -not -path './.git*' -not -path './Godeps/*' -not -path './lib/neosearch/store/leveldb' -type d);
 do
     if ls $dir/*.go &> /dev/null; then
 	$GO test $TEST_FLAGS -v -race -covermode=count -coverprofile="$dir/profile.tmp" "$dir"

@@ -1,6 +1,4 @@
-// +build leveldb
-
-package leveldb
+package goleveldb
 
 import (
 	"fmt"
@@ -8,39 +6,35 @@ import (
 	"sync"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
-	"github.com/jmhodges/levigo"
+	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/filter"
+	"github.com/syndtr/goleveldb/leveldb/opt"
 )
 
-// KVName is the name of leveldb data store
-const KVName = "leveldb"
+// KVName is the name of goleveldb data store
+const KVName = "goleveldb"
 
-// LVDB is the leveldb interface exposed by NeoSearch
 type LVDB struct {
 	debug   bool
 	isBatch bool
 	dataDir string
 
-	opts         *levigo.Options
-	db           *levigo.DB
-	readOptions  *levigo.ReadOptions
-	writeOptions *levigo.WriteOptions
-	writeBatch   *levigo.WriteBatch
+	opts       *opt.Options
+	db         *leveldb.DB
+	writeBatch *leveldb.Batch
 
 	onceWriter sync.Once
-	defWriter  store.KVWriter
+	defWriter  *LVDBWriter
 }
 
-// LVDBConstructor build the constructor
 func LVDBConstructor(config store.KVConfig) (store.KVStore, error) {
 	return NewLVDB(config)
 }
 
-// Registry the leveldb module
 func init() {
 	store.RegisterKVStore(KVName, LVDBConstructor)
 }
 
-// NewLVDB creates a new leveldb instance
 func NewLVDB(config store.KVConfig) (*LVDB, error) {
 	lvdb := LVDB{
 		debug:   false,
@@ -52,15 +46,16 @@ func NewLVDB(config store.KVConfig) (*LVDB, error) {
 	return &lvdb, nil
 }
 
-// Setup the leveldb instance
 func (lvdb *LVDB) setup(config store.KVConfig) {
+	opts := &opt.Options{}
+
 	debug, ok := config["debug"].(bool)
 	if ok {
 		lvdb.debug = debug
 	}
 
 	if debug {
-		fmt.Println("Setup leveldb")
+		fmt.Println("Setup goleveldb")
 	}
 
 	dataDir, ok := config["dataDir"].(string)
@@ -70,25 +65,50 @@ func (lvdb *LVDB) setup(config store.KVConfig) {
 		lvdb.dataDir = "/tmp"
 	}
 
-	lvdb.opts = levigo.NewOptions()
-
-	enableCache, ok := config["enableCache"].(bool)
-	if ok && enableCache {
-		cacheSize, _ := config["cacheSize"].(int)
-		if cacheSize == 0 && enableCache {
-			cacheSize = 3 << 30
-		}
-		lvdb.opts.SetCache(levigo.NewLRUCache(cacheSize))
+	ro, ok := config["read_only"].(bool)
+	if ok {
+		opts.ReadOnly = ro
 	}
 
-	lvdb.opts.SetCreateIfMissing(true)
+	cim, ok := config["create_if_missing"].(bool)
+	if ok {
+		opts.ErrorIfMissing = !cim
+	}
 
-	// TODO: export this configuration options
-	lvdb.readOptions = levigo.NewReadOptions()
-	lvdb.writeOptions = levigo.NewWriteOptions()
+	eie, ok := config["error_if_exists"].(bool)
+	if ok {
+		opts.ErrorIfExist = eie
+	}
+
+	wbs, ok := config["write_buffer_size"].(float64)
+	if ok {
+		opts.WriteBuffer = int(wbs)
+	}
+
+	bs, ok := config["block_size"].(float64)
+	if ok {
+		opts.BlockSize = int(bs)
+	}
+
+	bri, ok := config["block_restart_interval"].(float64)
+	if ok {
+		opts.BlockRestartInterval = int(bri)
+	}
+
+	lcc, ok := config["lru_cache_capacity"].(float64)
+	if ok {
+		opts.BlockCacheCapacity = int(lcc)
+	}
+
+	bfbpk, ok := config["bloom_filter_bits_per_key"].(float64)
+	if ok {
+		bf := filter.NewBloomFilter(int(bfbpk))
+		opts.Filter = bf
+	}
+
+	lvdb.opts = opts
 }
 
-// Open the database
 func (lvdb *LVDB) Open(indexName, databaseName string) error {
 	var err error
 
@@ -100,7 +120,7 @@ func (lvdb *LVDB) Open(indexName, databaseName string) error {
 	fullPath := (lvdb.dataDir + string(filepath.Separator) +
 		indexName + string(filepath.Separator) + databaseName)
 
-	lvdb.db, err = levigo.Open(fullPath, lvdb.opts)
+	lvdb.db, err = leveldb.OpenFile(fullPath, lvdb.opts)
 	if err != nil {
 		return err
 	}
@@ -119,20 +139,19 @@ func (lvdb *LVDB) IsOpen() bool {
 // Close the database
 func (lvdb *LVDB) Close() error {
 	if lvdb.db != nil {
-		// levigo close implementation does not returns error
 		lvdb.db.Close()
 		lvdb.db = nil
 	}
 
 	if lvdb.writeBatch != nil {
-		lvdb.writeBatch.Close()
+		lvdb.writeBatch.Reset()
 		lvdb.writeBatch = nil
 		lvdb.isBatch = false
 	}
 	return nil
 }
 
-// Reader returns a LVDBReader singleton instance
+// Reader returns a LVDBReader instance
 func (lvdb *LVDB) Reader() store.KVReader {
 	return newReader(lvdb)
 }

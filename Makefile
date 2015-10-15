@@ -9,7 +9,7 @@ TEST_DIRECTORY ?= .
 SHELL_EXPORT := $(foreach v,$(MAKE_ENV),$(v)='$($(v))')
 
 ifeq ($(STORAGE_ENGINE),)
-	export STORAGE_ENGINE=leveldb
+	export STORAGE_ENGINE=goleveldb
 else
 	export STORAGE_ENGINE
 endif

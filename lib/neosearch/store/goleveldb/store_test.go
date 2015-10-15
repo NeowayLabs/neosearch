@@ -1,6 +1,4 @@
-// +build leveldb
-
-package leveldb
+package goleveldb
 
 import (
 	"io/ioutil"
@@ -98,13 +96,13 @@ func TestStoreHasBackend(t *testing.T) {
 func TestOpenDatabase(t *testing.T) {
 	shouldPass := []string{
 		"123.tt",
-		/*		"9999.db",
-				"sample.db",
-				"sample.idx",
-				"sample_test.db",
-				"_id.db",
-				"_all.idx",
-				"__.idx",*/
+		/*      "9999.db",
+		        "sample.db",
+		        "sample.idx",
+		        "sample_test.db",
+		        "_id.db",
+		        "_all.idx",
+		        "__.idx",*/
 	}
 
 	shouldFail := []string{
@@ -181,6 +179,12 @@ func TestStoreSetGet(t *testing.T) {
 		return
 	}
 
+	for _, kv := range shouldPass {
+		if err = writer.Set(kv.key, kv.value); err != nil {
+			t.Error(err)
+		}
+	}
+
 	reader := kv.Reader()
 	if reader == nil {
 		t.Error("Reader not created!")
@@ -194,10 +198,6 @@ func TestStoreSetGet(t *testing.T) {
 	}()
 
 	for _, kv := range shouldPass {
-		if err = writer.Set(kv.key, kv.value); err != nil {
-			t.Error(err)
-		}
-
 		if data, err = reader.Get(kv.key); err != nil {
 			t.Error(err)
 			continue
@@ -241,18 +241,6 @@ func TestBatchWrite(t *testing.T) {
 		return
 	}
 
-	reader := kv.Reader()
-	if reader == nil {
-		t.Error("Reader not created!")
-		return
-	}
-	defer func() {
-		err := reader.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}()
-
 	writer := kv.Writer()
 	if writer == nil {
 		t.Error("Writer not created!")
@@ -271,6 +259,18 @@ func TestBatchWrite(t *testing.T) {
 		return
 	}
 
+	reader := kv.Reader()
+	if reader == nil {
+		t.Error("Reader not created!")
+		return
+	}
+	defer func() {
+		err := reader.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
 	// should returns nil, nil because the key is in the batch cache
 	if data, err = reader.Get(key); err != nil || data != nil {
 		t.Error("Key set before wasn't in the write batch cache." +
@@ -285,7 +285,19 @@ func TestBatchWrite(t *testing.T) {
 		t.Error("FlushBatch doesnt reset the isBatch")
 	}
 
-	if data, err = reader.Get(key); err != nil {
+	newReader := kv.Reader()
+	if newReader == nil {
+		t.Error("newReader not created!")
+		return
+	}
+	defer func() {
+		err := newReader.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	if data, err = newReader.Get(key); err != nil {
 		t.Error(err)
 	} else if data == nil || len(data) != len(value) {
 		t.Errorf("Failed to retrieve key '%s'. Retuns: %s", string(key), string(data))
@@ -312,18 +324,6 @@ func TestBatchMultiWrite(t *testing.T) {
 	if kv = openDatabase(t, "sample-batch-multi-write", testDb); kv == nil {
 		return
 	}
-
-	reader := kv.Reader()
-	if reader == nil {
-		t.Error("Reader not created!")
-		return
-	}
-	defer func() {
-		err := reader.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}()
 
 	writer := kv.Writer()
 	if writer == nil {
@@ -359,7 +359,21 @@ func TestBatchMultiWrite(t *testing.T) {
 		if err = writer.Set(kv.key, kv.value); err != nil {
 			t.Error(err)
 		}
+	}
 
+	reader := kv.Reader()
+	if reader == nil {
+		t.Error("Reader not created!")
+		return
+	}
+	defer func() {
+		err := reader.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	for _, kv := range shouldPass {
 		if data, err := reader.Get(kv.key); err != nil || data != nil {
 			t.Error("Key set before wasn't in the write batch cache." +
 				" Batch mode isnt working")
@@ -370,8 +384,20 @@ func TestBatchMultiWrite(t *testing.T) {
 		t.Error(err)
 	}
 
+	newReader := kv.Reader()
+	if newReader == nil {
+		t.Error("Reader not created!")
+		return
+	}
+	defer func() {
+		err := newReader.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
 	for _, kv := range shouldPass {
-		if data, err = reader.Get(kv.key); err != nil {
+		if data, err = newReader.Get(kv.key); err != nil {
 			t.Error(err)
 			continue
 		} else if data == nil || len(data) != len(kv.value) {
@@ -408,18 +434,6 @@ func TestStoreMergeSet(t *testing.T) {
 		return
 	}
 
-	reader := kv.Reader()
-	if reader == nil {
-		t.Error("Reader not created!")
-		return
-	}
-	defer func() {
-		err := reader.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}()
-
 	key := []byte{'t', 'e', 's', 't', 'e'}
 	values := []uint64{0, 2, 1}
 
@@ -433,6 +447,18 @@ func TestStoreMergeSet(t *testing.T) {
 		}
 	}
 
+	reader := kv.Reader()
+	if reader == nil {
+		t.Error("Reader not created!")
+		return
+	}
+	defer func() {
+		err := reader.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
 	if data, err = reader.Get(key); err != nil {
 		t.Error(err)
 	} else if data == nil || len(data) != len(result) {
@@ -445,4 +471,85 @@ func TestStoreMergeSet(t *testing.T) {
 
 	kv.Close()
 	os.RemoveAll(DataDirTmp + "/" + testDb)
+}
+
+func TestStoreIterator(t *testing.T) {
+	var (
+		err    error
+		kv     store.KVStore
+		testDb = "test_iterator.db"
+	)
+
+	os.Mkdir(DataDirTmp+string(filepath.Separator)+"sample-store-iterator", 0755)
+	if kv = openDatabase(t, "sample-store-iterator", testDb); kv == nil {
+		return
+	}
+
+	writer := kv.Writer()
+
+	type kvTest struct {
+		key   []byte
+		value []byte
+	}
+
+	data := []kvTest{
+		{
+			key: []byte{'p', 'l', 'a', 'n', '9'},
+			value: []byte{'f', 'r', 'o', 'm',
+				'o', 'u', 't', 'e', 'r', 's',
+				's', 'p', 'a', 'c', 'e', '!'},
+		},
+		{
+			key:   []byte{'t', 'e', 's', 't', 'e'},
+			value: []byte{'i', '4', 'k'},
+		},
+		{
+			key:   []byte{'t', 'h', 'e', 'm', 'a', 't', 'r', 'i', 'x'},
+			value: []byte{'h', 'a', 's', 'y', 'o', 'u'},
+		},
+	}
+
+	writer.StartBatch()
+	for _, kv := range data {
+		if err = writer.Set(kv.key, kv.value); err != nil {
+			t.Error(err)
+		}
+	}
+
+	err = writer.FlushBatch()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	reader := kv.Reader()
+	defer func() {
+		err := reader.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+	it := reader.GetIterator()
+	it.Seek([]byte{0})
+	keys := make([][]byte, 0, len(data))
+	for it.Valid() {
+		k := it.Key()
+		key := make([]byte, len(k))
+		copy(key, k)
+		keys = append(keys, key)
+		it.Next()
+	}
+
+	if len(keys) != len(data) {
+		t.Errorf("expected same number of keys, got %d != %d", len(keys), len(data))
+	}
+	for i, dk := range data {
+		if !reflect.DeepEqual(dk.key, keys[i]) {
+			t.Errorf("expected key %s got %s", dk.key, keys[i])
+		}
+	}
+
+	err = it.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
 }
