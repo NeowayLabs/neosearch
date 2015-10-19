@@ -22,47 +22,40 @@
 //
 // Dependencies
 //
-//     - leveldb
 //     - snappy (optional, only required for compressed data)
 //     - Go > 1.3
 //
 // Install
 //
-//     export CGO_CFLAGS='-I <path/to/leveldb/include>'
-//     export CGO_LDFLAGS='-L /home/secplus/projects/3rdparty/leveldb/'
 //     go get -u -v github.com/NeowayLabs/neosearch
 //     cd $GOPATH/src/github/NeowayLabs/neosearch
-//     go test -tags leveldb -v .
+//     go test -v .
 //
 // Create and add documents to NeoSearch is very easy, see below:
 //
 //   func main() {
-//       config := neosearch.NewConfig()
-//       config.Option(neosearch.DataDir("/tmp"))
-//       config.Option(neosearch.Debug(false))
+//       cfg := NewConfig()
+//       cfg.Option(neosearch.DataDir("/tmp"))
+//       cfg.Option(neosearch.Debug(false))
 //
-//       neo := neosearch.New(config)
+//       neo := neosearch.New(cfg)
 //
 //       index, err := neosearch.CreateIndex("test")
-//
 //       if err != nil {
 //           panic(err)
 //       }
 //
 //       err = index.Add(1, `{"name": "Neoway Business Solution", "type": "company"}`)
-//
 //       if err != nil {
 //           panic(err)
 //       }
 //
 //       err = index.Add(2, `{"name": "Facebook Inc", "type": "company"}`)
-//
 //       if err != nil {
 //           panic(err)
 //       }
 //
 //       values, err := index.MatchPrefix([]byte("name"), []byte("neoway"))
-//
 //       if err != nil {
 //           panic(err)
 //       }
@@ -94,7 +87,7 @@ import (
 	"os"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch/cache"
-	"github.com/NeowayLabs/neosearch/lib/neosearch/engine"
+	"github.com/NeowayLabs/neosearch/lib/neosearch/config"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/index"
 )
 
@@ -102,21 +95,17 @@ var (
 	cachedIndices = expvar.NewInt("cachedIndices")
 )
 
-const maxIndicesOpen = 50
-
 // NeoSearch is the core of the neosearch package.
 // This structure handles all of the user's interactions with the indices,
 // like CreateIndex, DeleteIndex, UpdateIndex and others.
 type NeoSearch struct {
 	indices cache.Cache
-
-	config *Config
-	engine *engine.Engine
+	config  *config.Config
 }
 
 // New creates the NeoSearch high-level interface.
 // Use that for index/update/delete JSON documents.
-func New(cfg *Config) *NeoSearch {
+func New(cfg *config.Config) *NeoSearch {
 	if cfg.DataDir == "" {
 		panic(errors.New("DataDir is required for NeoSearch interface"))
 	}
@@ -126,7 +115,7 @@ func New(cfg *Config) *NeoSearch {
 	}
 
 	if cfg.MaxIndicesOpen == 0 {
-		cfg.MaxIndicesOpen = maxIndicesOpen
+		cfg.MaxIndicesOpen = config.DefaultMaxIndicesOpen
 	}
 
 	neo := &NeoSearch{
@@ -152,16 +141,7 @@ func (neo *NeoSearch) GetIndices() cache.Cache {
 
 // CreateIndex creates and setup a new index
 func (neo *NeoSearch) CreateIndex(name string) (*index.Index, error) {
-	indx, err := index.New(
-		name,
-		index.Config{
-			DataDir:  neo.config.DataDir,
-			Debug:    neo.config.Debug,
-			KVConfig: neo.config.KVConfig,
-		},
-		true,
-	)
-
+	indx, err := index.New(name, neo.config, true)
 	if err != nil {
 		return nil, err
 	}
@@ -215,16 +195,7 @@ func (neo *NeoSearch) OpenIndex(name string) (*index.Index, error) {
 		return nil, err
 	}
 
-	indx, err = index.New(
-		name,
-		index.Config{
-			DataDir:  neo.config.DataDir,
-			Debug:    neo.config.Debug,
-			KVConfig: neo.config.KVConfig,
-		},
-		false,
-	)
-
+	indx, err = index.New(name, neo.config, false)
 	if err != nil {
 		return nil, err
 	}

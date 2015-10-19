@@ -1,16 +1,28 @@
 package home
 
 import (
+	"io/ioutil"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
+	"github.com/NeowayLabs/neosearch/lib/neosearch/config"
 	"github.com/julienschmidt/httprouter"
 )
 
+var dataDirTmp string
+
+func init() {
+	var err error
+	dataDirTmp, err = ioutil.TempDir("/tmp", "neosearch-service-home-")
+	if err != nil {
+		panic(err)
+	}
+}
+
 func getHomeHandler() *HomeHandler {
-	cfg := neosearch.NewConfig()
-	cfg.Option(neosearch.DataDir("/tmp/"))
+	cfg := config.NewConfig()
+	cfg.Option(config.DataDir(dataDirTmp))
 	ns := neosearch.New(cfg)
 	return NewHomeHandler(ns)
 }

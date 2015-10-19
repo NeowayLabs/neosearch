@@ -46,10 +46,10 @@ import (
 )
 
 func main() {
-    ng := engine.New(engine.NGConfig{
-	    KVCfg: &store.KVConfig{
-		DataDir: "/tmp/",
-		Debug:   false,
+    ng := engine.New(&engine.Config{
+	    KVConfig: &store.KVConfig{
+		  DataDir: "/tmp/",
+		  Debug:   false,
 	    },
     })
 

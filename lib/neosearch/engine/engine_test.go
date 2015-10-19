@@ -71,8 +71,8 @@ func cmpIterator(t *testing.T, itReturns []map[int64]string, ng *Engine, seek []
 // TestEngineIntegerKeyOrder verifies if the chosen storage engine is really
 // a LSM database ordered by key with ByteWise comparator.
 func TestEngineIntegerKeyOrder(t *testing.T) {
-	ng := New(NGConfig{
-		KVCfg: store.KVConfig{
+	ng := New(&Config{
+		KVConfig: store.KVConfig{
 			"dataDir": DataDirTmp,
 		},
 		OpenCacheSize: 1,

@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
-	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
+	"github.com/NeowayLabs/neosearch/lib/neosearch/config"
 	"github.com/NeowayLabs/neosearch/service/neosearch/server"
 	"github.com/jteeuwen/go-pkg-optarg"
 )
@@ -21,21 +21,23 @@ const (
 
 func main() {
 	var (
-		configOpt, dataDirOpt, hostOpt string
-		goProcsOpt                     uint64
-		portOpt                        uint16
-		helpOpt, debugOpt              bool
-		err                            error
-		cfg                            *neosearch.Config
-		cfgServer                      *server.ServerConfig
+		configOpt, dataDirOpt string
+		kvstoreOpt, hostOpt   string
+		goProcsOpt            uint64
+		portOpt               uint16
+		helpOpt, debugOpt     bool
+		err                   error
+		cfg                   *config.Config
+		cfgServer             *server.ServerConfig
 	)
 
-	cfg = neosearch.NewConfig()
+	cfg = config.NewConfig()
 	cfgServer = server.NewConfig()
 
 	optarg.Header("General options")
 	optarg.Add("c", "config", "Configurations file", "")
 	optarg.Add("d", "data-dir", "Data directory", "")
+	optarg.Add("k", "default-kvstore", "Default kvstore", "")
 	optarg.Add("g", "maximum-concurrence", "Set the maximum number of concurrent go routines", 0)
 	optarg.Add("t", "trace-debug", "Enable debug traces", false)
 	optarg.Add("s", "server-address", "Server host and port", "0.0.0.0:9500")
@@ -47,6 +49,8 @@ func main() {
 			configOpt = opt.String()
 		case "d":
 			dataDirOpt = opt.String()
+		case "k":
+			kvstoreOpt = opt.String()
 		case "s":
 			address := opt.String()
 			addrParts := strings.Split(address, ":")
@@ -97,10 +101,8 @@ func main() {
 		log.Println("No configuration file supplied. Using defaults...")
 		cfg.Debug = false
 		cfg.DataDir = "/data"
-		cfg.KVConfig = store.KVConfig{"enableCache": true}
 	} else {
-		cfg, err = neosearch.ConfigFromFile(configOpt)
-
+		cfg, err = config.ConfigFromFile(configOpt)
 		if err != nil {
 			log.Fatalf("Failed to read configuration file: %s", err.Error())
 			return
@@ -116,14 +118,14 @@ func main() {
 	}
 
 	// override config options by argument options
-	cfg.Option(neosearch.DataDir(dataDirOpt))
-	cfg.Option(neosearch.Debug(debugOpt))
+	cfg.Option(config.DataDir(dataDirOpt))
+	cfg.Option(config.KVStore(kvstoreOpt))
+	cfg.Option(config.Debug(debugOpt))
 
 	cfgServer.Host = hostOpt
 	cfgServer.Port = portOpt
 
 	search := neosearch.New(cfg)
-
 	defer func() {
 		search.Close()
 	}()

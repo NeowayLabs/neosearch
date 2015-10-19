@@ -10,12 +10,13 @@ import (
 	"testing"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
+	"github.com/NeowayLabs/neosearch/lib/neosearch/config"
 	"github.com/julienschmidt/httprouter"
 )
 
 func getGetHandler() *GetHandler {
-	cfg := neosearch.NewConfig()
-	cfg.Option(neosearch.DataDir("/tmp/"))
+	cfg := config.NewConfig()
+	cfg.Option(config.DataDir(dataDirTmp))
 	ns := neosearch.New(cfg)
 
 	handler := NewGetHandler(ns)

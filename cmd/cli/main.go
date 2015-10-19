@@ -53,8 +53,8 @@ func main() {
 		dataDirOpt, _ = os.Getwd()
 	}
 
-	ng := engine.New(engine.NGConfig{
-		KVCfg: store.KVConfig{
+	ng := engine.New(&engine.Config{
+		KVConfig: store.KVConfig{
 			"dataDir": dataDirOpt,
 			"debug":   debugOpt,
 		},

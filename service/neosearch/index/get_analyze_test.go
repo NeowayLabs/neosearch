@@ -11,12 +11,13 @@ import (
 	"testing"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
+	"github.com/NeowayLabs/neosearch/lib/neosearch/config"
 	"github.com/julienschmidt/httprouter"
 )
 
 func getAnalyzeGetHandler() *GetAnalyseHandler {
-	cfg := neosearch.NewConfig()
-	cfg.Option(neosearch.DataDir("/tmp/"))
+	cfg := config.NewConfig()
+	cfg.Option(config.DataDir(dataDirTmp))
 	ns := neosearch.New(cfg)
 
 	handler := NewGetAnalyzeHandler(ns)

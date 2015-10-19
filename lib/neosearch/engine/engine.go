@@ -5,40 +5,13 @@ import (
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch/cache"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
-	"github.com/NeowayLabs/neosearch/lib/neosearch/store/goleveldb"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/utils"
 )
-
-const (
-	DefaultKVStore = goleveldb.KVName
-
-	// OpenCacheSize is the default value for the maximum number of
-	// open database files. This value can be override by
-	// NGConfig.OpenCacheSize.
-	OpenCacheSize int = 100
-
-	// BatchSize is the default size of cached operations before
-	// a write batch occurs. You can override this value with
-	// NGConfig.BatchSize.
-	BatchSize int = 5000
-)
-
-// NGConfig configure the Engine
-type NGConfig struct {
-	KVCfg store.KVConfig
-	// OpenCacheSize adjust the length of maximum number of
-	// open indices. This is a LRU cache, the least used
-	// database open will be closed when needed.
-	OpenCacheSize int
-
-	// Default batch write size
-	BatchSize int
-}
 
 // Engine type
 type Engine struct {
 	stores cache.Cache
-	config NGConfig
+	config *Config
 	debug  bool
 }
 
@@ -58,25 +31,29 @@ const (
 // Engine is the generic interface to access database/index files.
 // You can execute commands directly to database using Execute method
 // acquire direct iterators using the Store interface.
-func New(config NGConfig) *Engine {
-	if config.OpenCacheSize == 0 {
-		config.OpenCacheSize = OpenCacheSize
+func New(cfg *Config) *Engine {
+	if cfg.OpenCacheSize == 0 {
+		cfg.OpenCacheSize = DefaultOpenCacheSize
 	}
 
-	if config.BatchSize == 0 {
-		config.BatchSize = BatchSize
+	if cfg.BatchSize == 0 {
+		cfg.BatchSize = DefaultBatchSize
 	}
 
-	if config.KVCfg == nil {
-		config.KVCfg = store.KVConfig{}
+	if cfg.KVStore == "" {
+		cfg.KVStore = DefaultKVStore
+	}
+
+	if cfg.KVConfig == nil {
+		cfg.KVConfig = store.KVConfig{}
 	}
 
 	ng := &Engine{
-		config: config,
-		stores: cache.NewLRUCache(config.OpenCacheSize),
+		config: cfg,
+		stores: cache.NewLRUCache(cfg.OpenCacheSize),
 	}
 
-	if debug, ok := config.KVCfg["debug"].(bool); ok {
+	if debug, ok := cfg.KVConfig["debug"].(bool); ok {
 		ng.debug = debug
 	}
 
@@ -107,12 +84,12 @@ func (ng *Engine) open(indexName, databaseName string) (store.KVStore, error) {
 	value, ok = ng.stores.Get(indexName + "." + databaseName)
 
 	if ok == false || value == nil {
-		storeConstructor := store.KVStoreConstructorByName(DefaultKVStore)
+		storeConstructor := store.KVStoreConstructorByName(ng.config.KVStore)
 		if storeConstructor == nil {
 			return nil, errors.New("Unknown storage type")
 		}
 
-		storekv, err = storeConstructor(ng.config.KVCfg)
+		storekv, err = storeConstructor(ng.config.KVConfig)
 		if err != nil {
 			return nil, err
 		}

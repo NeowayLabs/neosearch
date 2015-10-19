@@ -13,8 +13,8 @@ import (
 	"launchpad.net/gommap"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
+	"github.com/NeowayLabs/neosearch/lib/neosearch/config"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/index"
-	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
 	"github.com/jteeuwen/go-pkg-optarg"
 )
 
@@ -99,14 +99,10 @@ func main() {
 		}
 	}
 
-	cfg := neosearch.NewConfig()
+	cfg := config.NewConfig()
 
-	cfg.Option(neosearch.DataDir(dataDirOpt))
-	cfg.Option(neosearch.Debug(debugOpt))
-	cfg.Option(neosearch.KVConfig(store.KVConfig{
-		"enableCache": true,
-		"cacheSize":   (1 << 15),
-	}))
+	cfg.Option(config.DataDir(dataDirOpt))
+	cfg.Option(config.Debug(debugOpt))
 
 	neo := neosearch.New(cfg)
 

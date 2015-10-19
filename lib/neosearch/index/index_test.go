@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/NeowayLabs/neosearch/lib/neosearch/config"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/engine"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/utils"
 )
@@ -28,10 +29,8 @@ func createIndex(indexName string, t *testing.T) (*Index, error) {
 		indexDir = DataDirTmp + "/" + indexName
 	)
 
-	cfg := Config{
-		Debug:   false,
-		DataDir: DataDirTmp,
-	}
+	cfg := config.NewConfig()
+	cfg.Option(config.DataDir(DataDirTmp))
 
 	err = os.MkdirAll(DataDirTmp, 0755)
 

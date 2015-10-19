@@ -65,42 +65,42 @@ func (lvdb *LVDB) setup(config store.KVConfig) {
 		lvdb.dataDir = "/tmp"
 	}
 
-	ro, ok := config["read_only"].(bool)
+	ro, ok := config["readOnly"].(bool)
 	if ok {
 		opts.ReadOnly = ro
 	}
 
-	cim, ok := config["create_if_missing"].(bool)
+	cim, ok := config["errorIfMissing"].(bool)
 	if ok {
-		opts.ErrorIfMissing = !cim
+		opts.ErrorIfMissing = cim
 	}
 
-	eie, ok := config["error_if_exists"].(bool)
+	eie, ok := config["errorIfExist"].(bool)
 	if ok {
 		opts.ErrorIfExist = eie
 	}
 
-	wbs, ok := config["write_buffer_size"].(float64)
+	wbs, ok := config["writeBuffer"].(float64)
 	if ok {
 		opts.WriteBuffer = int(wbs)
 	}
 
-	bs, ok := config["block_size"].(float64)
+	bs, ok := config["wlockSize"].(float64)
 	if ok {
 		opts.BlockSize = int(bs)
 	}
 
-	bri, ok := config["block_restart_interval"].(float64)
+	bri, ok := config["blockRestartInterval"].(float64)
 	if ok {
 		opts.BlockRestartInterval = int(bri)
 	}
 
-	lcc, ok := config["lru_cache_capacity"].(float64)
+	lcc, ok := config["blockCacheCapacity"].(float64)
 	if ok {
 		opts.BlockCacheCapacity = int(lcc)
 	}
 
-	bfbpk, ok := config["bloom_filter_bits_per_key"].(float64)
+	bfbpk, ok := config["bloomFilterBitsPerKey"].(float64)
 	if ok {
 		bf := filter.NewBloomFilter(int(bfbpk))
 		opts.Filter = bf

@@ -10,12 +10,23 @@ import (
 	"testing"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
+	"github.com/NeowayLabs/neosearch/lib/neosearch/config"
 )
 
+var dataDirTmp string
+
+func init() {
+	var err error
+	dataDirTmp, err = ioutil.TempDir("/tmp", "neosearch-service-server-")
+	if err != nil {
+		panic(err)
+	}
+}
+
 func getServer(t *testing.T) (*httptest.Server, *neosearch.NeoSearch, error) {
-	config := neosearch.NewConfig()
-	config.Option(neosearch.DataDir("/tmp/"))
-	search := neosearch.New(config)
+	cfg := config.NewConfig()
+	cfg.Option(config.DataDir(dataDirTmp))
+	search := neosearch.New(cfg)
 	serverConfig := ServerConfig{
 		Host: "0.0.0.0",
 		Port: 9500,
@@ -199,7 +210,7 @@ func TestRESTIndexInfo(t *testing.T) {
 
 	errMsg := resObj["error"]
 
-	if errMsg.(string) != "Index 'test' not found in directory '/tmp'." {
+	if errMsg.(string) != "Index 'test' not found in directory '"+dataDirTmp+"'." {
 		t.Error("Wrong error message")
 	}
 }

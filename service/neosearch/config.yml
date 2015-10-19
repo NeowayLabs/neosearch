@@ -8,12 +8,39 @@ debug: false
 
 # maxIndicesOpen is the max number of indices maintained open by neosearch
 # for cached searchs
-maxIndicesOpen: 10
+maxIndicesOpen: 50
 
-store:
+engine:
+    # openCacheSize is the value for the maximum number of
+    # open database files.
+    openCacheSize: 100
+    # batchSize is the size of cached operations before
+    # a write batch occurs.
+    batchSize: 5000
+    # kvstore set the kvstore to be used
+    kvstore: goleveldb
+    # kvstoreConfig set specific options for the kvstore
+    kvconfig: *KVSTORE_CONFIG
+
+goleveldb: &KVSTORE_CONFIG
+    # WriteBuffer defines maximum size of a 'memdb' before flushed to
+    # 'sorted table'. 'memdb' is an in-memory DB backed by an on-disk
+    # unsorted journal.
+    writeBuffer: 4194304
+    # BlockSize is the minimum uncompressed size in bytes of each 'sorted table'
+    # block.
+    blockSize: 4096
+    # BlockRestartInterval is the number of keys between restart points for
+    # delta encoding of keys.
+    blockRestartInterval: 16
+    # BlockCacheCapacity defines the capacity of the 'sorted table' block caching.
+    # Default is 4MB
+    blockCacheCapacity: 1073741824
+    bloomFilterBitsPerKey: 16
+
+leveldb:
     # enable/disable cache support
     enableCache: true
     # CacheSize is the length of LRU cache used by the storage engine
-    # Default is 1GB (1 << 30)
+    # Default is 1GB
     cacheSize: 1073741824
-

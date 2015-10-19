@@ -2,15 +2,27 @@ package index
 
 import (
 	"fmt"
+	"io/ioutil"
 	"testing"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
+	"github.com/NeowayLabs/neosearch/lib/neosearch/config"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/index"
 )
 
+var dataDirTmp string
+
+func init() {
+	var err error
+	dataDirTmp, err = ioutil.TempDir("/tmp", "neosearch-service-index-")
+	if err != nil {
+		panic(err)
+	}
+}
+
 func getIndexHandler() *IndexHandler {
-	cfg := neosearch.NewConfig()
-	cfg.Option(neosearch.DataDir("/tmp/"))
+	cfg := config.NewConfig()
+	cfg.Option(config.DataDir(dataDirTmp))
 	ns := neosearch.New(cfg)
 
 	handler := New(ns)

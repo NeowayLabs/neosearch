@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/NeowayLabs/neosearch/lib/neosearch/config"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/engine"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/utils"
 )
@@ -30,10 +31,8 @@ func TestBuildAddObjectDocument(t *testing.T) {
 		index *Index
 	)
 
-	cfg := Config{
-		Debug:   false,
-		DataDir: DataDirTmp,
-	}
+	cfg := config.NewConfig()
+	cfg.Option(config.DataDir(DataDirTmp))
 
 	err = os.MkdirAll(DataDirTmp, 0755)
 
