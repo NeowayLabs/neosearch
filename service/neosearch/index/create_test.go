@@ -5,11 +5,12 @@ import (
 	"testing"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
+	"github.com/NeowayLabs/neosearch/lib/neosearch/config"
 )
 
 func getCreateHandler() *CreateIndexHandler {
-	cfg := neosearch.NewConfig()
-	cfg.Option(neosearch.DataDir("/tmp/"))
+	cfg := config.NewConfig()
+	cfg.Option(config.DataDir(dataDirTmp))
 	ns := neosearch.New(cfg)
 
 	handler := NewCreateHandler(ns)

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NeowayLabs/neosearch/lib/neosearch/config"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/index"
 )
 
@@ -23,9 +24,8 @@ func init() {
 }
 
 func TestCreateIndex(t *testing.T) {
-	cfg := NewConfig()
-	cfg.Option(DataDir(DataDirTmp))
-	cfg.Option(Debug(false))
+	cfg := config.NewConfig()
+	cfg.Option(config.DataDir(DataDirTmp))
 
 	neo := New(cfg)
 
@@ -84,9 +84,8 @@ func TestOpenIndexCache(t *testing.T) {
 		indx *index.Index
 	)
 
-	cfg := NewConfig()
-	cfg.Option(DataDir(DataDirTmp))
-	cfg.Option(Debug(false))
+	cfg := config.NewConfig()
+	cfg.Option(config.DataDir(DataDirTmp))
 
 	neo := New(cfg)
 
@@ -142,9 +141,8 @@ cleanup:
 }
 
 func TestDeleteIndex(t *testing.T) {
-	cfg := NewConfig()
-	cfg.Option(DataDir(DataDirTmp))
-	cfg.Option(Debug(false))
+	cfg := config.NewConfig()
+	cfg.Option(config.DataDir(DataDirTmp))
 
 	neo := New(cfg)
 
@@ -176,10 +174,8 @@ func TestAddDocument(t *testing.T) {
 		total      uint64
 	)
 
-	cfg := NewConfig()
-
-	cfg.Option(DataDir(DataDirTmp))
-	cfg.Option(Debug(false))
+	cfg := config.NewConfig()
+	cfg.Option(config.DataDir(DataDirTmp))
 
 	neo := New(cfg)
 
@@ -282,10 +278,8 @@ func BenchmarkAddDocuments(b *testing.B) {
 
 	indexDir := dataDirTmp + "/" + indexName
 
-	cfg := NewConfig()
-
-	cfg.Option(DataDir(dataDirTmp))
-	cfg.Option(Debug(false))
+	cfg := config.NewConfig()
+	cfg.Option(config.DataDir(dataDirTmp))
 
 	neo := New(cfg)
 
@@ -367,10 +361,8 @@ func TestAddDocumentWithObject(t *testing.T) {
     }
 }`
 
-	cfg := NewConfig()
-
-	cfg.Option(DataDir(DataDirTmp))
-	cfg.Option(Debug(false))
+	cfg := config.NewConfig()
+	cfg.Option(config.DataDir(DataDirTmp))
 
 	neo := New(cfg)
 
@@ -564,10 +556,8 @@ func TestComplexDocument(t *testing.T) {
     ]
 }`
 
-	cfg := NewConfig()
-
-	cfg.Option(DataDir(DataDirTmp))
-	cfg.Option(Debug(false))
+	cfg := config.NewConfig()
+	cfg.Option(config.DataDir(DataDirTmp))
 
 	neo := New(cfg)
 
@@ -654,9 +644,8 @@ func TestPrefixMatch(t *testing.T) {
 		indexDir  = DataDirTmp + "/" + indexName
 	)
 
-	cfg := NewConfig()
-	cfg.Option(DataDir(DataDirTmp))
-	cfg.Option(Debug(false))
+	cfg := config.NewConfig()
+	cfg.Option(config.DataDir(DataDirTmp))
 
 	neo := New(cfg)
 
@@ -747,9 +736,8 @@ func TestBatchAdd(t *testing.T) {
 		indexDir  = DataDirTmp + "/" + indexName
 	)
 
-	cfg := NewConfig()
-	cfg.Option(DataDir(DataDirTmp))
-	cfg.Option(Debug(false))
+	cfg := config.NewConfig()
+	cfg.Option(config.DataDir(DataDirTmp))
 
 	neo := New(cfg)
 

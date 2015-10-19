@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch"
+	"github.com/NeowayLabs/neosearch/lib/neosearch/config"
 )
 
 func OnErrorPanic(err error) {
@@ -20,9 +21,8 @@ func Example() {
 
 	OnErrorPanic(err)
 
-	cfg := neosearch.NewConfig()
-	cfg.Option(neosearch.DataDir(dataDir))
-	cfg.Option(neosearch.Debug(false))
+	cfg := config.NewConfig()
+	cfg.Option(config.DataDir(dataDir))
 
 	neo := neosearch.New(cfg)
 	defer neo.Close()
@@ -56,9 +56,9 @@ func ExampleMatchPrefix() {
 
 	OnErrorPanic(err)
 
-	cfg := neosearch.NewConfig()
-	cfg.Option(neosearch.DataDir(dataDir))
-	cfg.Option(neosearch.Debug(false))
+	cfg := config.NewConfig()
+	cfg.Option(config.DataDir(dataDir))
+	cfg.Option(config.Debug(false))
 
 	neo := neosearch.New(cfg)
 	defer neo.Close()

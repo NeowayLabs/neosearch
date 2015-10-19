@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/NeowayLabs/neosearch/lib/neosearch/config"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/engine"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
 	"github.com/NeowayLabs/neosearch/lib/neosearch/utils"
@@ -22,28 +23,18 @@ const (
 	indexExt string = "idx"
 )
 
-// Config index
-type Config struct {
-	// Per-Index configurations
-
-	DataDir  string
-	Debug    bool
-	KVConfig store.KVConfig
-}
-
 // Index represents an entire index
 type Index struct {
 	Name string `json:"name"`
 
 	engine *engine.Engine
-	config Config
+
+	debug bool
 
 	// Indicates that index abstraction should batch each write command
 	enableBatchMode bool
 
 	flushStorages []string
-
-	fullDir string
 }
 
 // ValidateIndexName verifies if name is valid NeoSearch index name
@@ -61,44 +52,45 @@ func ValidateIndexName(name string) bool {
 }
 
 // New creates new index
-func New(name string, cfg Config, create bool) (*Index, error) {
+func New(name string, cfg *config.Config, create bool) (*Index, error) {
 	if !ValidateIndexName(name) {
 		return nil, errors.New("Invalid index name")
 	}
 
 	index := &Index{
-		Name:   name,
-		config: cfg,
+		Name: name,
 	}
 
-	if err := index.setup(create); err != nil {
+	if err := index.setup(cfg, create); err != nil {
 		return nil, err
 	}
 
 	return index, nil
 }
 
-func (i *Index) setup(create bool) error {
-	dataDir := i.config.DataDir + "/" + i.Name
+func (i *Index) setup(cfg *config.Config, create bool) error {
+	dataDir := cfg.DataDir + "/" + i.Name
 	if create {
 		if err := os.Mkdir(dataDir, 0755); err != nil {
 			return err
 		}
 	}
 
-	i.fullDir = dataDir
+	i.debug = cfg.Debug
 
-	kvcfg := i.config.KVConfig
-	if kvcfg == nil {
-		kvcfg = store.KVConfig{}
+	if cfg.Engine == nil {
+		cfg.Engine = engine.NewConfig()
 	}
-	kvcfg["dataDir"] = i.config.DataDir
-	kvcfg["debug"] = i.config.Debug
 
-	i.engine = engine.New(engine.NGConfig{
-		KVCfg: kvcfg,
-	})
+	if cfg.Engine.KVConfig == nil {
+		cfg.Engine.KVConfig = store.KVConfig{}
+	}
 
+	kvcfg := cfg.Engine.KVConfig
+	kvcfg["dataDir"] = cfg.DataDir
+	kvcfg["debug"] = cfg.Debug
+
+	i.engine = engine.New(cfg.Engine)
 	return nil
 }
 
@@ -118,7 +110,7 @@ func (i *Index) FlushBatch() {
 			Command:  "flushbatch",
 		})
 
-		if i.config.Debug {
+		if i.debug {
 			fmt.Printf("Flushing batch storage '%s' of index '%s'.\n",
 				storeName,
 				i.Name)
@@ -273,7 +265,7 @@ func (i *Index) GetDocs(docIDs []uint64, limit uint) ([]string, error) {
 }
 
 func (i *Index) buildBatchOn(storage string) (engine.Command, error) {
-	if i.config.Debug {
+	if i.debug {
 		fmt.Printf("Batch mode enabled for storage '%s' of index '%s'.\n",
 			storage,
 			i.Name,
@@ -331,7 +323,7 @@ func (i *Index) buildIndexFields(id uint64, baseField string, structData map[str
 		metainfo, ok := metadata[key].(Metadata)
 
 		if !ok {
-			if i.config.Debug {
+			if i.debug {
 				fmt.Printf("[WARN] Metadata not supplied for field '%s'. Metadata = %+v\n", key, metadata)
 			}
 
@@ -477,7 +469,7 @@ func (i *Index) buildIndexField(id uint64, field string, value interface{}, meta
 	default:
 		errMsg := fmt.Sprintf("Unknown type %s: %s\n", fieldType, value)
 
-		if i.config.Debug {
+		if i.debug {
 			fmt.Printf(errMsg)
 		}
 
