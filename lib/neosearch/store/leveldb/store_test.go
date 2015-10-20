@@ -6,11 +6,10 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
 	"testing"
 
 	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
-	"github.com/NeowayLabs/neosearch/lib/neosearch/utils"
+	"github.com/NeowayLabs/neosearch/lib/neosearch/store/test"
 )
 
 var DataDirTmp string
@@ -79,7 +78,7 @@ func openDatabaseFail(t *testing.T, indexName, dbName string) {
 	}
 }
 
-func TestStoreHasBackend(t *testing.T) {
+func TestStoreHasBackend2(t *testing.T) {
 	cfg := store.KVConfig{
 		"dataDir": DataDirTmp,
 	}
@@ -95,7 +94,7 @@ func TestStoreHasBackend(t *testing.T) {
 	}
 }
 
-func TestOpenDatabase(t *testing.T) {
+func TestOpenDatabase2(t *testing.T) {
 	shouldPass := []string{
 		"123.tt",
 		/*		"9999.db",
@@ -140,11 +139,9 @@ func TestOpenDatabase(t *testing.T) {
 	}
 }
 
-func TestStoreSetGet(t *testing.T) {
+func TestStoreSetGet2(t *testing.T) {
 	var (
-		err    error
 		kv     store.KVStore
-		data   []byte
 		testDb = "test_set.db"
 	)
 
@@ -153,86 +150,15 @@ func TestStoreSetGet(t *testing.T) {
 		return
 	}
 
-	type kvTest struct {
-		key   []byte
-		value []byte
-	}
-
-	shouldPass := []kvTest{
-		{
-			key:   []byte{'t', 'e', 's', 't', 'e'},
-			value: []byte{'i', '4', 'k'},
-		},
-		{
-			key: []byte{'p', 'l', 'a', 'n', '9'},
-			value: []byte{'f', 'r', 'o', 'm',
-				'o', 'u', 't', 'e', 'r', 's',
-				's', 'p', 'a', 'c', 'e', '!'},
-		},
-		{
-			key:   []byte{'t', 'h', 'e', 'm', 'a', 't', 'r', 'i', 'x'},
-			value: []byte{'h', 'a', 's', 'y', 'o', 'u'},
-		},
-	}
-
-	writer := kv.Writer()
-	if writer == nil {
-		t.Error("Writer not created!")
-		return
-	}
-
-	reader := kv.Reader()
-	if reader == nil {
-		t.Error("Reader not created!")
-		return
-	}
-	defer func() {
-		err := reader.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	for _, kv := range shouldPass {
-		if err = writer.Set(kv.key, kv.value); err != nil {
-			t.Error(err)
-		}
-
-		if data, err = reader.Get(kv.key); err != nil {
-			t.Error(err)
-			continue
-		} else if data == nil || len(data) != len(kv.value) {
-			t.Errorf("Failed to retrieve key '%s'. Retuns: %s", string(kv.key), string(data))
-			continue
-		}
-
-		if !reflect.DeepEqual(data, kv.value) {
-			t.Errorf("Data retrieved '%s' != '%s'", string(data), string(kv.value))
-		}
-	}
-
-	data, err = reader.Get([]byte("do not exists"))
-	if err != nil {
-		t.Error(err)
-	}
-
-	// key does not exists, data should be nil
-	if data != nil {
-		t.Error("key 'does not exists' returning wrong value")
-	}
+	test.CommonTestStoreSetGet(t, kv)
 
 	kv.Close()
-
 	os.RemoveAll(DataDirTmp + "/" + testDb)
 }
 
-func TestBatchWrite(t *testing.T) {
+func TestBatchWrite2(t *testing.T) {
 	var (
-		err    error
 		kv     store.KVStore
-		key    = []byte{'a'}
-		value  = []byte{'b'}
-		data   []byte
 		testDb = "testbatch.db"
 	)
 
@@ -241,70 +167,15 @@ func TestBatchWrite(t *testing.T) {
 		return
 	}
 
-	reader := kv.Reader()
-	if reader == nil {
-		t.Error("Reader not created!")
-		return
-	}
-	defer func() {
-		err := reader.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	writer := kv.Writer()
-	if writer == nil {
-		t.Error("Writer not created!")
-		return
-	}
-
-	writer.StartBatch()
-
-	if writer.IsBatch() == false {
-		t.Error("StartBatch not setting isBatch = true")
-		return
-	}
-
-	if err = writer.Set(key, value); err != nil {
-		t.Error(err)
-		return
-	}
-
-	// should returns nil, nil because the key is in the batch cache
-	if data, err = reader.Get(key); err != nil || data != nil {
-		t.Error("Key set before wasn't in the write batch cache." +
-			" Batch mode isnt working")
-	}
-
-	if err = writer.FlushBatch(); err != nil {
-		t.Error(err)
-	}
-
-	if writer.IsBatch() == true {
-		t.Error("FlushBatch doesnt reset the isBatch")
-	}
-
-	if data, err = reader.Get(key); err != nil {
-		t.Error(err)
-	} else if data == nil || len(data) != len(value) {
-		t.Errorf("Failed to retrieve key '%s'. Retuns: %s", string(key), string(data))
-	}
-
-	if !reflect.DeepEqual(data, value) {
-		t.Errorf("Data retrieved '%s' != '%s'", string(data), string(value))
-	}
+	test.CommonTestBatchWrite(t, kv)
 
 	kv.Close()
-
 	os.RemoveAll(DataDirTmp + "/" + testDb)
 }
 
-func TestBatchMultiWrite(t *testing.T) {
+func TestBatchMultiWrite2(t *testing.T) {
 	var (
-		err    error
 		kv     store.KVStore
-		data   []byte
 		testDb = "test_set-multi.db"
 	)
 
@@ -313,87 +184,15 @@ func TestBatchMultiWrite(t *testing.T) {
 		return
 	}
 
-	reader := kv.Reader()
-	if reader == nil {
-		t.Error("Reader not created!")
-		return
-	}
-	defer func() {
-		err := reader.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	writer := kv.Writer()
-	if writer == nil {
-		t.Error("Writer not created!")
-		return
-	}
-
-	writer.StartBatch()
-
-	type kvTest struct {
-		key   []byte
-		value []byte
-	}
-
-	shouldPass := []kvTest{
-		{
-			key:   []byte{'t', 'e', 's', 't', 'e'},
-			value: []byte{'i', '4', 'k'},
-		},
-		{
-			key: []byte{'p', 'l', 'a', 'n', '9'},
-			value: []byte{'f', 'r', 'o', 'm',
-				'o', 'u', 't', 'e', 'r', 's',
-				's', 'p', 'a', 'c', 'e', '!'},
-		},
-		{
-			key:   []byte{'t', 'h', 'e', 'm', 'a', 't', 'r', 'i', 'x'},
-			value: []byte{'h', 'a', 's', 'y', 'o', 'u'},
-		},
-	}
-
-	for _, kv := range shouldPass {
-		if err = writer.Set(kv.key, kv.value); err != nil {
-			t.Error(err)
-		}
-
-		if data, err := reader.Get(kv.key); err != nil || data != nil {
-			t.Error("Key set before wasn't in the write batch cache." +
-				" Batch mode isnt working")
-		}
-	}
-
-	if err := writer.FlushBatch(); err != nil {
-		t.Error(err)
-	}
-
-	for _, kv := range shouldPass {
-		if data, err = reader.Get(kv.key); err != nil {
-			t.Error(err)
-			continue
-		} else if data == nil || len(data) != len(kv.value) {
-			t.Errorf("Failed to retrieve key '%s'. Retuns: %s", string(kv.key), string(data))
-			continue
-		}
-
-		if !reflect.DeepEqual(data, kv.value) {
-			t.Errorf("Data retrieved '%s' != '%s'", string(data), string(kv.value))
-		}
-	}
+	test.CommonTestBatchMultiWrite(t, kv)
 
 	kv.Close()
-
 	os.RemoveAll(DataDirTmp + "/" + testDb)
 }
 
-func TestStoreMergeSet(t *testing.T) {
+func TestStoreMergeSet2(t *testing.T) {
 	var (
-		err    error
 		kv     store.KVStore
-		data   []byte
 		testDb = "test_mergeset.db"
 	)
 
@@ -402,46 +201,24 @@ func TestStoreMergeSet(t *testing.T) {
 		return
 	}
 
-	writer := kv.Writer()
-	if writer == nil {
-		t.Error("Writer not created!")
+	test.CommonTestStoreMergeSet(t, kv)
+
+	kv.Close()
+	os.RemoveAll(DataDirTmp + "/" + testDb)
+}
+
+func TestStoreIterator2(t *testing.T) {
+	var (
+		kv     store.KVStore
+		testDb = "test_iterator.db"
+	)
+
+	os.Mkdir(DataDirTmp+string(filepath.Separator)+"sample-store-iterator", 0755)
+	if kv = openDatabase(t, "sample-store-iterator", testDb); kv == nil {
 		return
 	}
 
-	reader := kv.Reader()
-	if reader == nil {
-		t.Error("Reader not created!")
-		return
-	}
-	defer func() {
-		err := reader.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	key := []byte{'t', 'e', 's', 't', 'e'}
-	values := []uint64{0, 2, 1}
-
-	result := append(utils.Uint64ToBytes(values[0]), utils.Uint64ToBytes(values[2])...)
-	result = append(result, utils.Uint64ToBytes(values[1])...)
-
-	for _, value := range values {
-		if err = writer.MergeSet(key, value); err != nil {
-			t.Error(err)
-			return
-		}
-	}
-
-	if data, err = reader.Get(key); err != nil {
-		t.Error(err)
-	} else if data == nil || len(data) != len(result) {
-		t.Errorf("Failed to retrieve key '%s'. Retuns: %+v", string(key), data)
-	}
-
-	if !reflect.DeepEqual(data, result) {
-		t.Errorf("Data retrieved '%+v' != '%+v'", data, result)
-	}
+	test.CommonTestStoreIterator(t, kv)
 
 	kv.Close()
 	os.RemoveAll(DataDirTmp + "/" + testDb)
