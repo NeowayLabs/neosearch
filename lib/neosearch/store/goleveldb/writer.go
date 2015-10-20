@@ -1,12 +1,9 @@
 package goleveldb
 
 import (
-	"bytes"
-	"encoding/binary"
-	"fmt"
 	"sync"
 
-	"github.com/NeowayLabs/neosearch/lib/neosearch/utils"
+	"github.com/NeowayLabs/neosearch/lib/neosearch/store"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
@@ -38,62 +35,20 @@ func (w *LVDBWriter) Set(key, value []byte) error {
 	return w.store.db.Put(key, value, options)
 }
 
+// Get returns the value of the given key
+func (w *LVDBWriter) Get(key []byte) ([]byte, error) {
+	options := defaultReadOptions()
+	b, err := w.store.db.Get(key, options)
+	if err == leveldb.ErrNotFound {
+		return nil, nil
+	}
+	return b, err
+}
+
 // MergeSet add value to a ordered set of integers stored in key. If value
 // is already on the key, than the set will be skipped.
 func (w *LVDBWriter) MergeSet(key []byte, value uint64) error {
-	var (
-		buf      *bytes.Buffer
-		err      error
-		v        uint64
-		i        uint64
-		inserted bool
-		reader   = w.store.Reader()
-	)
-
-	data, err := reader.Get(key)
-	if err != nil {
-		return err
-	}
-
-	if w.store.debug {
-		fmt.Printf("[INFO] %d ids == %d GB of ids\n", len(data)/8, len(data)/(1024*1024*1024))
-	}
-
-	buf = new(bytes.Buffer)
-	lenBytes := uint64(len(data))
-
-	// O(n)
-	for i = 0; i < lenBytes; i += 8 {
-		v = utils.BytesToUint64(data[i : i+8])
-
-		// returns if value is already stored
-		if v == value {
-			return nil
-		}
-
-		if value < v {
-			err = binary.Write(buf, binary.BigEndian, value)
-			if err != nil {
-				return err
-			}
-
-			inserted = true
-		}
-
-		err = binary.Write(buf, binary.BigEndian, v)
-		if err != nil {
-			return err
-		}
-	}
-
-	if lenBytes == 0 || !inserted {
-		err = binary.Write(buf, binary.BigEndian, value)
-		if err != nil {
-			return err
-		}
-	}
-
-	return w.Set(key, buf.Bytes())
+	return store.MergeSet(w, key, value, w.store.debug)
 }
 
 func (w *LVDBWriter) Delete(key []byte) error {

@@ -20,11 +20,9 @@ type LVDB struct {
 	isBatch bool
 	dataDir string
 
-	opts         *levigo.Options
-	db           *levigo.DB
-	readOptions  *levigo.ReadOptions
-	writeOptions *levigo.WriteOptions
-	writeBatch   *levigo.WriteBatch
+	opts       *levigo.Options
+	db         *levigo.DB
+	writeBatch *levigo.WriteBatch
 
 	onceWriter sync.Once
 	defWriter  store.KVWriter
@@ -82,10 +80,6 @@ func (lvdb *LVDB) setup(config store.KVConfig) {
 	}
 
 	lvdb.opts.SetCreateIfMissing(true)
-
-	// TODO: export this configuration options
-	lvdb.readOptions = levigo.NewReadOptions()
-	lvdb.writeOptions = levigo.NewWriteOptions()
 }
 
 // Open the database
@@ -118,16 +112,21 @@ func (lvdb *LVDB) IsOpen() bool {
 
 // Close the database
 func (lvdb *LVDB) Close() error {
+	if lvdb.writeBatch != nil {
+		lvdb.writeBatch.Close()
+		lvdb.writeBatch = nil
+		lvdb.isBatch = false
+	}
+
 	if lvdb.db != nil {
 		// levigo close implementation does not returns error
 		lvdb.db.Close()
 		lvdb.db = nil
 	}
 
-	if lvdb.writeBatch != nil {
-		lvdb.writeBatch.Close()
-		lvdb.writeBatch = nil
-		lvdb.isBatch = false
+	if lvdb.opts != nil {
+		lvdb.opts.Close()
+		lvdb.opts = nil
 	}
 	return nil
 }

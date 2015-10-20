@@ -10,6 +10,7 @@ type KVReader interface {
 // KVWriter is a writer safe for concurrent writes.
 type KVWriter interface {
 	Set([]byte, []byte) error
+	Get([]byte) ([]byte, error)
 	MergeSet([]byte, uint64) error
 	Delete([]byte) error
 
