@@ -1,7 +1,7 @@
 language: go
 
 go:
-  - 1.3
+  - 1.4
   - tip
 install:
   - cd $HOME/gopath/src/github.com/NeowayLabs/neosearch
@@ -12,8 +12,8 @@ script:
   - go get github.com/axw/gocov/gocov
   - go get github.com/mattn/goveralls
   - go get -u github.com/golang/lint/golint
-  - go get github.com/nielsdraaisma/godep
-  - if ! go get code.google.com/p/go.tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
+  - go get github.com/tools/godep
+  - go get golang.org/x/tools/cover
   - hack/check.sh
 #  - goveralls -coverprofile=coverage.txt -service=travis-ci
 before_install:
